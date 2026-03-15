@@ -1,0 +1,27 @@
+{
+  "tenancy_law": [
+    "BWBR0005290",
+    "BWBR0014315",
+    "BWBR0009810"
+  ],
+  "employment_law": [
+    "BWBR0005290",
+    "BWBR0002638",
+    "BWBR0013008"
+  ],
+  "administrative_law": [
+    "BWBR0005537",
+    "BWBR0045754",
+    "BWBR0018472"
+  ],
+  "immigration_law": [
+    "BWBR0011823",
+    "BWBR0011825",
+    "BWBR0003738"
+  ],
+  "sme_business_law": [
+    "BWBR0003045",
+    "BWBR0021777",
+    "BWBR0001860"
+  ]
+}

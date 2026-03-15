@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "domain": "tenancy_law",
+      "query": "What does Article 7:271 BW say about notice periods for residential leases?",
+      "expected_articles": ["7:271"]
+    },
+    {
+      "domain": "tenancy_law",
+      "query": "Which article deals with the tenant's duty to report defects in a lease?",
+      "expected_articles": ["7:222"]
+    },
+    {
+      "domain": "administrative_law",
+      "query": "What is the bezwaar deadline under the Awb?",
+      "expected_articles": ["6:7", "6:8"]
+    },
+    {
+      "domain": "administrative_law",
+      "query": "Which Awb provision says a bezwaar must be submitted on time?",
+      "expected_articles": ["6:9"]
+    }
+  ]
+}

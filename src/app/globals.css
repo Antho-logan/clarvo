@@ -1,42 +1,90 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "tailwindcss";
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 44 26% 91%;
+    --foreground: 33 9% 11%;
+    --card: 44 26% 91%;
+    --card-foreground: 33 9% 11%;
+    --popover: 44 26% 91%;
+    --popover-foreground: 33 9% 11%;
+    --primary: 14 100% 43%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 13% 82%;
+    --secondary-foreground: 33 9% 11%;
+    --muted: 40 13% 82%;
+    --muted-foreground: 31 7% 45%;
+    --accent: 14 100% 43%;
+    --accent-foreground: 33 9% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 13% 82%;
+    --input: 40 13% 82%;
+    --ring: 14 100% 43%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 33 9% 11%;
+    --foreground: 60 14% 96%;
+    --card: 33 9% 11%;
+    --card-foreground: 60 14% 96%;
+    --popover: 33 9% 11%;
+    --popover-foreground: 60 14% 96%;
+    --primary: 14 100% 43%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 33 9% 20%;
+    --secondary-foreground: 60 14% 96%;
+    --muted: 33 9% 20%;
+    --muted-foreground: 40 13% 82%;
+    --accent: 14 100% 43%;
+    --accent-foreground: 60 14% 96%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 33 9% 20%;
+    --input: 33 9% 20%;
+    --ring: 14 100% 43%;
   }
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
+@layer base {
+  * {
+    border-color: hsl(var(--border) / 1);
+    /* Safe fallback instead of @apply for Tailwind 4 compat */
+  }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  body {
+    background-color: hsl(var(--background) / 1);
+    color: hsl(var(--foreground) / 1);
+    font-family: var(--font-inter), sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-playfair), serif;
+    letter-spacing: -0.025em;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  .glassmorphism {
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+  .dark .glassmorphism {
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  ::selection {
+    background-color: rgba(221, 51, 0, 0.2);
+    /* Coral */
+    color: #DD3300;
   }
 }

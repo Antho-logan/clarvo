@@ -1,0 +1,25 @@
+{
+  "tenancy_law": [
+    "ECLI:NL:GHAMS:2025:614",
+    "ECLI:NL:RBMNE:2025:3467"
+  ],
+  "employment_law": [
+    "ECLI:NL:RBROT:2022:5820",
+    "ECLI:NL:RBOBR:2024:2535"
+  ],
+  "administrative_law": [
+    "ECLI:NL:CRVB:2021:893",
+    "ECLI:NL:CRVB:2024:635",
+    "ECLI:NL:RVS:2023:2978"
+  ],
+  "immigration_law": [
+    "ECLI:NL:RVS:2025:5526",
+    "ECLI:NL:RVS:2022:3186",
+    "ECLI:NL:RBDHA:2024:18126"
+  ],
+  "sme_business_law": [
+    "ECLI:NL:RBDHA:2023:6671",
+    "ECLI:NL:GHSHE:2022:4164",
+    "ECLI:NL:GHAMS:2025:1367"
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "tests": [
+    {
+      "domain": "tenancy_law",
+      "source_type": "legislation",
+      "query": "huur woonruimte",
+      "expected_source_ids": ["BWBR0005290", "BWBR0014315"]
+    },
+    {
+      "domain": "tenancy_law",
+      "source_type": "case_law",
+      "query": "ECLI:NL:GHAMS:2025:614",
+      "expected_source_ids": ["ECLI:NL:GHAMS:2025:614"]
+    },
+    {
+      "domain": "employment_law",
+      "source_type": "legislation",
+      "query": "minimumloon vakantiebijslag",
+      "expected_source_ids": ["BWBR0002638"]
+    },
+    {
+      "domain": "employment_law",
+      "source_type": "case_law",
+      "query": "ECLI:NL:RBROT:2022:5820",
+      "expected_source_ids": ["ECLI:NL:RBROT:2022:5820"]
+    },
+    {
+      "domain": "administrative_law",
+      "source_type": "legislation",
+      "query": "algemene wet bestuursrecht bezwaar",
+      "expected_source_ids": ["BWBR0005537"]
+    },
+    {
+      "domain": "administrative_law",
+      "source_type": "case_law",
+      "query": "ECLI:NL:RVS:2023:2978",
+      "expected_source_ids": ["ECLI:NL:RVS:2023:2978"]
+    },
+    {
+      "domain": "immigration_law",
+      "source_type": "legislation",
+      "query": "vreemdelingenwet verblijfsvergunning",
+      "expected_source_ids": ["BWBR0011823", "BWBR0011825"]
+    },
+    {
+      "domain": "immigration_law",
+      "source_type": "case_law",
+      "query": "ECLI:NL:RBDHA:2024:18126",
+      "expected_source_ids": ["ECLI:NL:RBDHA:2024:18126"]
+    },
+    {
+      "domain": "sme_business_law",
+      "source_type": "legislation",
+      "query": "handelsregister onderneming inschrijving",
+      "expected_source_ids": ["BWBR0021777"]
+    },
+    {
+      "domain": "sme_business_law",
+      "source_type": "case_law",
+      "query": "ECLI:NL:GHSHE:2022:4164",
+      "expected_source_ids": ["ECLI:NL:GHSHE:2022:4164"]
+    }
+  ]
+}
