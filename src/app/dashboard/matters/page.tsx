@@ -6,10 +6,7 @@ import {
     FileText,
     MessageSquare,
     Share,
-    Settings,
     Users,
-    Search,
-    Filter,
     CheckCircle2,
     AlertTriangle
 } from "lucide-react";
@@ -78,7 +75,7 @@ export default function MatterDetail() {
                                         This matter involves a commercial lease dispute (ROZ-model 2012) between Visser Retail BV and their landlord regarding specialized service costs and maintenance obligations of the HVAC system.
                                     </p>
                                     <p>
-                                        <strong>Key Risks Identified:</strong> The scanned contract contains a deviation from standard ROZ provisions regarding casco maintenance, shifting unexpected liability to the tenant. Wait times for HVAC repairs may also breach 'huurgenot'.
+                                        <strong>Key Risks Identified:</strong> The scanned contract contains a deviation from standard ROZ provisions regarding casco maintenance, shifting unexpected liability to the tenant. Wait times for HVAC repairs may also breach &lsquo;huurgenot&rsquo;.
                                     </p>
                                 </div>
                                 <div className="mt-6 flex space-x-3">

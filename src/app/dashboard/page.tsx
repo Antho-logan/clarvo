@@ -40,7 +40,7 @@ export default function DashboardHome() {
                     <h1 className="text-3xl font-serif text-[#1F1D1A] tracking-tight">
                         Good morning, Clara.
                     </h1>
-                    <p className="text-[#63534B]">Here's what needs your attention today.</p>
+                    <p className="text-[#63534B]">Here&apos;s what needs your attention today.</p>
                 </div>
                 <div className="flex gap-3">
                     <Button variant="outline" className="text-[#1F1D1A] border-[#D8D2C8] bg-white hover:bg-[#F5F5F4]">

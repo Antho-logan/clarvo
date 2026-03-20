@@ -127,6 +127,9 @@ class SearchHit:
     article: Optional[str]
     section: Optional[str]
     title: Optional[str]
+    court: Optional[str]
+    decision_date: Optional[date]
+    subject: Optional[str]
     text: str
     source_url: Optional[str]
     score: float
@@ -145,6 +148,9 @@ class SearchHit:
             "article": self.article,
             "section": self.section,
             "title": self.title,
+            "court": self.court,
+            "decision_date": self.decision_date.isoformat() if self.decision_date else None,
+            "subject": self.subject,
             "text": self.text,
             "source_url": self.source_url,
             "score": self.score,
