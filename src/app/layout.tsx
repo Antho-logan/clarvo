@@ -15,7 +15,7 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "Veridicta | Professional-Grade Legal AI",
-  description: "AI Agents for Europe’s Legal Teams. Built for legal work that demands precision.",
+  description: "AI Agents for Europe's Legal Teams. Built for legal work that demands precision.",
 };
 
 export default function RootLayout({
