@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Any
+
+from sqlalchemy.orm import Session
 
 from backend_common import (
     DEFAULT_EFFECTIVE_FROM,
@@ -17,7 +20,6 @@ from backend_common import (
 )
 from parsers.bwb_parser import LawDocument
 from parsers.rechtspraak_parser import JudgmentDocument
-
 
 LOGGER = get_logger("repositories.legal_documents")
 
@@ -41,13 +43,13 @@ def _parse_optional_date(value: object) -> date | None:
 
 
 def _upsert_row(
-    session,
+    session: Session,
     *,
     source_id: str,
     domain: str | None,
     article: str | None,
     section: str | None,
-    payload: dict,
+    payload: dict[str, Any],
 ) -> bool:
     """Insert or update a single normalized document row."""
     with session.no_autoflush:
@@ -56,9 +58,21 @@ def _upsert_row(
             .filter(Document.source_type == payload["source_type"])
             .filter(Document.source_system == payload["source_system"])
             .filter(Document.source_id == source_id)
-            .filter(Document.domain.is_(None) if domain is None else Document.domain == domain)
-            .filter(Document.article.is_(None) if article is None else Document.article == article)
-            .filter(Document.section.is_(None) if section is None else Document.section == section)
+            .filter(
+                Document.domain.is_(None)
+                if domain is None
+                else Document.domain == domain
+            )
+            .filter(
+                Document.article.is_(None)
+                if article is None
+                else Document.article == article
+            )
+            .filter(
+                Document.section.is_(None)
+                if section is None
+                else Document.section == section
+            )
             .one_or_none()
         )
 
@@ -79,14 +93,20 @@ def insert_law_document(
     source_url: str,
     fetched_at: datetime | None = None,
     parser_version: str | None = None,
-    fetch_metadata: dict | None = None,
+    fetch_metadata: dict[str, Any] | None = None,
 ) -> InsertSummary:
     """Insert normalized law rows with idempotent upsert behavior."""
     session_factory = get_session_factory()
     fetched_at = fetched_at or utcnow()
     parser_version = parser_version or get_parser_version()
-    effective_from = _parse_optional_date((fetch_metadata or {}).get("selected_start_date")) or DEFAULT_EFFECTIVE_FROM
-    effective_to = _parse_optional_date((fetch_metadata or {}).get("selected_end_date")) or DEFAULT_EFFECTIVE_TO
+    effective_from = (
+        _parse_optional_date((fetch_metadata or {}).get("selected_start_date"))
+        or DEFAULT_EFFECTIVE_FROM
+    )
+    effective_to = (
+        _parse_optional_date((fetch_metadata or {}).get("selected_end_date"))
+        or DEFAULT_EFFECTIVE_TO
+    )
 
     inserted = 0
     updated = 0
@@ -114,9 +134,13 @@ def insert_law_document(
             existing_item["article_title"] = item.article_title
 
     with session_factory() as session:
-        for index, item in enumerate(normalized_articles.values()):
+        for index, normalized_item in enumerate(normalized_articles.values()):
             payload = {
-                "document_type": "law_article_section" if item["section_number"] else "law_article",
+                "document_type": (
+                    "law_article_section"
+                    if normalized_item["section_number"]
+                    else "law_article"
+                ),
                 "source_type": law_document.source_type,
                 "source_system": law_document.source_system,
                 "source_id": law_document.bwbr_id,
@@ -124,14 +148,14 @@ def insert_law_document(
                 "bwbr_id": law_document.bwbr_id,
                 "ecli": None,
                 "title": law_document.title,
-                "article": item["article_number"],
-                "section": item["section_number"],
+                "article": normalized_item["article_number"],
+                "section": normalized_item["section_number"],
                 "court": None,
                 "decision_date": None,
-                "subject": item["article_title"],
+                "subject": normalized_item["article_title"],
                 "effective_from": effective_from,
                 "effective_to": effective_to,
-                "text": item["text"],
+                "text": normalized_item["text"],
                 # Preserve the full source XML on one anchor row per source/domain.
                 "raw_xml": law_document.raw_xml if index == 0 else None,
                 "source_url": source_url,
@@ -143,8 +167,8 @@ def insert_law_document(
                 session,
                 source_id=law_document.bwbr_id,
                 domain=domain,
-                article=item["article_number"],
-                section=item["section_number"],
+                article=normalized_item["article_number"],
+                section=normalized_item["section_number"],
                 payload=payload,
             ):
                 inserted += 1
@@ -153,8 +177,15 @@ def insert_law_document(
 
         session.commit()
 
-    summary = InsertSummary(inserted=inserted, updated=updated, total=len(normalized_articles))
-    LOGGER.info("Stored law rows for %s inserted=%s updated=%s", law_document.bwbr_id, inserted, updated)
+    summary = InsertSummary(
+        inserted=inserted, updated=updated, total=len(normalized_articles)
+    )
+    LOGGER.info(
+        "Stored law rows for %s inserted=%s updated=%s",
+        law_document.bwbr_id,
+        inserted,
+        updated,
+    )
     return summary
 
 
@@ -196,23 +227,34 @@ def insert_judgment_document(
     }
 
     with session_factory() as session:
-        inserted = 1 if _upsert_row(
-            session,
-            source_id=judgment_document.ecli,
-            domain=domain,
-            article=None,
-            section=None,
-            payload=payload,
-        ) else 0
+        inserted = (
+            1
+            if _upsert_row(
+                session,
+                source_id=judgment_document.ecli,
+                domain=domain,
+                article=None,
+                section=None,
+                payload=payload,
+            )
+            else 0
+        )
         updated = 0 if inserted else 1
         session.commit()
 
     summary = InsertSummary(inserted=inserted, updated=updated, total=1)
-    LOGGER.info("Stored judgment row for %s inserted=%s updated=%s", judgment_document.ecli, inserted, updated)
+    LOGGER.info(
+        "Stored judgment row for %s inserted=%s updated=%s",
+        judgment_document.ecli,
+        inserted,
+        updated,
+    )
     return summary
 
 
-def get_document_by_source_id(source_id: str, *, domain: str | None = None) -> list[Document]:
+def get_document_by_source_id(
+    source_id: str, *, domain: str | None = None
+) -> list[Document]:
     """Return stored rows for one source identifier."""
     session_factory = get_session_factory()
     with session_factory() as session:

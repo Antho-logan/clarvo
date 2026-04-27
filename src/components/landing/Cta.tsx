@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -30,10 +31,11 @@ export function Cta() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button
+            asChild
             size="lg"
             className="bg-coral hover:bg-coral/90 text-ink border-0 h-14 px-8 text-base shadow-xl shadow-coral/20 w-full sm:w-auto"
           >
-            {cta.primaryCta}
+            <Link href="/dashboard">{cta.primaryCta}</Link>
           </Button>
           <Button
             size="lg"

@@ -1,0 +1,5 @@
+Alembic migrations for the Veridicta backend schema.
+
+Use:
+
+    DATABASE_URL=postgresql+psycopg://user@host/db python3 -m alembic upgrade head

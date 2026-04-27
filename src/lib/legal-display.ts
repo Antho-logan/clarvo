@@ -20,21 +20,61 @@ const sourceTypeLabelMap = new Map<string, string>(
 
 export function getDomainLabel(domain?: string | null) {
   if (!domain) {
-    return "Unassigned Domain";
+    return "Domain pending";
   }
   return domainLabelMap.get(domain) || startCase(domain);
 }
 
 export function getSourceTypeLabel(sourceType?: string | null) {
   if (!sourceType) {
-    return "Unknown Source";
+    return "Stored source";
   }
   return sourceTypeLabelMap.get(sourceType) || startCase(sourceType);
 }
 
+export function getSourceSystemLabel(
+  record: Pick<LegalRecord, "source_system" | "source_type">,
+) {
+  if (record.source_system) {
+    const normalized = record.source_system.toLowerCase();
+    if (normalized === "bwb" || normalized.includes("wetten")) {
+      return "Overheid.nl";
+    }
+    if (normalized === "rechtspraak") {
+      return "Rechtspraak";
+    }
+    return startCase(record.source_system);
+  }
+
+  if (record.source_type === "case_law") {
+    return "Rechtspraak";
+  }
+  if (record.source_type === "legislation") {
+    return "Overheid.nl";
+  }
+  return "Stored source";
+}
+
+export function getEmbeddingStatusBadge(status?: string | null) {
+  if (status === "completed") {
+    return {
+      label: "Indexed",
+      className: "text-emerald-700 border-emerald-200 bg-emerald-50",
+    };
+  }
+  if (status === "stale") {
+    return {
+      label: "Re-indexing",
+      className: "text-amber-700 border-amber-200 bg-amber-50",
+    };
+  }
+  return null;
+}
+
 export function getDocumentHeading(record: LegalRecord) {
+  const title = cleanLegalTitle(record.title);
   return (
-    record.title ||
+    title ||
     record.ecli ||
     record.bwbr_id ||
     record.source_id ||
@@ -48,6 +88,9 @@ export function getSourceIdentifier(record: LegalRecord) {
 
 export function getDocumentSnippet(text: string, maxLength = 240) {
   const compactText = text.replace(/\s+/g, " ").trim();
+  if (!compactText) {
+    return "No preview text is available for this stored row.";
+  }
 
   if (compactText.length <= maxLength) {
     return compactText;
@@ -79,18 +122,19 @@ export function getArticleLabel(record: LegalRecord) {
   }
 
   if (record.article && record.section) {
-    return `Article ${record.article} · Section ${record.section}`;
+    return `Art. ${record.article} · lid ${record.section}`;
   }
 
   if (record.article) {
-    return `Article ${record.article}`;
+    return `Art. ${record.article}`;
   }
 
-  return `Section ${record.section}`;
+  return `Lid ${record.section}`;
 }
 
 export function getSearchScore(result: SearchResult) {
-  return `${Math.round(result.score * 100)}% relevance`;
+  const normalized = Math.max(0, Math.min(1, result.score));
+  return `${Math.round(normalized * 100)}% relevance`;
 }
 
 export function getJobStatusTone(status: IngestionJob["status"]) {
@@ -123,4 +167,21 @@ function startCase(value: string) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function cleanLegalTitle(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+  const compact = value.replace(/\s+/g, " ").trim();
+  if (!compact) {
+    return null;
+  }
+  if (/^ecli:nl:/i.test(compact)) {
+    return compact.toUpperCase();
+  }
+  return compact
+    .replace(/^wettenbank\s*[-:]\s*/i, "")
+    .replace(/^regeling\s*[-:]\s*/i, "")
+    .replace(/\s*\|\s*wetten\.nl\s*$/i, "");
 }

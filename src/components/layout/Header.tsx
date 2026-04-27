@@ -98,7 +98,7 @@ export function Header() {
           </DropdownMenu>
 
           <Link
-            href="/dashboard"
+            href="/login"
             className="text-sm font-medium text-ink hover:text-ink/80 transition-colors"
           >
             {copy.header.login}
@@ -158,7 +158,7 @@ export function Header() {
 
           <div className="pt-4 flex flex-col space-y-4 border-t border-border/50">
             <Link
-              href="/dashboard"
+              href="/login"
               className="text-lg font-medium text-ink"
               onClick={() => setIsMobileMenuOpen(false)}
             >

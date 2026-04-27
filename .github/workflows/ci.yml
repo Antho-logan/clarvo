@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, codex/upgrade-to-10]
+
+jobs:
+  test:
+    name: node-${{ matrix.node }} py-${{ matrix.python }} pg-${{ matrix.postgres }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+        python: ["3.11", "3.12"]
+        postgres: [15, 16]
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg${{ matrix.postgres }}
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: veridicta_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    env:
+      DATABASE_URL: postgresql+psycopg://postgres@localhost:5432/veridicta_test
+      TEST_DATABASE_URL: postgresql+psycopg://postgres@localhost:5432/veridicta_test
+      REDIS_URL: redis://localhost:6379/0
+      AUTH_SECRET: veridicta-ci-placeholder-${{ github.run_id }}-${{ github.run_attempt }}
+      NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements-backend.txt -r requirements-dev.txt
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Python lint and typecheck
+        run: |
+          ruff check repositories parsers sources search.py api
+          black --check repositories parsers sources search.py api
+          mypy --strict repositories parsers sources
+
+      - name: Migrate test database
+        run: python -m alembic upgrade head
+
+      - name: Python tests with coverage
+        run: python -m pytest --cov=repositories --cov=parsers --cov=sources --cov=search --cov=api --cov-fail-under=80
+
+      - name: Frontend checks
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test
+          npm run build
+
+  evals:
+    if: github.event_name == 'pull_request'
+    name: retrieval evals
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: veridicta_eval
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    env:
+      DATABASE_URL: postgresql+psycopg://postgres@localhost:5432/veridicta_eval
+      TEST_DATABASE_URL: postgresql+psycopg://postgres@localhost:5432/veridicta_eval
+      REDIS_URL: redis://localhost:6379/0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements-backend.txt -r requirements-dev.txt
+
+      - name: Migrate eval database
+        run: python -m alembic upgrade head
+
+      - name: Seed curated laws
+        run: |
+          python ingestion/ingest_curated_laws.py --domain employment_law --limit 1
+          python ingestion/ingest_curated_laws.py --domain tenancy_law --limit 1
+          python ingestion/ingest_curated_laws.py --domain administrative_law --limit 1
+
+      - name: Run retrieval evals
+        run: python evals/run_eval.py
