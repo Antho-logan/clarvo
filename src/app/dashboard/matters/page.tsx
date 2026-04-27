@@ -1,152 +1,195 @@
-import { Button } from "@/components/ui/button";
+import { Archive, Briefcase, FileText, Search, SlidersHorizontal } from "lucide-react";
+
+import { archiveMatterAction, createMatterAction, updateMatterAction } from "@/app/dashboard/matters/actions";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    ArrowLeft,
-    FileText,
-    MessageSquare,
-    Share,
-    Users,
-    CheckCircle2,
-    AlertTriangle
-} from "lucide-react";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ApiError, getMatters } from "@/lib/api/client";
+import { getDomainLabel, isValidDomain } from "@/lib/legal-display";
+import { DOMAIN_OPTIONS } from "@/lib/types";
 
-export default function MatterDetail() {
-    return (
-        <div className="max-w-7xl mx-auto pb-12">
-            {/* Matter Header */}
-            <div className="mb-8">
-                <Link href="/dashboard" className="inline-flex items-center text-sm text-[#7C746B] hover:text-[#1F1D1A] mb-4 transition-colors">
-                    <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
-                </Link>
+type MattersPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div>
-                        <div className="flex items-center space-x-3 mb-2">
-                            <h1 className="text-3xl font-serif text-[#1F1D1A] tracking-tight">Huurgeschil Centrum - Visser</h1>
-                            <Badge className="bg-[#EEEDE4] text-[#63534B] hover:bg-[#EEEDE4] border border-[#D8D2C8]">Active</Badge>
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm text-[#63534B]">
-                            <span>Client: Visser Retail BV</span>
-                            <span>•</span>
-                            <span>Domain: Huurrecht (NL)</span>
-                            <span>•</span>
-                            <span>Matter ID: M-2041</span>
-                        </div>
-                    </div>
+function readSingleValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
 
-                    <div className="flex space-x-2">
-                        <Button variant="outline" className="border-[#D8D2C8] text-[#1F1D1A]">
-                            <Share className="w-4 h-4 mr-2" /> Share
-                        </Button>
-                        <Button className="bg-[#DD3300] text-white hover:bg-[#DD3300]/90">
-                            <MessageSquare className="w-4 h-4 mr-2" /> Ask Agent
-                        </Button>
-                    </div>
-                </div>
-            </div>
+export default async function MattersPage({ searchParams }: MattersPageProps) {
+  const params = await searchParams;
+  const query = readSingleValue(params.q) || "";
+  const status = readSingleValue(params.status) || "";
+  const rechtsgebied = readSingleValue(params.rechtsgebied) || "";
+  const selectedMatterId = readSingleValue(params.matter) || "";
 
-            <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="bg-[#EEEDE4]/50 border-b border-[#D8D2C8] w-full justify-start rounded-none h-auto p-0 mb-6">
-                    {["Overview", "Documents (12)", "Research", "Drafts", "Activity"].map((tab) => (
-                        <TabsTrigger
-                            key={tab}
-                            value={tab.split(' ')[0].toLowerCase()}
-                            className="px-6 py-3 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-[#DD3300] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-medium text-[#63534B] data-[state=active]:text-[#1F1D1A]"
-                        >
-                            {tab}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
+  const mattersResult = await getMatters({
+    q: query || undefined,
+    status: status || undefined,
+    rechtsgebied: isValidDomain(rechtsgebied) ? rechtsgebied : undefined,
+    limit: 80,
+  }).catch((error) => ({
+    error: error instanceof ApiError ? error.message : "Matters could not be loaded.",
+  }));
+  const matters = "matters" in mattersResult ? mattersResult.matters : [];
+  const selectedMatter = matters.find((matter) => matter.id === selectedMatterId) || matters[0];
 
-                <TabsContent value="overview" className="space-y-6">
-                    <div className="grid lg:grid-cols-3 gap-8">
-                        {/* Main Area */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* AI Summary Card */}
-                            <div className="bg-white border border-[#D8D2C8] rounded-xl p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-4 border-b border-[#D8D2C8]/50 pb-4">
-                                    <h3 className="text-lg font-serif text-[#1F1D1A]">AI Matter Summary</h3>
-                                    <Badge variant="outline" className="bg-[#DD3300]/10 text-[#DD3300] border-transparent">Updated 2h ago</Badge>
-                                </div>
-                                <div className="prose prose-sm max-w-none text-[#63534B] space-y-4">
-                                    <p>
-                                        This matter involves a commercial lease dispute (ROZ-model 2012) between Visser Retail BV and their landlord regarding specialized service costs and maintenance obligations of the HVAC system.
-                                    </p>
-                                    <p>
-                                        <strong>Key Risks Identified:</strong> The scanned contract contains a deviation from standard ROZ provisions regarding casco maintenance, shifting unexpected liability to the tenant. Wait times for HVAC repairs may also breach &lsquo;huurgenot&rsquo;.
-                                    </p>
-                                </div>
-                                <div className="mt-6 flex space-x-3">
-                                    <Button variant="outline" size="sm" className="text-[#1F1D1A]">View Full Analysis</Button>
-                                    <Button variant="outline" size="sm" className="text-[#1F1D1A]">Generate Memo (EN/NL)</Button>
-                                </div>
-                            </div>
-
-                            {/* Open Tasks */}
-                            <div className="bg-white border border-[#D8D2C8] rounded-xl p-6 shadow-sm">
-                                <h3 className="text-lg font-serif text-[#1F1D1A] mb-4">Action Items</h3>
-                                <div className="space-y-3">
-                                    {[
-                                        { task: "Review extracted risk matrix for HVAC clause", assignee: "Clara R.", due: "Today", urgent: true },
-                                        { task: "Approve timeline of landlord notifications", assignee: "Agent (Extraction)", due: "Tomorrow", urgent: false },
-                                        { task: "Draft formal notice of default (ingebrekestelling)", assignee: "Markus B.", due: "Oct 24", urgent: false },
-                                    ].map((item, idx) => (
-                                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-[#D8D2C8]/50 hover:bg-[#F5F5F4] transition-colors">
-                                            <div className="flex items-center space-x-3">
-                                                <div className={`w-4 h-4 rounded-full border ${item.urgent ? 'border-[#DD3300]' : 'border-[#BDA989]'} flex items-center justify-center`}>
-                                                    {!item.urgent && <CheckCircle2 className="w-3 h-3 text-[#BDA989] opacity-0 hover:opacity-100" />}
-                                                    {item.urgent && <AlertTriangle className="w-3 h-3 text-[#DD3300]" />}
-                                                </div>
-                                                <span className={`text-sm ${item.urgent ? 'font-medium text-[#1F1D1A]' : 'text-[#63534B]'}`}>{item.task}</span>
-                                            </div>
-                                            <div className="flex items-center space-x-4 text-xs text-[#7C746B]">
-                                                <span className="flex items-center"><Users className="w-3 h-3 mr-1" /> {item.assignee}</span>
-                                                <span>{item.due}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right Sidebar */}
-                        <div className="space-y-6">
-                            <div className="bg-[#F5F5F4] border border-[#D8D2C8] rounded-xl p-5">
-                                <h4 className="font-semibold text-[#1F1D1A] mb-4 text-sm uppercase tracking-wider">Matter Details</h4>
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-xs text-[#7C746B] mb-1">Assigned Partner</p>
-                                        <p className="text-sm font-medium text-[#1F1D1A]">Helena Rostova</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-[#7C746B] mb-1">Lead Associate</p>
-                                        <p className="text-sm font-medium text-[#1F1D1A]">Clara Rostova</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-[#7C746B] mb-1">Related Sources</p>
-                                        <div className="flex flex-wrap gap-2 mt-2">
-                                            <Badge variant="secondary" className="bg-[#EEEDE4] text-[#63534B]">BW 7:204</Badge>
-                                            <Badge variant="secondary" className="bg-[#EEEDE4] text-[#63534B]">ROZ 2012</Badge>
-                                            <Badge variant="secondary" className="bg-[#EEEDE4] text-[#63534B]">Gebrek Jurisprudence</Badge>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="documents">
-                    <div className="bg-white border border-[#D8D2C8] rounded-xl p-6 shadow-sm min-h-[400px] flex items-center justify-center flex-col text-center">
-                        <FileText className="w-12 h-12 text-[#BDA989] mb-4" />
-                        <h3 className="text-lg font-serif text-[#1F1D1A] mb-2">Document Data Room</h3>
-                        <p className="text-[#63534B] max-w-md mb-6">Select a document to begin AI review, comparison, or multilingual translation.</p>
-                        <Button className="bg-[#1F1D1A] text-white">Upload Documents</Button>
-                    </div>
-                </TabsContent>
-            </Tabs>
+  return (
+    <div className="mx-auto max-w-7xl space-y-8 pb-12">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="mb-2 font-serif text-3xl tracking-tight text-[#1F1D1A]">Matters</h1>
+          <p className="max-w-3xl text-[#63534B]">
+            Lightweight private matter notes for saved context. Full matter workspaces and document bundles are intentionally deferred.
+          </p>
         </div>
-    );
+        <Badge variant="outline" className="w-fit border-[#D8D2C8] bg-white px-3 py-1.5 text-[#63534B]">
+          Limited preview · {matters.length} notes
+        </Badge>
+      </div>
+
+      {"error" in mattersResult ? (
+        <Card className="border-[#DD3300]/20 bg-white">
+          <CardContent className="p-6 text-sm text-[#8A2408]">{mattersResult.error}</CardContent>
+        </Card>
+      ) : null}
+
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_420px]">
+        <section className="space-y-6">
+          <Card className="border-[#D8D2C8] bg-white shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center font-serif text-xl text-[#1F1D1A]">
+                <SlidersHorizontal className="mr-2 h-5 w-5 text-[#BDA989]" />
+                Filters
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="grid gap-3 md:grid-cols-4" method="get">
+                <Input name="q" defaultValue={query} placeholder="Search title or client" />
+                <select name="status" defaultValue={status} className="h-10 rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm">
+                  <option value="">All statuses</option>
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                  <option value="archived">Archived</option>
+                </select>
+                <select name="rechtsgebied" defaultValue={rechtsgebied} className="h-10 rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm">
+                  <option value="">All domains</option>
+                  {DOMAIN_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <Button className="bg-[#1F1D1A] text-white">
+                  <Search className="mr-2 h-4 w-4" />
+                  Apply
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            {matters.map((matter) => (
+              <a
+                key={matter.id}
+                href={`/dashboard/matters?matter=${matter.id}`}
+                className="block rounded-xl border border-[#D8D2C8] bg-white p-5 shadow-sm transition hover:border-[#DD3300]/40"
+              >
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <h2 className="font-serif text-xl text-[#1F1D1A]">{matter.title}</h2>
+                    <p className="mt-1 text-sm text-[#63534B]">
+                      {matter.client || "Client not set"} · {getDomainLabel(matter.rechtsgebied)}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="w-fit border-[#D8D2C8] text-[#63534B]">
+                    {matter.status}
+                  </Badge>
+                </div>
+                <p className="mt-4 line-clamp-2 text-sm leading-6 text-[#63534B]">
+                  {matter.description || "No notes have been added yet."}
+                </p>
+              </a>
+            ))}
+            {matters.length === 0 ? (
+              <Card className="border-dashed border-[#D8D2C8] bg-white">
+                <CardContent className="p-10 text-center text-sm text-[#63534B]">
+                  No matters matched the current filters.
+                </CardContent>
+              </Card>
+            ) : null}
+          </div>
+        </section>
+
+        <aside className="space-y-6">
+          <Card className="border-[#D8D2C8] bg-white shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center font-serif text-xl text-[#1F1D1A]">
+                <Briefcase className="mr-2 h-5 w-5 text-[#DD3300]" />
+                New Matter Note
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form action={createMatterAction} className="space-y-4">
+                <Input name="title" required placeholder="Short matter title" />
+                <Input name="client" placeholder="Client or internal reference" />
+                <select name="rechtsgebied" className="h-10 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm">
+                  <option value="">Choose rechtsgebied</option>
+                  {DOMAIN_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <textarea name="description" placeholder="Notes for this MVP matter preview" className="min-h-28 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 py-2 text-sm" />
+                <Button className="w-full bg-[#DD3300] text-white hover:bg-[#DD3300]/90">Create note</Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {selectedMatter ? (
+            <Card className="border-[#D8D2C8] bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center font-serif text-xl text-[#1F1D1A]">
+                  <FileText className="mr-2 h-5 w-5 text-[#BDA989]" />
+                  Matter Note
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <form action={updateMatterAction} className="space-y-4">
+                  <input type="hidden" name="matter_id" value={selectedMatter.id} />
+                  <Input name="title" defaultValue={selectedMatter.title} required />
+                  <Input name="client" defaultValue={selectedMatter.client || ""} placeholder="Client" />
+                  <select name="status" defaultValue={selectedMatter.status} className="h-10 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm">
+                    <option value="active">Active</option>
+                    <option value="paused">Paused</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                  <select name="rechtsgebied" defaultValue={selectedMatter.rechtsgebied || ""} className="h-10 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm">
+                    <option value="">No domain tag</option>
+                    {DOMAIN_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <textarea name="description" defaultValue={selectedMatter.description || ""} className="min-h-28 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 py-2 text-sm" />
+                  <Button className="w-full bg-[#1F1D1A] text-white">Save changes</Button>
+                </form>
+
+                <form action={archiveMatterAction}>
+                  <input type="hidden" name="matter_id" value={selectedMatter.id} />
+                  <Button variant="outline" className="w-full border-[#D8D2C8] text-[#1F1D1A]">
+                    <Archive className="mr-2 h-4 w-4" />
+                    Archive matter
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          ) : null}
+        </aside>
+      </div>
+    </div>
+  );
 }

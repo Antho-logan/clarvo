@@ -1,0 +1,30 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "next-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "fastapi",
+      "runtimeExecutable": "uvicorn",
+      "runtimeArgs": ["api.main:app", "--reload", "--host", "127.0.0.1", "--port", "8000"],
+      "port": 8000
+    },
+    {
+      "name": "celery-worker",
+      "runtimeExecutable": "celery",
+      "runtimeArgs": ["-A", "ingestion.celery_app", "worker", "--loglevel=info"],
+      "port": 0
+    },
+    {
+      "name": "docker-compose",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "up"],
+      "port": 5432
+    }
+  ]
+}

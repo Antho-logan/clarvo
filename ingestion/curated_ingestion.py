@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import yaml
 
 from backend_common import get_logger, get_parser_version, get_repo_root, utcnow
 from parsers.bwb_parser import parse_law_xml
@@ -12,6 +16,7 @@ from repositories.ingestion_jobs import (
     create_job,
     finalize_job,
     list_retryable_items,
+    mark_job_running,
     upsert_job_item,
     upsert_source_registry,
 )
@@ -27,6 +32,7 @@ from sources.rechtspraak_client import fetch_judgment_xml
 
 LOGGER = get_logger("ingestion.curated")
 SEED_CONFIG_DIR = get_repo_root() / "config"
+PRIORITY_DOMAINS = ("employment_law", "tenancy_law", "administrative_law")
 
 
 @dataclass(frozen=True)
@@ -35,6 +41,7 @@ class CuratedSeed:
 
     domain: str | None
     identifier: str
+    priority: int = 100
 
 
 @dataclass
@@ -66,26 +73,60 @@ class CuratedIngestionResult:
         }
 
 
-def _load_seed_map(filename: str) -> dict[str, list[str]]:
-    """Load a curated seed config file from the repo."""
+def _normalize_seed_entry(entry: object, *, default_priority: int) -> tuple[str, int]:
+    """Normalize a string or structured YAML seed entry."""
+    if isinstance(entry, str):
+        return entry, default_priority
+    if isinstance(entry, dict):
+        identifier = str(entry.get("identifier") or entry.get("id") or "").strip()
+        if not identifier:
+            raise ValueError(f"Structured seed entry is missing an identifier: {entry!r}")
+        priority = int(entry.get("priority", default_priority))
+        return identifier, priority
+    raise ValueError(f"Unsupported seed entry: {entry!r}")
+
+
+def _load_seed_map(filename: str, *, yaml_filename: str | None = None) -> dict[str, list[CuratedSeed]]:
+    """Load curated seeds from structured YAML, falling back to legacy JSON."""
+    yaml_path = SEED_CONFIG_DIR / "seeds" / yaml_filename if yaml_filename else None
+    if yaml_path and yaml_path.exists():
+        data = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+        if not isinstance(data, dict):
+            raise ValueError(f"Seed config {yaml_path} must contain an object at the top level.")
+        return _normalize_seed_map(data, source_path=yaml_path)
+
     path = SEED_CONFIG_DIR / filename
     with path.open("r", encoding="utf-8") as handle:
         data = json.load(handle)
     if not isinstance(data, dict):
         raise ValueError(f"Seed config {path} must contain an object at the top level.")
-    return {str(key): [str(item) for item in value] for key, value in data.items()}
+    return _normalize_seed_map(data, source_path=path)
 
 
-def _select_seeds(seed_map: dict[str, list[str]], *, domain: str | None, limit: int | None) -> list[CuratedSeed]:
+def _normalize_seed_map(data: dict[Any, Any], *, source_path: Path) -> dict[str, list[CuratedSeed]]:
+    """Normalize a domain-keyed seed payload into sorted curated seeds."""
+    normalized: dict[str, list[CuratedSeed]] = {}
+    for domain_key, raw_entries in data.items():
+        domain = str(domain_key)
+        if not isinstance(raw_entries, list):
+            raise ValueError(f"Seed config {source_path} domain {domain!r} must contain a list.")
+        seeds: list[CuratedSeed] = []
+        for index, entry in enumerate(raw_entries):
+            identifier, priority = _normalize_seed_entry(entry, default_priority=index + 1)
+            seeds.append(CuratedSeed(domain=domain, identifier=identifier, priority=priority))
+        normalized[domain] = sorted(seeds, key=lambda item: (item.priority, item.identifier))
+    return normalized
+
+
+def _select_seeds(seed_map: dict[str, list[CuratedSeed]], *, domain: str | None, limit: int | None) -> list[CuratedSeed]:
     """Flatten domain-grouped seeds into a deterministic work list."""
     if domain is not None and domain not in seed_map:
         raise ValueError(f"Unknown domain {domain!r}. Known domains: {', '.join(sorted(seed_map))}")
 
-    selected_domains = [domain] if domain is not None else sorted(seed_map)
+    selected_domains = [domain] if domain is not None else [item for item in PRIORITY_DOMAINS if item in seed_map]
     seeds: list[CuratedSeed] = []
     for selected_domain in selected_domains:
-        for identifier in seed_map[selected_domain]:
-            seeds.append(CuratedSeed(domain=selected_domain, identifier=identifier))
+        seeds.extend(seed_map[selected_domain])
 
     if limit is not None:
         return seeds[:limit]
@@ -167,12 +208,13 @@ def run_curated_law_ingestion(
     limit: int | None = None,
     dry_run: bool = False,
     resume_job_id: int | None = None,
+    queued_job_id: int | None = None,
 ) -> CuratedIngestionResult:
     """Run curated legislation ingestion for one or all domains."""
     source_type = "legislation"
     source_system = "bwb"
     warnings: list[str] = []
-    seed_map = _load_seed_map("seed_bwbr_ids.json")
+    seed_map = _load_seed_map("seed_bwbr_ids.json", yaml_filename="curated_laws.yaml")
     seeds = (
         _load_resume_seeds(
             resume_job_id,
@@ -187,8 +229,17 @@ def run_curated_law_ingestion(
     if not seeds:
         warning = "No curated law seeds matched the requested selection."
         LOGGER.warning(warning)
+        if queued_job_id is not None:
+            mark_job_running(queued_job_id, total_items=0, notes=warning)
+            finalize_job(
+                queued_job_id,
+                status="completed",
+                success_count=0,
+                failure_count=0,
+                notes=warning,
+            )
         return CuratedIngestionResult(
-            job_id=None,
+            job_id=queued_job_id,
             source_type=source_type,
             source_system=source_system,
             domain=domain,
@@ -201,8 +252,21 @@ def run_curated_law_ingestion(
 
     if dry_run:
         LOGGER.info("Dry run selected %s curated law seeds.", len(seeds))
+        if queued_job_id is not None:
+            mark_job_running(
+                queued_job_id,
+                total_items=len(seeds),
+                notes=f"dry run selected {len(seeds)} curated law seeds",
+            )
+            finalize_job(
+                queued_job_id,
+                status="completed",
+                success_count=0,
+                failure_count=0,
+                notes=f"dry run selected {len(seeds)} curated law seeds",
+            )
         return CuratedIngestionResult(
-            job_id=None,
+            job_id=queued_job_id,
             source_type=source_type,
             source_system=source_system,
             domain=domain,
@@ -216,12 +280,16 @@ def run_curated_law_ingestion(
     notes = "curated law ingestion"
     if resume_job_id is not None:
         notes = f"{notes}; resume_of_job={resume_job_id}"
-    job = create_job(
-        job_type="curated_laws",
-        source_system=source_system,
-        domain=domain,
-        total_items=len(seeds),
-        notes=notes,
+    job = (
+        mark_job_running(queued_job_id, total_items=len(seeds), notes=notes)
+        if queued_job_id is not None
+        else create_job(
+            job_type="curated_laws",
+            source_system=source_system,
+            domain=domain,
+            total_items=len(seeds),
+            notes=notes,
+        )
     )
     _create_job_items(job.id, seeds=seeds, source_type=source_type, source_system=source_system)
 
@@ -248,7 +316,8 @@ def run_curated_law_ingestion(
                 identifier=seed.identifier,
                 domain=seed.domain or None,
                 source_url=source_url,
-                notes="starter curated milestone2 seed",
+                editorial_priority=seed.priority,
+                notes="phase3 curated priority seed",
             )
             parsed = parse_law_xml(seed.identifier, payload["toestand_xml"])
             fetched_at = utcnow()
@@ -312,12 +381,13 @@ def run_curated_judgment_ingestion(
     limit: int | None = None,
     dry_run: bool = False,
     resume_job_id: int | None = None,
+    queued_job_id: int | None = None,
 ) -> CuratedIngestionResult:
     """Run curated case-law ingestion for one or all domains."""
     source_type = "case_law"
     source_system = "rechtspraak"
     warnings: list[str] = []
-    seed_map = _load_seed_map("seed_eclis.json")
+    seed_map = _load_seed_map("seed_eclis.json", yaml_filename="curated_judgments.yaml")
     seeds = (
         _load_resume_seeds(
             resume_job_id,
@@ -332,8 +402,17 @@ def run_curated_judgment_ingestion(
     if not seeds:
         warning = "No curated judgment seeds matched the requested selection."
         LOGGER.warning(warning)
+        if queued_job_id is not None:
+            mark_job_running(queued_job_id, total_items=0, notes=warning)
+            finalize_job(
+                queued_job_id,
+                status="completed",
+                success_count=0,
+                failure_count=0,
+                notes=warning,
+            )
         return CuratedIngestionResult(
-            job_id=None,
+            job_id=queued_job_id,
             source_type=source_type,
             source_system=source_system,
             domain=domain,
@@ -346,8 +425,21 @@ def run_curated_judgment_ingestion(
 
     if dry_run:
         LOGGER.info("Dry run selected %s curated judgment seeds.", len(seeds))
+        if queued_job_id is not None:
+            mark_job_running(
+                queued_job_id,
+                total_items=len(seeds),
+                notes=f"dry run selected {len(seeds)} curated judgment seeds",
+            )
+            finalize_job(
+                queued_job_id,
+                status="completed",
+                success_count=0,
+                failure_count=0,
+                notes=f"dry run selected {len(seeds)} curated judgment seeds",
+            )
         return CuratedIngestionResult(
-            job_id=None,
+            job_id=queued_job_id,
             source_type=source_type,
             source_system=source_system,
             domain=domain,
@@ -361,12 +453,16 @@ def run_curated_judgment_ingestion(
     notes = "curated judgment ingestion"
     if resume_job_id is not None:
         notes = f"{notes}; resume_of_job={resume_job_id}"
-    job = create_job(
-        job_type="curated_judgments",
-        source_system=source_system,
-        domain=domain,
-        total_items=len(seeds),
-        notes=notes,
+    job = (
+        mark_job_running(queued_job_id, total_items=len(seeds), notes=notes)
+        if queued_job_id is not None
+        else create_job(
+            job_type="curated_judgments",
+            source_system=source_system,
+            domain=domain,
+            total_items=len(seeds),
+            notes=notes,
+        )
     )
     _create_job_items(job.id, seeds=seeds, source_type=source_type, source_system=source_system)
 
@@ -392,7 +488,8 @@ def run_curated_judgment_ingestion(
                 identifier=seed.identifier,
                 domain=seed.domain or None,
                 source_url=payload["source_url"],
-                notes="starter curated milestone2 seed",
+                editorial_priority=seed.priority,
+                notes="phase3 curated priority seed",
             )
             parsed = parse_judgment_xml(payload["xml"])
             existing_count = count_documents_by_source_id(seed.identifier, domain=seed.domain or None)

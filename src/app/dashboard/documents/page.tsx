@@ -1,17 +1,30 @@
-import { AlertCircle, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { AlertCircle, ShieldCheck, X } from "lucide-react";
 
 import { RecentIngestionJobs } from "@/components/dashboard/RecentIngestionJobs";
 import { SourceCard } from "@/components/dashboard/SourceCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ApiError, getDocuments, getIngestionJobs, healthCheck } from "@/lib/api";
 import {
+  ApiError,
+  getDocument,
+  getDocuments,
+  getIngestionJobs,
+  healthCheck,
+} from "@/lib/api/client";
+import {
+  formatDate,
+  getDocumentHeading,
+  getDocumentSnippet,
   getDomainLabel,
+  getSourceIdentifier,
+  getSourceSystemLabel,
   getSourceTypeLabel,
   isValidDomain,
   isValidSourceType,
 } from "@/lib/legal-display";
+import type { DocumentRecord } from "@/lib/types";
 import { DOMAIN_OPTIONS, SOURCE_TYPE_OPTIONS } from "@/lib/types";
 
 type VaultPageProps = {
@@ -22,22 +35,51 @@ function readSingleValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function createDocumentsHref(params: {
+  sourceType: string;
+  domain: string;
+  limit: number;
+  doc?: string | null;
+}) {
+  const urlParams = new URLSearchParams();
+  if (isValidSourceType(params.sourceType)) {
+    urlParams.set("source_type", params.sourceType);
+  }
+  if (isValidDomain(params.domain)) {
+    urlParams.set("domain", params.domain);
+  }
+  urlParams.set("limit", String(params.limit));
+  if (params.doc) {
+    urlParams.set("doc", params.doc);
+  }
+  return `/dashboard/documents?${urlParams.toString()}`;
+}
+
 export default async function VaultPage({ searchParams }: VaultPageProps) {
   const params = await searchParams;
   const sourceType = readSingleValue(params.source_type) || "";
   const domain = readSingleValue(params.domain) || "";
+  const selectedDoc = readSingleValue(params.doc) || "";
   const parsedLimit = Number(readSingleValue(params.limit) || "12");
-  const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 5), 30) : 12;
+  const limit = Number.isFinite(parsedLimit)
+    ? Math.min(Math.max(parsedLimit, 5), 30)
+    : 12;
 
-  const [healthResult, jobsResult, documentsResult] = await Promise.allSettled([
-    healthCheck(),
-    getIngestionJobs(5),
-    getDocuments({
-      limit,
-      source_type: isValidSourceType(sourceType) ? sourceType : undefined,
-      domain: isValidDomain(domain) ? domain : undefined,
-    }),
-  ]);
+  const [healthResult, jobsResult, documentsResult, selectedDocumentResult] =
+    await Promise.allSettled([
+      healthCheck(),
+      getIngestionJobs(5),
+      getDocuments({
+        limit,
+        source_type: isValidSourceType(sourceType) ? sourceType : undefined,
+        domain: isValidDomain(domain) ? domain : undefined,
+      }),
+      selectedDoc
+        ? getDocument(selectedDoc, {
+            domain: isValidDomain(domain) ? domain : undefined,
+          })
+        : Promise.resolve(null),
+    ]);
 
   const jobs = jobsResult.status === "fulfilled" ? jobsResult.value.jobs : [];
   const documentsError =
@@ -47,11 +89,22 @@ export default async function VaultPage({ searchParams }: VaultPageProps) {
         : "Documents could not be loaded."
       : null;
   const documents =
-    documentsResult.status === "fulfilled" ? documentsResult.value.documents : [];
+    documentsResult.status === "fulfilled"
+      ? documentsResult.value.documents
+      : [];
   const totalCount =
     documentsResult.status === "fulfilled" ? documentsResult.value.count : 0;
+  const selectedDocument =
+    selectedDocumentResult.status === "fulfilled" &&
+    selectedDocumentResult.value
+      ? selectedDocumentResult.value.documents[0] || null
+      : documents.find(
+          (document) =>
+            document.source_id === selectedDoc || document.id === selectedDoc,
+        ) || null;
   const isBackendLive =
     healthResult.status === "fulfilled" && healthResult.value.status === "ok";
+  const drawerCloseHref = createDocumentsHref({ sourceType, domain, limit });
 
   return (
     <div className="max-w-7xl mx-auto pb-12">
@@ -61,7 +114,8 @@ export default async function VaultPage({ searchParams }: VaultPageProps) {
             Vault
           </h1>
           <p className="text-[#63534B] max-w-3xl">
-            Inspect the real backend document store. This page reads directly from `/documents` and links into per-source detail views.
+            Inspect stored BWB and Rechtspraak rows from the backend document
+            store and open source detail views.
           </p>
         </div>
 
@@ -140,10 +194,16 @@ export default async function VaultPage({ searchParams }: VaultPageProps) {
 
               <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[#63534B]">
                 <span className="font-medium text-[#1F1D1A]">
-                  {getSourceTypeLabel(isValidSourceType(sourceType) ? sourceType : null)}
+                  {isValidSourceType(sourceType)
+                    ? getSourceTypeLabel(sourceType)
+                    : "All sources"}
                 </span>
                 <span>·</span>
-                <span>{getDomainLabel(isValidDomain(domain) ? domain : null)}</span>
+                <span>
+                  {isValidDomain(domain)
+                    ? getDomainLabel(domain)
+                    : "All domains"}
+                </span>
                 <span>·</span>
                 <span>Showing up to {limit} records</span>
               </div>
@@ -155,8 +215,12 @@ export default async function VaultPage({ searchParams }: VaultPageProps) {
               <CardContent className="p-6 flex gap-4">
                 <AlertCircle className="w-5 h-5 text-[#DD3300] mt-1 shrink-0" />
                 <div>
-                  <p className="font-medium text-[#1F1D1A] mb-1">Vault unavailable</p>
-                  <p className="text-sm text-[#63534B] leading-6">{documentsError}</p>
+                  <p className="font-medium text-[#1F1D1A] mb-1">
+                    Vault unavailable
+                  </p>
+                  <p className="text-sm text-[#63534B] leading-6">
+                    {documentsError}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -172,7 +236,9 @@ export default async function VaultPage({ searchParams }: VaultPageProps) {
                   No stored documents matched this filter
                 </h2>
                 <p className="text-[#63534B] max-w-2xl mx-auto leading-7">
-                  The backend `/documents` endpoint returned an empty set. Either the database is empty or the current filters are too narrow.
+                  The backend `/documents` endpoint returned an empty set.
+                  Either the database is empty or the current filters are too
+                  narrow.
                 </p>
               </CardContent>
             </Card>
@@ -184,10 +250,13 @@ export default async function VaultPage({ searchParams }: VaultPageProps) {
                 <SourceCard
                   key={document.id}
                   item={document}
-                  href={`/dashboard/documents/${encodeURIComponent(
-                    document.source_id || document.id,
-                  )}${document.domain ? `?domain=${encodeURIComponent(document.domain)}` : ""}`}
-                  footerLabel="Inspect source detail"
+                  href={createDocumentsHref({
+                    sourceType,
+                    domain,
+                    limit,
+                    doc: document.source_id || document.id,
+                  })}
+                  footerLabel="Preview document"
                 />
               ))}
             </div>
@@ -203,20 +272,31 @@ export default async function VaultPage({ searchParams }: VaultPageProps) {
             </CardHeader>
             <CardContent className="pt-6 space-y-4 text-sm text-[#63534B] leading-7">
               <p>
-                This first live version surfaces stored legal documents exactly as the backend returns them, including legislation chunks and case-law records.
+                This read-only MVP view surfaces stored legal material,
+                including legislation chunks and case-law records.
               </p>
               <div className="rounded-xl bg-[#F5F5F4] border border-[#D8D2C8]/60 p-4">
                 <p className="text-xs uppercase tracking-[0.16em] text-[#7C746B] mb-2">
                   Active source mix
                 </p>
                 <p className="text-[#1F1D1A] font-medium">
-                  {documents.filter((item) => item.source_type === "legislation").length} legislation ·{" "}
-                  {documents.filter((item) => item.source_type === "case_law").length} case law
+                  {
+                    documents.filter(
+                      (item) => item.source_type === "legislation",
+                    ).length
+                  }{" "}
+                  legislation ·{" "}
+                  {
+                    documents.filter((item) => item.source_type === "case_law")
+                      .length
+                  }{" "}
+                  case law
                 </p>
               </div>
               <div className="flex items-center text-xs text-[#7C746B]">
                 <ShieldCheck className="w-4 h-4 mr-2 text-[#BDA989]" />
-                GDPR aligned storage posture remains represented in the UI, but upload/auth flows are still out of scope for this milestone.
+                Uploads and document generation are not included in this MVP
+                scope.
               </div>
             </CardContent>
           </Card>
@@ -224,6 +304,157 @@ export default async function VaultPage({ searchParams }: VaultPageProps) {
           <RecentIngestionJobs jobs={jobs} />
         </div>
       </div>
+
+      {selectedDoc ? (
+        <DocumentPreviewDrawer
+          document={selectedDocument}
+          requestedDocument={selectedDoc}
+          closeHref={drawerCloseHref}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function DocumentPreviewDrawer({
+  document,
+  requestedDocument,
+  closeHref,
+}: {
+  document: DocumentRecord | null;
+  requestedDocument: string;
+  closeHref: string;
+}) {
+  const detailHref = document
+    ? `/dashboard/documents/${encodeURIComponent(document.source_id || document.id)}${
+        document.domain ? `?domain=${encodeURIComponent(document.domain)}` : ""
+      }`
+    : null;
+  const dateLabel = document?.decision_date
+    ? formatDate(document.decision_date)
+    : document?.fetched_at
+      ? formatDate(document.fetched_at)
+      : null;
+
+  return (
+    <div className="fixed inset-0 z-40">
+      <Link
+        href={closeHref}
+        aria-label="Close document preview"
+        className="absolute inset-0 bg-[#1F1D1A]/20"
+      />
+      <aside className="absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto border-l border-[#D8D2C8] bg-white shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#D8D2C8] bg-white px-6 py-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-[#7C746B]">
+              Document preview
+            </p>
+            <p className="text-sm text-[#63534B]">{requestedDocument}</p>
+          </div>
+          <Link
+            href={closeHref}
+            className="rounded-full border border-[#D8D2C8] p-2 text-[#63534B] hover:text-[#DD3300]"
+            aria-label="Close preview"
+          >
+            <X className="h-4 w-4" />
+          </Link>
+        </div>
+
+        {document ? (
+          <div className="space-y-6 px-6 py-6">
+            <div>
+              <div className="mb-4 flex flex-wrap gap-2">
+                <Badge
+                  variant="outline"
+                  className="border-[#D8D2C8] bg-white text-[#63534B]"
+                >
+                  {getSourceSystemLabel(document)}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="border-[#D8D2C8] bg-[#EEEDE4] text-[#63534B]"
+                >
+                  {getSourceTypeLabel(document.source_type)}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="border-[#D8D2C8] bg-[#EEEDE4] text-[#63534B]"
+                >
+                  {getDomainLabel(document.domain)}
+                </Badge>
+              </div>
+              <h2 className="font-serif text-2xl leading-tight text-[#1F1D1A]">
+                {getDocumentHeading(document)}
+              </h2>
+            </div>
+
+            <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-xs uppercase tracking-[0.16em] text-[#7C746B]">
+                  Source ID
+                </dt>
+                <dd className="mt-1 break-words text-[#1F1D1A]">
+                  {getSourceIdentifier(document)}
+                </dd>
+              </div>
+              {document.article ? (
+                <div>
+                  <dt className="text-xs uppercase tracking-[0.16em] text-[#7C746B]">
+                    Article
+                  </dt>
+                  <dd className="mt-1 text-[#1F1D1A]">{document.article}</dd>
+                </div>
+              ) : null}
+              {document.ecli ? (
+                <div>
+                  <dt className="text-xs uppercase tracking-[0.16em] text-[#7C746B]">
+                    ECLI
+                  </dt>
+                  <dd className="mt-1 break-words text-[#1F1D1A]">
+                    {document.ecli}
+                  </dd>
+                </div>
+              ) : null}
+              {dateLabel ? (
+                <div>
+                  <dt className="text-xs uppercase tracking-[0.16em] text-[#7C746B]">
+                    Date
+                  </dt>
+                  <dd className="mt-1 text-[#1F1D1A]">{dateLabel}</dd>
+                </div>
+              ) : null}
+            </dl>
+
+            <div className="rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] p-5">
+              <p className="mb-3 text-xs uppercase tracking-[0.16em] text-[#7C746B]">
+                Text preview
+              </p>
+              <p className="whitespace-pre-wrap text-sm leading-7 text-[#4F463F]">
+                {getDocumentSnippet(document.text, 2000)}
+              </p>
+            </div>
+
+            {detailHref ? (
+              <Link
+                href={detailHref}
+                className="inline-flex rounded-full bg-[#1F1D1A] px-4 py-2 text-sm font-medium text-white hover:bg-[#1F1D1A]/90"
+              >
+                Open full detail
+              </Link>
+            ) : null}
+          </div>
+        ) : (
+          <div className="px-6 py-10">
+            <h2 className="font-serif text-2xl text-[#1F1D1A]">
+              Document not found
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-[#63534B]">
+              The requested document is not available in the current filtered
+              result set.
+            </p>
+          </div>
+        )}
+      </aside>
     </div>
   );
 }

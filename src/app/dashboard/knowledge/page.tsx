@@ -6,9 +6,15 @@ import { SourceCard } from "@/components/dashboard/SourceCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { healthCheck, getIngestionJobs, searchDocuments, ApiError } from "@/lib/api";
+import {
+  healthCheck,
+  getIngestionJobs,
+  searchDocuments,
+  ApiError,
+} from "@/lib/api/client";
 import {
   formatDate,
+  getDocumentHeading,
   getDocumentSnippet,
   getDomainLabel,
   getSourceTypeLabel,
@@ -25,13 +31,17 @@ function readSingleValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export default async function KnowledgePage({ searchParams }: KnowledgePageProps) {
+export default async function KnowledgePage({
+  searchParams,
+}: KnowledgePageProps) {
   const params = await searchParams;
   const query = (readSingleValue(params.q) || "").trim();
   const sourceType = readSingleValue(params.source_type) || "";
   const domain = readSingleValue(params.domain) || "";
   const parsedLimit = Number(readSingleValue(params.limit) || "8");
-  const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 3), 12) : 8;
+  const limit = Number.isFinite(parsedLimit)
+    ? Math.min(Math.max(parsedLimit, 3), 12)
+    : 8;
 
   const [healthResult, jobsResult, searchResult] = await Promise.allSettled([
     healthCheck(),
@@ -60,8 +70,24 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
   const isBackendLive =
     healthResult.status === "fulfilled" && healthResult.value.status === "ok";
 
-  const lawCount = results.filter((item) => item.source_type === "legislation").length;
-  const caseLawCount = results.filter((item) => item.source_type === "case_law").length;
+  const lawCount = results.filter(
+    (item) => item.source_type === "legislation",
+  ).length;
+  const caseLawCount = results.filter(
+    (item) => item.source_type === "case_law",
+  ).length;
+  const activeDomainLabel = isValidDomain(domain)
+    ? getDomainLabel(domain)
+    : "all domains";
+  const broaderSearchParams = new URLSearchParams();
+  if (query) {
+    broaderSearchParams.set("q", query);
+  }
+  if (isValidSourceType(sourceType)) {
+    broaderSearchParams.set("source_type", sourceType);
+  }
+  broaderSearchParams.set("limit", String(limit));
+  const broaderSearchHref = `/dashboard/knowledge?${broaderSearchParams.toString()}`;
 
   return (
     <div className="max-w-7xl mx-auto pb-12">
@@ -71,7 +97,8 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
             Knowledge Base
           </h1>
           <p className="text-[#63534B] max-w-3xl">
-            Search the live Veridicta retrieval layer across curated Dutch legislation and case law already stored in the backend.
+            Search the live Veridicta retrieval layer across curated Dutch
+            legislation and case law already stored in the backend.
           </p>
         </div>
 
@@ -119,7 +146,9 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
                 <div className="grid md:grid-cols-4 gap-3">
                   <select
                     name="source_type"
-                    defaultValue={isValidSourceType(sourceType) ? sourceType : ""}
+                    defaultValue={
+                      isValidSourceType(sourceType) ? sourceType : ""
+                    }
                     className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
                   >
                     <option value="">All sources</option>
@@ -156,7 +185,7 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
                   </select>
 
                   <Button className="h-11 bg-[#1F1D1A] text-white hover:bg-[#1F1D1A]/90">
-                    Deep Search
+                    Search
                   </Button>
                 </div>
               </form>
@@ -190,7 +219,9 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
                   <p className="text-xs uppercase tracking-[0.18em] text-[#7C746B] mb-2">
                     Legislation Hits
                   </p>
-                  <p className="text-2xl font-serif text-[#1F1D1A]">{lawCount}</p>
+                  <p className="text-2xl font-serif text-[#1F1D1A]">
+                    {lawCount}
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-white border-[#D8D2C8] shadow-sm">
@@ -198,7 +229,9 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
                   <p className="text-xs uppercase tracking-[0.18em] text-[#7C746B] mb-2">
                     Case Law Hits
                   </p>
-                  <p className="text-2xl font-serif text-[#1F1D1A]">{caseLawCount}</p>
+                  <p className="text-2xl font-serif text-[#1F1D1A]">
+                    {caseLawCount}
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -209,8 +242,12 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
               <CardContent className="p-6 flex gap-4">
                 <AlertCircle className="w-5 h-5 text-[#DD3300] mt-1 shrink-0" />
                 <div>
-                  <p className="font-medium text-[#1F1D1A] mb-1">Search unavailable</p>
-                  <p className="text-sm text-[#63534B] leading-6">{searchError}</p>
+                  <p className="font-medium text-[#1F1D1A] mb-1">
+                    Search unavailable
+                  </p>
+                  <p className="text-sm text-[#63534B] leading-6">
+                    {searchError}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -226,7 +263,8 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
                   Search the live Dutch legal corpus
                 </h2>
                 <p className="text-[#63534B] max-w-2xl mx-auto leading-7">
-                  Enter a query to search stored legislation and Rechtspraak material. Results will come directly from the backend `/search` endpoint, not from demo data.
+                  Enter a query to search stored legislation and Rechtspraak
+                  material through the live backend retrieval endpoint.
                 </p>
               </CardContent>
             </Card>
@@ -235,10 +273,22 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
           {query && !searchError && results.length === 0 ? (
             <Card className="bg-white border-[#D8D2C8] shadow-sm">
               <CardContent className="p-8 text-center">
-                <h2 className="text-2xl font-serif text-[#1F1D1A] mb-3">No matches found</h2>
+                <h2 className="text-2xl font-serif text-[#1F1D1A] mb-3">
+                  No matches for &quot;{query}&quot; in {activeDomainLabel}
+                </h2>
                 <p className="text-[#63534B] leading-7 max-w-2xl mx-auto">
-                  The backend returned zero hits for this query and filter combination. Try broadening the domain filter or use a shorter legal term.
+                  The backend returned zero hits for this query and filter
+                  combination. Try a shorter legal term or broaden the domain
+                  filter.
                 </p>
+                {isValidDomain(domain) ? (
+                  <Link
+                    href={broaderSearchHref}
+                    className="mt-5 inline-flex rounded-full border border-[#D8D2C8] bg-[#F5F5F4] px-4 py-2 text-sm font-medium text-[#63534B] hover:border-[#DD3300]/30 hover:text-[#DD3300] transition-colors"
+                  >
+                    Try broader domain
+                  </Link>
+                ) : null}
               </CardContent>
             </Card>
           ) : null}
@@ -270,24 +320,31 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
               <p>
                 Source filter:{" "}
                 <span className="font-medium text-[#1F1D1A]">
-                  {getSourceTypeLabel(isValidSourceType(sourceType) ? sourceType : null)}
+                  {isValidSourceType(sourceType)
+                    ? getSourceTypeLabel(sourceType)
+                    : "All sources"}
                 </span>
               </p>
               <p>
                 Domain filter:{" "}
                 <span className="font-medium text-[#1F1D1A]">
-                  {getDomainLabel(isValidDomain(domain) ? domain : null)}
+                  {isValidDomain(domain)
+                    ? getDomainLabel(domain)
+                    : "All domains"}
                 </span>
               </p>
               <p>
-                Result limit: <span className="font-medium text-[#1F1D1A]">{limit}</span>
+                Result limit:{" "}
+                <span className="font-medium text-[#1F1D1A]">{limit}</span>
               </p>
               {results[0] ? (
                 <div className="rounded-xl bg-[#F5F5F4] border border-[#D8D2C8]/60 p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-[#7C746B] mb-2">
                     Top hit preview
                   </p>
-                  <p className="text-[#1F1D1A] font-medium mb-2">{results[0].title || results[0].source_id}</p>
+                  <p className="text-[#1F1D1A] font-medium mb-2">
+                    {getDocumentHeading(results[0])}
+                  </p>
                   <p className="text-sm text-[#63534B]">
                     {getDocumentSnippet(results[0].text, 160)}
                   </p>
@@ -300,7 +357,8 @@ export default async function KnowledgePage({ searchParams }: KnowledgePageProps
                   </p>
                   <p className="font-medium">{jobs[0].job_type}</p>
                   <p className="text-sm text-white/70 mt-1">
-                    {getDomainLabel(jobs[0].domain)} · {formatDate(jobs[0].started_at)}
+                    {getDomainLabel(jobs[0].domain)} ·{" "}
+                    {formatDate(jobs[0].started_at)}
                   </p>
                 </div>
               ) : null}

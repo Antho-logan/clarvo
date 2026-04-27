@@ -1,196 +1,436 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
-    AlertCircle,
-    ArrowRight,
-    Bot,
-    Briefcase,
-    Clock,
-    FileText,
-    Search,
-    Sparkles,
-    Globe
+  AlertCircle,
+  ArrowRight,
+  Bot,
+  Briefcase,
+  Clock,
+  Database,
+  FileText,
+  Scale,
+  Sparkles,
 } from "lucide-react";
 
-const RECENT_MATTERS = [
-    { id: "M-2041", name: "Huurgeschil Centrum - Visser", client: "Visser Retail BV", status: "Review", jurisdiction: "NL", urgency: "High" },
-    { id: "M-2042", name: "Ontslag op staande voet - Jansen", client: "TechCorp BV", status: "Drafting", jurisdiction: "NL", urgency: "Medium" },
-    { id: "M-2045", name: "Bezwaar Omgevingsvergunning Alpha", client: "Projectontwikkeling X", status: "Research", jurisdiction: "NL", urgency: "Low" },
+import { auth } from "@/auth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  ApiError,
+  getDocuments,
+  getIngestionJobs,
+  getMatters,
+  getSettings,
+  getWorkflows,
+  healthCheck,
+} from "@/lib/api/client";
+import {
+  formatDate,
+  getDocumentHeading,
+  getDomainLabel,
+  getSourceTypeLabel,
+} from "@/lib/legal-display";
+
+type PracticeArea = {
+  label: string;
+  domain: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const PRACTICE_AREAS: PracticeArea[] = [
+  { label: "Arbeidsrecht", domain: "employment_law", icon: Briefcase },
+  { label: "Huurrecht", domain: "tenancy_law", icon: FileText },
+  { label: "Bestuursrecht", domain: "administrative_law", icon: Scale },
 ];
 
-const AGENT_ACTIVITY = [
-    { time: "10 mins ago", action: "Arbeidsovereenkomst risk summary generated", matter: "M-2042", agent: "Risk Analyst" },
-    { time: "1 hour ago", action: "Huurcontract termination clauses extracted", matter: "M-2041", agent: "Extraction" },
-    { time: "3 hours ago", action: "Jurisprudence matched for Bestuursrecht appeal", matter: "M-2045", agent: "Research" },
-];
-
-const SUGGESTED_ACTIONS = [
-    { title: "Review flagged termination risk in Visser huurcontract", matter: "M-2041", type: "Risk" },
-    { title: "Approve generated bezwaarschrift concept", matter: "M-2045", type: "Approval" },
-    { title: "Extract employer obligations for Jansen case", matter: "M-2042", type: "Task" },
-];
-
-export default function DashboardHome() {
-    return (
-        <div className="space-y-8 max-w-7xl mx-auto pb-12">
-            {/* Welcome Block */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-serif text-[#1F1D1A] tracking-tight">
-                        Good morning, Clara.
-                    </h1>
-                    <p className="text-[#63534B]">Here&apos;s what needs your attention today.</p>
-                </div>
-                <div className="flex gap-3">
-                    <Button variant="outline" className="text-[#1F1D1A] border-[#D8D2C8] bg-white hover:bg-[#F5F5F4]">
-                        <Sparkles className="w-4 h-4 mr-2 text-[#DD3300]" /> Ask Veridicta
-                    </Button>
-                    <Button className="bg-[#DD3300] text-white hover:bg-[#DD3300]/90">
-                        New Matter
-                    </Button>
-                </div>
-            </div>
-
-            {/* Practice Area Quick-Starts */}
-            <div className="grid sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {[
-                    { label: "Arbeidsrecht", icon: Briefcase, color: "text-[#DD3300]", bg: "bg-[#DD3300]/10" },
-                    { label: "Huurrecht", icon: FileText, color: "text-[#BDA989]", bg: "bg-[#BDA989]/10" },
-                    { label: "Bestuursrecht", icon: AlertCircle, color: "text-[#63534B]", bg: "bg-[#EEEDE4]" },
-                    { label: "Ondernemingsrecht", icon: Search, color: "text-[#BDA989]", bg: "bg-[#BDA989]/10" },
-                    { label: "Vreemdelingenrecht", icon: Globe, color: "text-[#DD3300]", bg: "bg-[#DD3300]/10" },
-                ].map((area, idx) => (
-                    <Card key={idx} className="bg-white border-[#D8D2C8] shadow-sm hover:border-[#DD3300]/30 hover:shadow-md transition-all cursor-pointer group">
-                        <CardHeader className="flex flex-row items-center space-y-0 pb-2 pt-4 px-4">
-                            <div className={`w-8 h-8 rounded-lg ${area.bg} flex items-center justify-center mr-3 group-hover:scale-105 transition-transform`}>
-                                <area.icon className={`w-4 h-4 ${area.color}`} />
-                            </div>
-                            <CardTitle className="text-sm font-medium text-[#1F1D1A] leading-tight">{area.label}</CardTitle>
-                        </CardHeader>
-                    </Card>
-                ))}
-            </div>
-
-            <div className="grid lg:grid-cols-3 gap-8">
-                {/* Main Column - Matters and Suggesions */}
-                <div className="lg:col-span-2 space-y-8">
-
-                    {/* Suggested Actions */}
-                    <Card className="bg-[#1F1D1A] border-none text-white shadow-md">
-                        <CardHeader className="pb-4">
-                            <CardTitle className="text-lg font-serif flex items-center">
-                                <Sparkles className="w-5 h-5 mr-2 text-[#DD3300]" /> Smart Next Steps
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {SUGGESTED_ACTIONS.map((action, idx) => (
-                                    <div key={idx} className="flex items-start justify-between p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
-                                        <div className="flex items-start space-x-3">
-                                            <div className="mt-0.5">
-                                                {action.type === 'Risk' ? <AlertCircle className="w-4 h-4 text-[#DD3300]" /> :
-                                                    <CheckCircle className="w-4 h-4 text-[#BDA989]" />}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-[#F5F5F4]">{action.title}</p>
-                                                <p className="text-xs text-[#BDA989] mt-1">Matter: {action.matter}</p>
-                                            </div>
-                                        </div>
-                                        <ArrowRight className="w-4 h-4 text-[#7C746B]" />
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Active Matters */}
-                    <Card className="bg-white border-[#D8D2C8] shadow-sm">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-lg font-serif text-[#1F1D1A]">Active Matters</CardTitle>
-                            <Button variant="ghost" size="sm" className="text-[#DD3300]">View all</Button>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="text-xs text-[#7C746B] uppercase border-b border-[#D8D2C8]/50">
-                                        <tr>
-                                            <th className="px-4 py-3 font-medium">Matter</th>
-                                            <th className="px-4 py-3 font-medium">Client</th>
-                                            <th className="px-4 py-3 font-medium">Status</th>
-                                            <th className="px-4 py-3 font-medium">Jurisdiction</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[#D8D2C8]/30">
-                                        {RECENT_MATTERS.map((matter, idx) => (
-                                            <tr key={idx} className="hover:bg-[#F5F5F4] transition-colors cursor-pointer">
-                                                <td className="px-4 py-3 font-medium text-[#1F1D1A]">{matter.name}</td>
-                                                <td className="px-4 py-3 text-[#63534B]">{matter.client}</td>
-                                                <td className="px-4 py-3">
-                                                    <Badge variant="outline" className="bg-[#EEEDE4] text-[#63534B] border-[#D8D2C8] font-normal">
-                                                        {matter.status}
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <Badge variant="outline" className="bg-white text-[#1F1D1A] border-[#D8D2C8] font-normal">
-                                                        {matter.jurisdiction}
-                                                    </Badge>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Right Sidebar - Agent Activity */}
-                <div className="space-y-8">
-                    <Card className="bg-white border-[#D8D2C8] shadow-sm">
-                        <CardHeader className="pb-4 border-b border-[#D8D2C8]/30 mb-4">
-                            <CardTitle className="text-lg font-serif text-[#1F1D1A] flex items-center">
-                                <Bot className="w-5 h-5 mr-2 text-[#BDA989]" /> Recent Agent Activity
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-6">
-                                {AGENT_ACTIVITY.map((activity, idx) => (
-                                    <div key={idx} className="flex gap-4">
-                                        <div className="mt-1 relative">
-                                            <div className="w-6 h-6 rounded-full bg-[#EEEDE4] border border-[#D8D2C8] flex items-center justify-center shrink-0">
-                                                <Bot className="w-3 h-3 text-[#63534B]" />
-                                            </div>
-                                            {idx !== AGENT_ACTIVITY.length - 1 && (
-                                                <div className="absolute top-6 bottom-[-24px] left-1/2 w-px bg-[#D8D2C8]/50 transform -translate-x-1/2" />
-                                            )}
-                                        </div>
-                                        <div className="flex-1 pb-1">
-                                            <p className="text-sm font-medium text-[#1F1D1A] leading-snug">{activity.action}</p>
-                                            <div className="flex items-center space-x-2 mt-1">
-                                                <span className="text-xs text-[#7C746B] flex items-center">
-                                                    <Clock className="w-3 h-3 mr-1" /> {activity.time}
-                                                </span>
-                                                <span className="text-[#D8D2C8]">•</span>
-                                                <span className="text-xs text-[#DD3300]">{activity.agent}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <Button variant="outline" className="w-full mt-6 text-[#63534B] border-[#D8D2C8]">View Full Log</Button>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        </div>
-    );
+function greeting(date: Date) {
+  const hour = date.getHours();
+  if (hour < 5) return "Still up";
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
-function CheckCircle({ className }: { className?: string }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-        </svg>
-    );
+function formatTime(date: Date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+function firstName(name: string) {
+  const token = name.split(/[\s@]/)[0];
+  if (!token) return name;
+  return token.charAt(0).toUpperCase() + token.slice(1);
+}
+
+function relativeTime(value?: string | null) {
+  if (!value) return null;
+  const then = new Date(value).getTime();
+  if (Number.isNaN(then)) return null;
+  const diffMs = Date.now() - then;
+  const diffSec = Math.max(0, Math.round(diffMs / 1000));
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.round(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.round(diffHr / 24);
+  if (diffDay < 30) return `${diffDay}d ago`;
+  return formatDate(value);
+}
+
+function statusPalette(status: string) {
+  if (status === "completed") return "text-emerald-700 bg-emerald-50 border-emerald-200";
+  if (status === "completed_with_errors") return "text-amber-700 bg-amber-50 border-amber-200";
+  if (status === "running") return "text-[#DD3300] bg-[#DD3300]/10 border-[#DD3300]/20";
+  if (status === "failed") return "text-red-700 bg-red-50 border-red-200";
+  return "text-[#63534B] bg-[#F5F5F4] border-[#D8D2C8]";
+}
+
+export default async function DashboardHome() {
+  const now = new Date();
+
+  const devBypass = process.env.AUTH_DEV_BYPASS === "true";
+  let displayName = "there";
+  if (devBypass) {
+    displayName = "Demo";
+  } else {
+    const session = await auth();
+    const rawName = session?.user?.name || session?.user?.email || "";
+    if (rawName) displayName = firstName(rawName);
+    const settings = await getSettings().catch(() => null);
+    if (settings && !settings.settings.onboarding_completed) {
+      redirect("/dashboard/onboarding");
+    }
+  }
+
+  const [
+    healthResult,
+    documentsResult,
+    jobsResult,
+    workflowsResult,
+    mattersResult,
+    ...domainCountResults
+  ] = await Promise.allSettled([
+    healthCheck(),
+    getDocuments({ limit: 6 }),
+    getIngestionJobs(10),
+    getWorkflows(),
+    getMatters({ limit: 1 }),
+    ...PRACTICE_AREAS.map((area) =>
+      getDocuments({ limit: 1, domain: area.domain }),
+    ),
+  ]);
+
+  const isBackendLive =
+    healthResult.status === "fulfilled" && healthResult.value.status === "ok";
+  const documents =
+    documentsResult.status === "fulfilled" ? documentsResult.value.documents : [];
+  const totalSourceCount =
+    documentsResult.status === "fulfilled" ? documentsResult.value.count : 0;
+  const jobs = jobsResult.status === "fulfilled" ? jobsResult.value.jobs : [];
+  const workflows =
+    workflowsResult.status === "fulfilled" ? workflowsResult.value.workflows : [];
+  const matterCount =
+    mattersResult.status === "fulfilled" ? mattersResult.value.count : 0;
+
+  const domainCounts = PRACTICE_AREAS.map((area, index) => {
+    const result = domainCountResults[index];
+    const count =
+      result && result.status === "fulfilled" ? result.value.count : null;
+    return { ...area, count };
+  });
+
+  const runningJobs = jobs.filter((job) => job.status === "running").length;
+  const lastIngestJob = jobs.find((job) => job.finished_at) || jobs[0];
+  const lastIngestRelative = lastIngestJob
+    ? relativeTime(lastIngestJob.finished_at || lastIngestJob.started_at)
+    : null;
+
+  const dataError =
+    documentsResult.status === "rejected"
+      ? documentsResult.reason instanceof ApiError
+        ? documentsResult.reason.message
+        : "Dashboard data could not be loaded."
+      : null;
+
+  return (
+    <div className="space-y-10 max-w-6xl mx-auto pb-12">
+      {/* Greeting + quick actions */}
+      <section className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#7C746B]">
+            {formatTime(now)} · {now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+          </p>
+          <h1 className="mt-2 text-3xl md:text-4xl font-serif text-[#1F1D1A] tracking-tight">
+            {greeting(now)}, {displayName}.
+          </h1>
+          <p className="mt-1 text-[#63534B]">
+            Here&rsquo;s what&rsquo;s live in your Veridicta workspace.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" className="border-[#D8D2C8] bg-white text-[#1F1D1A] hover:bg-[#F5F5F4]">
+            <Link href="/dashboard/agents">
+              <Sparkles className="w-4 h-4 mr-2 text-[#DD3300]" />
+              Ask Veridicta
+            </Link>
+          </Button>
+          <Button asChild className="bg-[#1F1D1A] text-white hover:bg-[#1F1D1A]/90">
+            <Link href="/dashboard/knowledge">Search sources</Link>
+          </Button>
+        </div>
+      </section>
+
+      {/* Pulse strip */}
+      <section className="rounded-xl border border-[#D8D2C8] bg-white px-5 py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="flex items-center gap-2">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              isBackendLive ? "bg-emerald-500" : "bg-red-500"
+            }`}
+            aria-hidden="true"
+          />
+          <span className="text-sm font-medium text-[#1F1D1A]">
+            {isBackendLive ? "Backend live" : "Backend offline"}
+          </span>
+        </div>
+        <PulseStat label="Loaded sample" value={totalSourceCount.toLocaleString()} />
+        <PulseStat label="Last ingest" value={lastIngestRelative || "—"} />
+        <PulseStat
+          label="Running jobs"
+          value={runningJobs > 0 ? String(runningJobs) : "Idle"}
+        />
+        <PulseStat label="Workflow previews" value={workflows.length.toLocaleString()} />
+        <PulseStat label="Matters" value={matterCount.toLocaleString()} />
+      </section>
+
+      {/* Jump back in */}
+      <section className="grid gap-4 md:grid-cols-3">
+        <JumpCard
+          href="/dashboard/agents"
+          icon={Bot}
+          title="Ask the assistant"
+          description="Pose a research question and get source-backed citations."
+          ctaLabel="Open assistant"
+        />
+        <JumpCard
+          href="/dashboard/knowledge"
+          icon={Scale}
+          title="Search the corpus"
+          description="Hybrid retrieval across stored BWB legislation and Rechtspraak rows."
+          ctaLabel="Search sources"
+        />
+        <JumpCard
+          href="/dashboard/matters"
+          icon={Briefcase}
+          title="Matter notes"
+          description={
+            matterCount > 0
+              ? `${matterCount} lightweight matter note${matterCount === 1 ? "" : "s"}.`
+              : "Lightweight matter notes are available; full matter workspaces come later."
+          }
+          ctaLabel="Open preview"
+        />
+      </section>
+
+      {/* Practice areas */}
+      <section>
+        <div className="flex items-end justify-between mb-3">
+          <h2 className="text-sm font-semibold text-[#1F1D1A] tracking-tight">
+            Practice areas
+          </h2>
+          <Link
+            href="/dashboard/knowledge"
+            className="text-xs text-[#7C746B] hover:text-[#1F1D1A]"
+          >
+            All sources →
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {domainCounts.map((area) => (
+            <Link
+              key={area.domain}
+              href={`/dashboard/knowledge?domain=${area.domain}`}
+              className="group rounded-xl border border-[#D8D2C8] bg-white p-4 hover:border-[#1F1D1A]/30 hover:shadow-sm transition-all"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 rounded-lg bg-[#EEEDE4] flex items-center justify-center">
+                  <area.icon className="w-4 h-4 text-[#63534B]" />
+                </div>
+                <span className="text-xs font-medium text-[#7C746B] group-hover:text-[#1F1D1A]">
+                  {area.count === null
+                    ? "Check"
+                    : area.count > 0
+                      ? "Available"
+                      : "No sample"}
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-medium text-[#1F1D1A] leading-tight">
+                {area.label}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {dataError ? (
+        <Card className="bg-white border-[#DD3300]/20 shadow-none">
+          <CardContent className="p-5 flex gap-3">
+            <AlertCircle className="w-5 h-5 text-[#DD3300] mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium text-[#1F1D1A] mb-1">
+                Dashboard data unavailable
+              </p>
+              <p className="text-sm text-[#63534B] leading-6">{dataError}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* Latest + activity */}
+      <section className="grid lg:grid-cols-5 gap-6">
+        {/* Latest stored sources */}
+        <div className="lg:col-span-3 rounded-xl border border-[#D8D2C8] bg-white">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[#D8D2C8]/60">
+            <h2 className="text-sm font-semibold text-[#1F1D1A]">
+              Latest stored sources
+            </h2>
+            <Link
+              href="/dashboard/documents"
+              className="text-xs text-[#7C746B] hover:text-[#1F1D1A]"
+            >
+              Open vault →
+            </Link>
+          </div>
+          <ul className="divide-y divide-[#D8D2C8]/60">
+            {documents.length === 0 ? (
+              <li className="p-8 text-center text-sm text-[#63534B]">
+                No sources yet. Trigger an ingestion to populate the vault.
+              </li>
+            ) : (
+              documents.map((document) => (
+                <li key={document.id}>
+                  <Link
+                    href={`/dashboard/documents/${encodeURIComponent(
+                      document.source_id || document.id,
+                    )}${
+                      document.domain
+                        ? `?domain=${encodeURIComponent(document.domain)}`
+                        : ""
+                    }`}
+                    className="flex items-start justify-between gap-4 px-5 py-3 hover:bg-[#F5F5F4] transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#1F1D1A] truncate">
+                        {getDocumentHeading(document)}
+                      </p>
+                      <p className="mt-0.5 text-xs text-[#7C746B]">
+                        {getSourceTypeLabel(document.source_type)} ·{" "}
+                        {getDomainLabel(document.domain)}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-[#BDA989] mt-1 shrink-0" />
+                  </Link>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+
+        {/* Ingestion timeline */}
+        <div className="lg:col-span-2 rounded-xl border border-[#D8D2C8] bg-white">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[#D8D2C8]/60">
+            <h2 className="text-sm font-semibold text-[#1F1D1A] flex items-center gap-2">
+              <Database className="w-4 h-4 text-[#BDA989]" />
+              Ingestion activity
+            </h2>
+            <span className="text-xs text-[#7C746B]">Queue history</span>
+          </div>
+          <div className="p-5">
+            {jobs.length === 0 ? (
+              <p className="text-sm text-[#63534B]">
+                No ingestion jobs recorded yet.
+              </p>
+            ) : (
+              <ol className="relative border-l border-[#D8D2C8]/70 ml-2 space-y-5">
+                {jobs.slice(0, 5).map((job) => (
+                  <li key={job.id} className="pl-5 relative">
+                    <span
+                      className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#BDA989]"
+                      aria-hidden="true"
+                    />
+                    <p className="text-sm font-medium text-[#1F1D1A] leading-snug">
+                      {job.job_type.replace(/_/g, " ")}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <span className="text-xs text-[#7C746B] flex items-center">
+                        <Clock className="w-3 h-3 mr-1" />
+                        {relativeTime(job.started_at) || "—"}
+                      </span>
+                      <span
+                        className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${statusPalette(
+                          job.status,
+                        )}`}
+                      >
+                        {job.status.replace(/_/g, " ")}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function PulseStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="text-[11px] uppercase tracking-[0.14em] text-[#7C746B]">
+        {label}
+      </span>
+      <span className="text-sm font-medium text-[#1F1D1A]">{value}</span>
+    </div>
+  );
+}
+
+function JumpCard({
+  href,
+  icon: Icon,
+  title,
+  description,
+  ctaLabel,
+}: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  ctaLabel: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-xl border border-[#D8D2C8] bg-white p-5 hover:border-[#1F1D1A]/30 hover:shadow-sm transition-all flex flex-col"
+    >
+      <div className="w-9 h-9 rounded-lg bg-[#EEEDE4] flex items-center justify-center mb-4">
+        <Icon className="w-[18px] h-[18px] text-[#63534B]" />
+      </div>
+      <h3 className="text-base font-serif text-[#1F1D1A] tracking-tight">
+        {title}
+      </h3>
+      <p className="mt-1 text-sm text-[#63534B] leading-6 flex-1">
+        {description}
+      </p>
+      <span className="mt-4 inline-flex items-center text-xs font-medium text-[#1F1D1A] group-hover:text-[#DD3300] transition-colors">
+        {ctaLabel}
+        <ArrowRight className="w-3.5 h-3.5 ml-1" />
+      </span>
+    </Link>
+  );
 }

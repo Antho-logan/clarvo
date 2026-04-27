@@ -3,7 +3,7 @@ import { ArrowLeft, ExternalLink, FileText, Landmark, Scale } from "lucide-react
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ApiError, getDocument } from "@/lib/api";
+import { ApiError, getDocument } from "@/lib/api/client";
 import {
   formatDate,
   getArticleLabel,
@@ -138,7 +138,7 @@ export default async function DocumentDetailPage({
                     Fetched
                   </p>
                   <p className="text-[#1F1D1A] font-medium">
-                    {formatDate(primaryDocument.fetched_at) || "Unknown"}
+                    {formatDate(primaryDocument.fetched_at) || "Not recorded"}
                   </p>
                 </div>
                 <div className="rounded-xl bg-[#F5F5F4] border border-[#D8D2C8]/60 p-4">
@@ -148,7 +148,7 @@ export default async function DocumentDetailPage({
                   <p className="text-[#1F1D1A] font-medium">
                     {[primaryDocument.ecli, primaryDocument.court, formatDate(primaryDocument.decision_date)]
                       .filter(Boolean)
-                      .join(" · ") || primaryDocument.subject || "Not applicable"}
+                      .join(" · ") || primaryDocument.subject || "Legislation source"}
                   </p>
                 </div>
               </div>

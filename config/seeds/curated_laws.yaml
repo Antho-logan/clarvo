@@ -1,0 +1,128 @@
+# Curated BWB seeds grouped by Veridicta domain.
+# Phase 3 defaults to the first three domains. Immigration and SME remain
+# explicit opt-in shallow domains for later milestones.
+tenancy_law:
+  - identifier: BWBR0005290
+    priority: 1
+  - identifier: BWBR0014315
+    priority: 2
+  - identifier: BWBR0009810
+    priority: 3
+  - identifier: BWBR0003237
+    priority: 4
+  - identifier: BWBR0048028
+    priority: 5
+  - identifier: BWBR0035303
+    priority: 6
+  - identifier: BWBR0005181
+    priority: 7
+  - identifier: BWBR0003403
+    priority: 8
+  - identifier: BWBR0037885
+    priority: 9
+  - identifier: BWBR0024779
+    priority: 10
+  - identifier: BWBR0005416
+    priority: 11
+  - identifier: BWBR0005682
+    priority: 12
+  - identifier: BWBR0009636
+    priority: 13
+  - identifier: BWBR0028899
+    priority: 14
+  - identifier: BWBR0037051
+    priority: 15
+  - identifier: BWBR0011440
+    priority: 16
+  - identifier: BWBR0005576
+    priority: 17
+  - identifier: BWBR0003245
+    priority: 18
+employment_law:
+  - identifier: BWBR0005290
+    priority: 1
+  - identifier: BWBR0002638
+    priority: 2
+  - identifier: BWBR0013008
+    priority: 3
+  - identifier: BWBR0010346
+    priority: 4
+  - identifier: BWBR0007671
+    priority: 5
+  - identifier: BWBR0004045
+    priority: 6
+  - identifier: BWBR0001888
+    priority: 7
+  - identifier: BWBR0019057
+    priority: 8
+  - identifier: BWBR0002524
+    priority: 9
+  - identifier: BWBR0002747
+    priority: 10
+  - identifier: BWBR0009616
+    priority: 11
+  - identifier: BWBR0003026
+    priority: 12
+  - identifier: BWBR0016185
+    priority: 13
+  - identifier: BWBR0003299
+    priority: 14
+  - identifier: BWBR0006502
+    priority: 15
+  - identifier: BWBR0011173
+    priority: 16
+  - identifier: BWBR0001937
+    priority: 17
+  - identifier: BWBR0001987
+    priority: 18
+administrative_law:
+  - identifier: BWBR0005537
+    priority: 1
+  - identifier: BWBR0045754
+    priority: 2
+  - identifier: BWBR0018472
+    priority: 3
+  - identifier: BWBR0005252
+    priority: 4
+  - identifier: BWBR0002367
+    priority: 5
+  - identifier: BWBR0002170
+    priority: 6
+  - identifier: BWBR0004581
+    priority: 7
+  - identifier: BWBR0011823
+    priority: 8
+  - identifier: BWBR0037885
+    priority: 9
+  - identifier: BWBR0024779
+    priority: 10
+  - identifier: BWBR0005416
+    priority: 11
+  - identifier: BWBR0005645
+    priority: 12
+  - identifier: BWBR0005108
+    priority: 13
+  - identifier: BWBR0015703
+    priority: 14
+  - identifier: BWBR0035362
+    priority: 15
+  - identifier: BWBR0006368
+    priority: 16
+  - identifier: BWBR0002320
+    priority: 17
+  - identifier: BWBR0004770
+    priority: 18
+immigration_law:
+  - identifier: BWBR0011823
+    priority: 50
+  - identifier: BWBR0011825
+    priority: 51
+  - identifier: BWBR0003738
+    priority: 52
+sme_business_law:
+  - identifier: BWBR0003045
+    priority: 50
+  - identifier: BWBR0021777
+    priority: 51
+  - identifier: BWBR0001860
+    priority: 52

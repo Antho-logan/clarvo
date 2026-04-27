@@ -9,8 +9,10 @@ import {
   getDocumentHeading,
   getDocumentSnippet,
   getDomainLabel,
+  getEmbeddingStatusBadge,
   getSearchScore,
   getSourceIdentifier,
+  getSourceSystemLabel,
   getSourceTypeLabel,
 } from "@/lib/legal-display";
 import type { DocumentRecord, SearchResult } from "@/lib/types";
@@ -21,8 +23,16 @@ type SourceCardProps = {
   footerLabel?: string;
 };
 
-export function SourceCard({ item, href, footerLabel = "Open source" }: SourceCardProps) {
+export function SourceCard({
+  item,
+  href,
+  footerLabel = "Open source",
+}: SourceCardProps) {
   const Icon = item.source_type === "case_law" ? Scale : Landmark;
+  const sourceTone =
+    item.source_type === "case_law"
+      ? "text-[#3F5F88] border-[#9FB4CC] bg-[#EEF4F8]"
+      : "text-[#5B4B2F] border-[#CDBB91] bg-[#F8F3E6]";
   const articleLabel = getArticleLabel(item);
   const dateLabel =
     "decision_date" in item && item.decision_date
@@ -30,6 +40,7 @@ export function SourceCard({ item, href, footerLabel = "Open source" }: SourceCa
       : "fetched_at" in item && item.fetched_at
         ? formatDate(item.fetched_at)
         : null;
+  const embeddingBadge = getEmbeddingStatusBadge(item.embedding_status);
 
   return (
     <Card className="bg-white border-[#D8D2C8] shadow-sm hover:shadow-md transition-shadow h-full">
@@ -41,11 +52,14 @@ export function SourceCard({ item, href, footerLabel = "Open source" }: SourceCa
             </div>
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className={sourceTone}>
+                  {getSourceTypeLabel(item.source_type)}
+                </Badge>
                 <Badge
                   variant="outline"
-                  className="text-[#63534B] border-[#D8D2C8] bg-[#F5F5F4]"
+                  className="text-[#63534B] border-[#D8D2C8] bg-white"
                 >
-                  {getSourceTypeLabel(item.source_type)}
+                  {getSourceSystemLabel(item)}
                 </Badge>
                 <Badge
                   variant="outline"
@@ -53,6 +67,11 @@ export function SourceCard({ item, href, footerLabel = "Open source" }: SourceCa
                 >
                   {getDomainLabel(item.domain)}
                 </Badge>
+                {embeddingBadge ? (
+                  <Badge variant="outline" className={embeddingBadge.className}>
+                    {embeddingBadge.label}
+                  </Badge>
+                ) : null}
                 {"score" in item ? (
                   <Badge
                     variant="outline"
@@ -88,14 +107,16 @@ export function SourceCard({ item, href, footerLabel = "Open source" }: SourceCa
 
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-[#63534B]">
-          {articleLabel ? <span>{articleLabel}</span> : null}
+          {articleLabel ? <span title={item.text}>{articleLabel}</span> : null}
           {"ecli" in item && item.ecli ? <span>{item.ecli}</span> : null}
           {"court" in item && item.court ? <span>{item.court}</span> : null}
-          {"subject" in item && item.subject ? <span>{item.subject}</span> : null}
+          {"subject" in item && item.subject ? (
+            <span>{item.subject}</span>
+          ) : null}
           {dateLabel ? <span>{dateLabel}</span> : null}
         </div>
 
-        <p className="text-sm leading-7 text-[#63534B]">
+        <p className="text-sm leading-7 text-[#4F463F]">
           {getDocumentSnippet(item.text, 280)}
         </p>
 

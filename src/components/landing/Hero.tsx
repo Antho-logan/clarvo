@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -52,12 +53,15 @@ export function Hero() {
               {hero.primaryCta}
             </Button>
             <Button
+              asChild
               size="lg"
               variant="outline"
               className="h-14 px-8 text-base border-white/20 text-ink hover:bg-white/10 glassmorphism bg-transparent"
             >
-              <PlayCircle className="mr-2 w-5 h-5" />
-              {hero.secondaryCta}
+              <Link href="/dashboard">
+                <PlayCircle className="mr-2 w-5 h-5" />
+                {hero.secondaryCta}
+              </Link>
             </Button>
           </motion.div>
         </div>

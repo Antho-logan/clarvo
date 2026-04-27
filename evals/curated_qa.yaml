@@ -1,0 +1,183 @@
+# Curated retrieval eval starter set for Dutch legal questions.
+# Domains are product-facing labels; eval runner maps them to stored corpus domains.
+questions:
+  - id: tenancy-001
+    question: "opzegging huurder termijn huurprijs"
+    domain: tenancy
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:271", "7:272"]
+    min_relevant_hits: 1
+  - id: tenancy-002
+    question: "rechter vordering goed huurder betaamt"
+    domain: tenancy
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:274"]
+    min_relevant_hits: 1
+  - id: tenancy-003
+    question: "opgezegde huurovereenkomst blijft opzegging huurder"
+    domain: tenancy
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:272", "7:274"]
+    min_relevant_hits: 1
+  - id: tenancy-004
+    question: "evenredige vermindering huurprijs gebrek kennis gegeven"
+    domain: tenancy
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:204", "7:207"]
+    min_relevant_hits: 1
+  - id: tenancy-005
+    question: "kleine herstellingen huurder"
+    domain: tenancy
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:217"]
+    min_relevant_hits: 1
+  - id: tenancy-006
+    question: "renovatie redelijk voorstel huurder"
+    domain: tenancy
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:220"]
+    min_relevant_hits: 1
+  - id: tenancy-007
+    question: "einde huur ter beschikking verhuurder"
+    domain: tenancy
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:224"]
+    min_relevant_hits: 1
+  - id: tenancy-008
+    question: "onderhuur zelfstandige woning hoofdverblijf voortgezet"
+    domain: tenancy
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:269"]
+    min_relevant_hits: 1
+  - id: tenancy-009
+    question: "bepaalde tijd huur opgezegd betaling huurprijs"
+    domain: tenancy
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:271"]
+    min_relevant_hits: 1
+  - id: tenancy-010
+    question: "servicekosten nutsvoorzieningen overzicht kalenderjaar"
+    domain: tenancy
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:259"]
+    min_relevant_hits: 1
+  - id: employment-001
+    question: "arbeidsovereenkomst werknemer werkgever loon arbeid"
+    domain: employment
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:610"]
+    min_relevant_hits: 1
+  - id: employment-002
+    question: "loon arbeid niet verricht werknemer werkgever"
+    domain: employment
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:628"]
+    min_relevant_hits: 1
+  - id: employment-003
+    question: "104 weken ziekte loon werknemer"
+    domain: employment
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:629"]
+    min_relevant_hits: 1
+  - id: employment-004
+    question: "loon werkgever artikel 628 aftrek"
+    domain: employment
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:625"]
+    min_relevant_hits: 1
+  - id: employment-005
+    question: "proeftijd schriftelijk overeengekomen"
+    domain: employment
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:652"]
+    min_relevant_hits: 1
+  - id: employment-006
+    question: "beding werkgever werknemer beperkt bevoegdheid werkzaam"
+    domain: employment
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:653"]
+    min_relevant_hits: 1
+  - id: employment-007
+    question: "door werkgever in acht te nemen termijn opzegging"
+    domain: employment
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:672"]
+    min_relevant_hits: 1
+  - id: employment-008
+    question: "transitievergoeding arbeidsovereenkomst werkgever werknemer"
+    domain: employment
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:673"]
+    min_relevant_hits: 1
+  - id: employment-009
+    question: "redelijke grond herplaatsing werknemer passende functie"
+    domain: employment
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:669"]
+    min_relevant_hits: 1
+  - id: employment-010
+    question: "onverwijld op te zeggen dringende reden wederpartij"
+    domain: employment
+    expected_bwbr_ids: ["BWBR0005290"]
+    expected_articles: ["7:677", "7:678"]
+    min_relevant_hits: 1
+  - id: administrative-001
+    question: "besluit schriftelijke beslissing bestuursorgaan publiekrechtelijke rechtshandeling"
+    domain: administrative
+    expected_bwbr_ids: ["BWBR0005537"]
+    expected_articles: ["1:3"]
+    min_relevant_hits: 1
+  - id: administrative-002
+    question: "voorbereiding besluit nodige kennis relevante feiten belangen"
+    domain: administrative
+    expected_bwbr_ids: ["BWBR0005537"]
+    expected_articles: ["3:2"]
+    min_relevant_hits: 1
+  - id: administrative-003
+    question: "nadelige gevolgen besluit onevenredig doelen"
+    domain: administrative
+    expected_bwbr_ids: ["BWBR0005537"]
+    expected_articles: ["3:4"]
+    min_relevant_hits: 1
+  - id: administrative-004
+    question: "bekendmaking besluiten toezending uitreiking belanghebbenden"
+    domain: administrative
+    expected_bwbr_ids: ["BWBR0005537"]
+    expected_articles: ["3:41"]
+    min_relevant_hits: 1
+  - id: administrative-005
+    question: "aanvraag niet behandelen aanvrager wettelijk voorschrift"
+    domain: administrative
+    expected_bwbr_ids: ["BWBR0005537"]
+    expected_articles: ["4:5"]
+    min_relevant_hits: 1
+  - id: administrative-006
+    question: "beschikking termijn redelijke termijn acht weken aanvraag"
+    domain: administrative
+    expected_bwbr_ids: ["BWBR0005537"]
+    expected_articles: ["4:13"]
+    min_relevant_hits: 1
+  - id: administrative-007
+    question: "termijn indienen bezwaar beroepschrift zes weken"
+    domain: administrative
+    expected_bwbr_ids: ["BWBR0005537"]
+    expected_articles: ["6:7"]
+    min_relevant_hits: 1
+  - id: administrative-008
+    question: "bezwaar beroepschrift tijdig ingediend einde termijn ontvangen"
+    domain: administrative
+    expected_bwbr_ids: ["BWBR0005537"]
+    expected_articles: ["6:9"]
+    min_relevant_hits: 1
+  - id: administrative-009
+    question: "alvorens beroep in te stellen bezwaar te maken"
+    domain: administrative
+    expected_bwbr_ids: ["BWBR0005537"]
+    expected_articles: ["7:1"]
+    min_relevant_hits: 1
+  - id: administrative-010
+    question: "bezwaar beslist belanghebbenden gelegenheid gehoord"
+    domain: administrative
+    expected_bwbr_ids: ["BWBR0005537"]
+    expected_articles: ["7:2"]
+    min_relevant_hits: 1

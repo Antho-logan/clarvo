@@ -27,43 +27,48 @@ export function RecentIngestionJobs({ jobs }: RecentIngestionJobsProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            {jobs.map((job) => (
-              <div
-                key={job.id}
-                className="rounded-xl border border-[#D8D2C8]/60 bg-[#F5F5F4] p-4"
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div>
-                    <p className="text-sm font-semibold text-[#1F1D1A]">
-                      {job.job_type}
-                    </p>
-                    <p className="text-xs text-[#7C746B] mt-1">
-                      {getDomainLabel(job.domain)} · {job.source_system}
-                    </p>
+            {jobs.map((job) => {
+              const itemsDone = job.items_done ?? job.success_count + job.failure_count;
+              const itemsTotal = job.items_total ?? job.total_items;
+
+              return (
+                <div
+                  key={job.id}
+                  className="rounded-xl border border-[#D8D2C8]/60 bg-[#F5F5F4] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div>
+                      <p className="text-sm font-semibold text-[#1F1D1A]">
+                        {job.job_type}
+                      </p>
+                      <p className="text-xs text-[#7C746B] mt-1">
+                        {getDomainLabel(job.domain)} · {job.source_system}
+                      </p>
+                    </div>
+
+                    <Badge
+                      variant="outline"
+                      className={getJobStatusTone(job.status)}
+                    >
+                      {job.status.replace(/_/g, " ")}
+                    </Badge>
                   </div>
 
-                  <Badge
-                    variant="outline"
-                    className={getJobStatusTone(job.status)}
-                  >
-                    {job.status.replace(/_/g, " ")}
-                  </Badge>
-                </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs text-[#63534B]">
+                    <span>Success: {job.success_count}</span>
+                    <span>Failures: {job.failure_count}</span>
+                    <span>Progress: {itemsDone}/{itemsTotal}</span>
+                    <span>Started: {formatDate(job.started_at) || "Not recorded"}</span>
+                  </div>
 
-                <div className="grid grid-cols-2 gap-3 text-xs text-[#63534B]">
-                  <span>Success: {job.success_count}</span>
-                  <span>Failures: {job.failure_count}</span>
-                  <span>Total: {job.total_items}</span>
-                  <span>Started: {formatDate(job.started_at) || "Unknown"}</span>
+                  {job.finished_at ? (
+                    <p className="text-xs text-[#7C746B] mt-3">
+                      Finished {formatDate(job.finished_at)}
+                    </p>
+                  ) : null}
                 </div>
-
-                {job.finished_at ? (
-                  <p className="text-xs text-[#7C746B] mt-3">
-                    Finished {formatDate(job.finished_at)}
-                  </p>
-                ) : null}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
