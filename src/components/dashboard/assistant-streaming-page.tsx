@@ -58,6 +58,29 @@ type AssistantStreamEvent =
       tool_trace: Array<Record<string, unknown>>;
     };
 
+const ADMINISTRATIVE_LAW_INSUFFICIENT_MESSAGE =
+  "Veridicta does not yet have enough administrative-law sources to answer this reliably.";
+
+const GENERIC_INSUFFICIENT_MESSAGE =
+  "Veridicta does not have enough grounded sources to answer this reliably.";
+
+const REFUSAL_PATTERNS = [
+  /does not yet have enough/i,
+  /not enough (supporting|grounded)?\s*sources/i,
+  /cannot answer/i,
+  /can't answer/i,
+  /kan (deze vraag )?niet betrouwbaar beantwoorden/i,
+  /onvoldoende/i,
+  /niet genoeg/i,
+  /buiten.*scope/i,
+  /valt buiten/i,
+  /niet ondersteund/i,
+  /only (answer|supports?)/i,
+  /alleen.*ondersteun/i,
+  /out[- ]of[- ]scope/i,
+  /unsupported/i,
+] as const;
+
 function buildAssistantHref(query: string, domain?: string) {
   const params = new URLSearchParams({
     q: query,
@@ -68,6 +91,26 @@ function buildAssistantHref(query: string, domain?: string) {
   }
 
   return `/dashboard/agents?${params.toString()}`;
+}
+
+function isAdministrativeLawQuestion(query: string, domain?: string) {
+  const normalized = query.toLowerCase();
+  return (
+    domain === "administrative_law" ||
+    normalized.includes("bezwaar") ||
+    normalized.includes("bestuursrecht") ||
+    normalized.includes("besluit")
+  );
+}
+
+function getInsufficientMessage(query: string, domain?: string) {
+  return isAdministrativeLawQuestion(query, domain)
+    ? ADMINISTRATIVE_LAW_INSUFFICIENT_MESSAGE
+    : GENERIC_INSUFFICIENT_MESSAGE;
+}
+
+function isRefusalAnswer(answer: string) {
+  return REFUSAL_PATTERNS.some((pattern) => pattern.test(answer));
 }
 
 function readSseEvents(buffer: string) {
@@ -141,6 +184,9 @@ export function AssistantStreamingPage({
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
+        let streamedAnswer = "";
+        let streamedCitations: AssistantCitation[] = [];
+        let sawFinalEvent = false;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -152,23 +198,61 @@ export function AssistantStreamingPage({
           buffer = parsed.remainder;
           for (const event of parsed.events) {
             if (event.type === "token") {
+              streamedAnswer += event.content;
               setAnswerText((current) => current + event.content);
             } else if (event.type === "citation" && event.citation) {
+              streamedCitations = [
+                ...streamedCitations,
+                event.citation as AssistantCitation,
+              ];
               setCitations((current) => [
                 ...current,
                 event.citation as AssistantCitation,
               ]);
             } else if (event.type === "insufficient_sources") {
-              setAnswerText(event.answer);
-              setCitations(event.citations || []);
+              sawFinalEvent = true;
+              const answer =
+                event.answer?.trim() || getInsufficientMessage(query, domain);
+              streamedAnswer = answer;
+              streamedCitations = [];
+              setAnswerText(answer);
+              setCitations([]);
               setSourceIds(event.source_ids || []);
               setToolTrace(event.tool_trace || []);
               setStreamState("insufficient_sources");
             } else if (event.type === "done") {
+              sawFinalEvent = true;
+              const finalAnswer = streamedAnswer.trim();
+              if (!finalAnswer || isRefusalAnswer(finalAnswer)) {
+                setAnswerText(
+                  finalAnswer || getInsufficientMessage(query, domain),
+                );
+                streamedCitations = [];
+                setCitations([]);
+                setSourceIds([]);
+                setToolTrace(event.tool_trace || []);
+                setStreamState("insufficient_sources");
+                continue;
+              }
+
+              setCitations(streamedCitations);
               setSourceIds(event.source_ids || []);
               setToolTrace(event.tool_trace || []);
               setStreamState("grounded");
             }
+          }
+        }
+
+        if (!sawFinalEvent) {
+          const finalAnswer = streamedAnswer.trim();
+          if (!finalAnswer || isRefusalAnswer(finalAnswer)) {
+            setAnswerText(finalAnswer || getInsufficientMessage(query, domain));
+            setCitations([]);
+            setSourceIds([]);
+            setStreamState("insufficient_sources");
+          } else {
+            setCitations(streamedCitations);
+            setStreamState("grounded");
           }
         }
       } catch (error) {

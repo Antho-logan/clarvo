@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { AlertCircle, Database, Search } from "lucide-react";
 
-import { RecentIngestionJobs } from "@/components/dashboard/RecentIngestionJobs";
+import {
+  hasMeaningfulIngestionJobData,
+  RecentIngestionJobs,
+} from "@/components/dashboard/RecentIngestionJobs";
 import { SourceCard } from "@/components/dashboard/SourceCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,7 +59,10 @@ export default async function KnowledgePage({
       : Promise.resolve(null),
   ]);
 
-  const jobs = jobsResult.status === "fulfilled" ? jobsResult.value.jobs : [];
+  const jobs =
+    jobsResult.status === "fulfilled"
+      ? jobsResult.value.jobs.filter(hasMeaningfulIngestionJobData)
+      : [];
   const searchError =
     searchResult.status === "rejected"
       ? searchResult.reason instanceof ApiError
@@ -79,6 +85,13 @@ export default async function KnowledgePage({
   const activeDomainLabel = isValidDomain(domain)
     ? getDomainLabel(domain)
     : "all domains";
+  const latestJob = jobs[0];
+  const latestJobMeta = latestJob
+    ? [
+        latestJob.domain ? getDomainLabel(latestJob.domain) : null,
+        formatDate(latestJob.started_at),
+      ].filter((item): item is string => Boolean(item))
+    : [];
   const broaderSearchParams = new URLSearchParams();
   if (query) {
     broaderSearchParams.set("q", query);
@@ -350,16 +363,19 @@ export default async function KnowledgePage({
                   </p>
                 </div>
               ) : null}
-              {jobs[0] ? (
+              {latestJob ? (
                 <div className="rounded-xl bg-[#1F1D1A] p-4 text-white">
                   <p className="text-xs uppercase tracking-[0.16em] text-white/60 mb-2">
                     Latest ingestion
                   </p>
-                  <p className="font-medium">{jobs[0].job_type}</p>
-                  <p className="text-sm text-white/70 mt-1">
-                    {getDomainLabel(jobs[0].domain)} ·{" "}
-                    {formatDate(jobs[0].started_at)}
+                  <p className="font-medium">
+                    {latestJob.job_type || "Ingestion job"}
                   </p>
+                  {latestJobMeta.length > 1 ? (
+                    <p className="text-sm text-white/70 mt-1">
+                      {latestJobMeta.join(" / ")}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
             </CardContent>
