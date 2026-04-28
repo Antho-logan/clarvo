@@ -8,12 +8,12 @@ export function Metrics() {
   const metrics = copy.metrics;
 
   return (
-    <section className="bg-ink text-ink py-32 border-b border-white/10">
+    <section className="bg-stucco-light/40 text-ink py-32 border-b border-border/40">
       <div className="container mx-auto px-6">
         <h2 className="text-3xl md:text-5xl font-serif text-ink tracking-tight mb-12">
           {metrics.title}
         </h2>
-        <div className="grid md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-white/10">
+        <div className="grid md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-border/60">
           {metrics.columns.map((column, idx) => (
             <motion.div
               key={column.title}
@@ -32,7 +32,7 @@ export function Metrics() {
                 {column.items.map((item) => (
                   <li
                     key={item}
-                    className="text-ink/70 text-sm uppercase tracking-widest leading-relaxed font-medium"
+                    className="text-stucco-dark text-sm uppercase tracking-widest leading-relaxed font-medium"
                   >
                     {item}
                   </li>

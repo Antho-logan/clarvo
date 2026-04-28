@@ -16,9 +16,9 @@ export function Security() {
   return (
     <section
       id="security"
-      className="bg-ink/95 text-ink py-32 relative overflow-hidden scroll-mt-24"
+      className="bg-ivory text-ink py-32 relative overflow-hidden scroll-mt-24 border-b border-border/40"
     >
-      <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-radial from-stucco-dark/10 to-transparent opacity-50 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-radial from-stucco-mid/20 to-transparent opacity-60 pointer-events-none" />
 
       <div className="container mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center relative z-10">
         <motion.div
@@ -36,7 +36,7 @@ export function Security() {
             {copy.security.titleLead}
             <br /> {copy.security.titleAccent}
           </h2>
-          <p className="text-lg text-ink/80 leading-relaxed">
+          <p className="text-lg text-stucco-dark leading-relaxed">
             {copy.security.description}
           </p>
         </motion.div>
@@ -53,13 +53,13 @@ export function Security() {
                 delay: 0.3 + idx * 0.1,
                 ease: "easeOut",
               }}
-              className="bg-white/5 border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-colors backdrop-blur-sm"
+              className="bg-white border border-border/50 p-6 rounded-xl hover:border-coral/30 hover:shadow-xl transition-all duration-300"
             >
-              <item.icon className="w-8 h-8 text-ink mb-4 opacity-80" />
+              <item.icon className="w-8 h-8 text-coral mb-4 opacity-80" />
               <h4 className="text-lg font-semibold text-ink mb-2">
                 {item.title}
               </h4>
-              <p className="text-sm text-ink/70 leading-relaxed">
+              <p className="text-sm text-stucco-dark leading-relaxed">
                 {item.desc}
               </p>
             </motion.div>
