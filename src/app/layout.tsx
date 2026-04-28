@@ -16,7 +16,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Veridicta — Dutch legal research, grounded in sources",
+  title: "Veridicta - Dutch legal research, grounded in sources",
   description:
     "A research assistant for Dutch legal professionals. Ask source-backed questions across Dutch legislation and case law, and inspect every citation. Currently in private beta, focused on employment and tenancy law.",
 };

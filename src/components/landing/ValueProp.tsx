@@ -10,14 +10,14 @@ export function ValueProp() {
   const valueProp = copy.valueProp;
 
   return (
-    <section className="bg-ivory py-32 border-b border-border/40">
+    <section className="bg-ivory py-24 border-b border-border/40 md:py-28 lg:py-32">
       <div className="container mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 mb-20 items-end">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 mb-16 md:mb-20 items-end">
           <div>
             <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
               {valueProp.eyebrow}
             </span>
-            <h2 className="text-4xl md:text-5xl font-serif text-ink tracking-tight leading-tight">
+            <h2 className="break-words text-3xl font-serif leading-tight text-ink [overflow-wrap:anywhere] sm:text-4xl md:text-5xl">
               {valueProp.titleLead}
               <br className="hidden md:block" /> {valueProp.titleAccent}
             </h2>
@@ -29,7 +29,7 @@ export function ValueProp() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {valueProp.pillars.map((pillar, idx) => {
             const Icon = PILLAR_ICONS[idx];
 
@@ -44,7 +44,7 @@ export function ValueProp() {
                 <h3 className="text-xl font-serif text-ink font-semibold mb-3">
                   {pillar.title}
                 </h3>
-                <p className="text-muted-foreground leading-relaxed text-sm mb-6 min-h-[80px]">
+                <p className="text-muted-foreground leading-relaxed text-sm mb-6 lg:min-h-[88px]">
                   {pillar.description}
                 </p>
 

@@ -9,10 +9,10 @@ export function CaseStudies() {
   const caseStudies = copy.caseStudies;
 
   return (
-    <section className="bg-ivory py-32 border-b border-border/40">
+    <section className="bg-ivory py-24 border-b border-border/40 md:py-28 lg:py-32">
       <div className="container mx-auto px-6">
         <div className="text-center mb-20">
-          <h2 className="text-3xl md:text-5xl font-serif text-ink tracking-tight mb-4">
+          <h2 className="mb-4 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] md:text-5xl">
             {caseStudies.titleLead}{" "}
             <span className="italic text-stucco-dark">
               {caseStudies.titleAccent}
@@ -26,7 +26,7 @@ export function CaseStudies() {
           {caseStudies.principles.map((principle, idx) => (
             <motion.div
               key={principle.title}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 1, y: 0 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6, delay: idx * 0.1, ease: "easeOut" }}

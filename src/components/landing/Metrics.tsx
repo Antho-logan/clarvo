@@ -8,16 +8,16 @@ export function Metrics() {
   const metrics = copy.metrics;
 
   return (
-    <section className="bg-stucco-light/40 text-ink py-32 border-b border-border/40">
+    <section className="bg-stucco-light/40 text-ink py-24 border-b border-border/40 md:py-28 lg:py-32">
       <div className="container mx-auto px-6">
-        <h2 className="text-3xl md:text-5xl font-serif text-ink tracking-tight mb-12">
+        <h2 className="mb-12 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] md:text-5xl">
           {metrics.title}
         </h2>
         <div className="grid md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-border/60">
           {metrics.columns.map((column, idx) => (
             <motion.div
               key={column.title}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 0 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6, delay: idx * 0.15, ease: "easeOut" }}

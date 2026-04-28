@@ -21,14 +21,14 @@ export function Features() {
   return (
     <section
       id="practice-areas"
-      className="bg-ivory py-32 border-b border-border/40 scroll-mt-24"
+      className="bg-ivory py-24 border-b border-border/40 scroll-mt-24 md:py-28 lg:py-32"
     >
-      <div className="container mx-auto px-6 space-y-32">
+      <div className="container mx-auto px-6 space-y-24 md:space-y-28">
         <div className="max-w-3xl">
           <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
             {copy.features.eyebrow}
           </span>
-          <h2 className="text-4xl md:text-5xl font-serif text-ink tracking-tight leading-tight mb-6">
+          <h2 className="mb-6 break-words text-3xl font-serif leading-tight text-ink [overflow-wrap:anywhere] sm:text-4xl md:text-5xl">
             {copy.features.titleLead}{" "}
             <span className="italic text-stucco-dark">
               {copy.features.titleAccent}
@@ -42,13 +42,13 @@ export function Features() {
         {features.map((feature) => (
           <div
             key={feature.title}
-            className={`flex flex-col lg:flex-row gap-16 items-center ${
+            className={`flex flex-col lg:flex-row gap-10 lg:gap-16 items-center ${
               feature.reverse ? "lg:flex-row-reverse" : ""
             }`}
           >
             <motion.div
               className="flex-1 space-y-6"
-              initial={{ opacity: 0, x: feature.reverse ? 30 : -30 }}
+              initial={{ opacity: 1, x: 0 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.8, ease: "easeOut" }}
@@ -56,7 +56,7 @@ export function Features() {
               <div className="inline-flex w-fit rounded-full border border-coral/30 bg-coral/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-coral">
                 {feature.badge}
               </div>
-              <h3 className="text-3xl md:text-4xl font-serif text-ink tracking-tight mb-4">
+              <h3 className="mb-4 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] md:text-4xl">
                 {feature.title}
               </h3>
               <p className="text-lg text-stucco-dark leading-relaxed">
@@ -82,7 +82,7 @@ export function Features() {
 
             <motion.div
               className="flex-1 w-full"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 1, scale: 1 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
@@ -91,11 +91,11 @@ export function Features() {
                 <img
                   src={feature.image}
                   alt={feature.title}
-                  className="object-cover w-full h-full opacity-90 hover:opacity-100 transition-opacity duration-500 MixBlend Multiply"
+                  className="h-full w-full object-cover opacity-90 transition-opacity duration-500 hover:opacity-100"
                 />
                 <motion.div
-                  className="absolute inset-x-8 bottom-8 h-24 bg-white/80 backdrop-blur-md rounded-xl border border-white/40 shadow-xl flex items-center px-6 gap-4"
-                  initial={{ opacity: 0, y: 20 }}
+                  className="absolute inset-x-4 bottom-4 min-h-24 bg-white/85 backdrop-blur-md rounded-xl border border-white/40 shadow-xl flex items-center px-5 py-4 gap-4 sm:inset-x-8 sm:bottom-8 sm:px-6"
+                  initial={{ opacity: 1, y: 0 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}

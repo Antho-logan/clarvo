@@ -12,22 +12,22 @@ export function Cta() {
   const cta = copy.cta;
 
   return (
-    <section className="bg-stucco-light py-32 border-b border-border/40 relative overflow-hidden">
+    <section className="bg-stucco-light py-24 border-b border-border/40 relative overflow-hidden md:py-28 lg:py-32">
       <div className="absolute top-0 right-0 w-64 h-64 bg-stucco-mid/20 rounded-full blur-[80px]" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-ivory/80 rounded-full blur-[100px]" />
 
       <motion.div
-        className="container mx-auto px-6 relative z-10 max-w-4xl"
-        initial={{ opacity: 0, scale: 0.95 }}
+        className="container mx-auto px-6 relative z-10 max-w-5xl"
+        initial={{ opacity: 1, scale: 1 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true, margin: "-50px" }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <div className="mb-20 border-b border-border/50 pb-16">
+        <div className="mb-16 rounded-2xl border border-border/50 bg-white/70 p-6 shadow-[0_20px_40px_-25px_rgba(31,29,26,0.25)] backdrop-blur-sm md:p-10">
           <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
             {cta.betaEyebrow}
           </span>
-          <h2 className="text-3xl md:text-5xl font-serif text-ink tracking-tight mb-6">
+          <h2 className="mb-6 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] md:text-5xl">
             {cta.betaTitle}
           </h2>
           <p className="text-lg text-stucco-dark leading-relaxed mb-6">
@@ -51,14 +51,14 @@ export function Cta() {
           </ul>
           <Button
             asChild
-            className="bg-coral hover:bg-coral/90 text-ink border-0 h-12 px-6 text-base"
+            className="min-h-12 h-auto whitespace-normal bg-coral px-6 py-3 text-base text-ink hover:bg-coral/90"
           >
             <Link href={betaAccessHref}>{cta.betaCta}</Link>
           </Button>
         </div>
 
         <div className="text-center">
-          <h2 className="text-4xl md:text-6xl font-serif text-ink tracking-tight mb-8">
+          <h2 className="mb-8 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] sm:text-4xl md:text-6xl">
             {cta.titleLead} <br /> {cta.titleAccent}
           </h2>
           <p className="text-xl text-stucco-dark leading-relaxed mb-12 max-w-2xl mx-auto">
@@ -69,7 +69,7 @@ export function Cta() {
             <Button
               asChild
               size="lg"
-              className="bg-coral hover:bg-coral/90 text-ink border-0 h-14 px-8 text-base shadow-xl shadow-coral/20 w-full sm:w-auto"
+              className="min-h-14 h-auto w-full whitespace-normal bg-coral px-8 py-4 text-base text-ink shadow-xl shadow-coral/20 hover:bg-coral/90 sm:w-auto"
             >
               <Link href={betaAccessHref}>{cta.primaryCta}</Link>
             </Button>
@@ -77,7 +77,7 @@ export function Cta() {
               asChild
               size="lg"
               variant="outline"
-              className="h-14 px-8 text-base border-border text-ink hover:bg-white w-full sm:w-auto group"
+              className="min-h-14 h-auto w-full whitespace-normal border-border px-8 py-4 text-base text-ink hover:bg-white sm:w-auto group"
             >
               <Link href={walkthroughHref}>
                 {cta.secondaryCta}

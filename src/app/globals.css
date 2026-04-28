@@ -58,6 +58,7 @@
     background-color: hsl(var(--background) / 1);
     color: hsl(var(--foreground) / 1);
     font-family: var(--font-inter), sans-serif;
+    overflow-x: clip;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -69,7 +70,7 @@
   h5,
   h6 {
     font-family: var(--font-playfair), serif;
-    letter-spacing: -0.025em;
+    letter-spacing: 0;
   }
 
   .glassmorphism {

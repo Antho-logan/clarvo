@@ -16,14 +16,14 @@ export function Security() {
   return (
     <section
       id="security"
-      className="bg-ivory text-ink py-32 relative overflow-hidden scroll-mt-24 border-b border-border/40"
+      className="bg-ivory text-ink py-24 relative overflow-hidden scroll-mt-24 border-b border-border/40 md:py-28 lg:py-32"
     >
       <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-radial from-stucco-mid/20 to-transparent opacity-60 pointer-events-none" />
 
       <div className="container mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center relative z-10">
         <motion.div
           className="lg:col-span-5 space-y-6"
-          initial={{ opacity: 0, x: -30 }}
+          initial={{ opacity: 1, x: 0 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -32,7 +32,7 @@ export function Security() {
             <Lock className="w-3.5 h-3.5" />
             <span>{copy.security.badge}</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-serif text-ink tracking-tight leading-tight">
+          <h2 className="break-words text-3xl font-serif leading-tight text-ink [overflow-wrap:anywhere] sm:text-4xl md:text-5xl">
             {copy.security.titleLead}
             <br /> {copy.security.titleAccent}
           </h2>
@@ -41,11 +41,11 @@ export function Security() {
           </p>
         </motion.div>
 
-        <div className="lg:col-span-6 lg:col-start-7 grid sm:grid-cols-2 gap-4">
+        <div className="lg:col-span-6 lg:col-start-7 grid sm:grid-cols-2 gap-4 auto-rows-fr">
           {principles.map((item, idx) => (
             <motion.div
               key={item.title}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 1, y: 0 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{

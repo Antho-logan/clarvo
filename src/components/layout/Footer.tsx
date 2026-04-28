@@ -18,7 +18,7 @@ export function Footer() {
           <div className="space-y-4">
             <Link
               href="/"
-              className="font-serif text-2xl font-bold tracking-tight text-ink block"
+              className="font-serif text-2xl font-bold text-ink block"
             >
               VERIDICTA
             </Link>
@@ -34,7 +34,7 @@ export function Footer() {
 
         <div className="pt-8 border-t border-border/60 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
           <div className="text-sm text-stucco-dark">
-            © {new Date().getFullYear()} Veridicta. {footer.rightsReserved}
+            Copyright {new Date().getFullYear()} Veridicta. {footer.rightsReserved}
           </div>
           <div className="flex space-x-6">
             {footer.legalLinks.map((link, idx) =>

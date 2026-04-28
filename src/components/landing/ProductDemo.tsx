@@ -30,7 +30,7 @@ export function ProductDemo() {
   return (
     <section
       id="workflows"
-      className="bg-stucco-light/30 py-32 border-b border-border/40 relative overflow-hidden scroll-mt-24"
+      className="bg-stucco-light/30 py-24 border-b border-border/40 relative overflow-hidden scroll-mt-24 md:py-28 lg:py-32"
     >
       <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-white/40 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 left-10 w-1/3 h-1/3 bg-stucco-mid/10 blur-[100px] rounded-full pointer-events-none" />
@@ -40,7 +40,7 @@ export function ProductDemo() {
           <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
             {productDemo.eyebrow}
           </span>
-          <h2 className="text-4xl md:text-5xl font-serif text-ink tracking-tight mb-6">
+          <h2 className="mb-6 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] sm:text-4xl md:text-5xl">
             {productDemo.titleLead} <br /> {productDemo.titleAccent}
           </h2>
           <p className="text-lg text-stucco-dark max-w-2xl mx-auto">
@@ -55,8 +55,8 @@ export function ProductDemo() {
           whileHover={{ y: -4 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="bg-white px-6 py-4 flex items-center justify-between border-b border-border/40">
-            <div className="flex items-center space-x-3">
+          <div className="bg-white px-5 py-4 flex flex-col gap-3 border-b border-border/40 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Badge
                 variant="outline"
                 className="bg-stucco-light/50 text-ink font-medium border-border/50"
@@ -70,15 +70,15 @@ export function ProductDemo() {
                 {productDemo.languageBadge}
               </Badge>
             </div>
-            <div className="flex space-x-2">
+            <div className="hidden space-x-2 sm:flex">
               <div className="w-3 h-3 rounded-full bg-border" />
               <div className="w-3 h-3 rounded-full bg-border" />
               <div className="w-3 h-3 rounded-full bg-border" />
             </div>
           </div>
 
-          <div className="p-8 pb-4">
-            <p className="font-serif text-2xl text-ink leading-relaxed mb-8">
+          <div className="p-5 pb-4 sm:p-8 sm:pb-4">
+            <p className="mb-8 break-words font-serif text-xl leading-relaxed text-ink [overflow-wrap:anywhere] sm:text-2xl">
               {productDemo.prompt.beforeLaw}
               <span className="text-coral bg-coral/5 px-1 rounded">
                 {productDemo.prompt.highlightedLaw}
@@ -112,7 +112,7 @@ export function ProductDemo() {
             </div>
           </div>
 
-          <div className="bg-white p-4 border-t border-border/40 flex items-center justify-between">
+          <div className="bg-white p-4 border-t border-border/40 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center space-x-1 sm:space-x-2">
               <Button
                 aria-label={productDemo.chips[0]}
@@ -154,7 +154,7 @@ export function ProductDemo() {
 
             <Button
               asChild
-              className={`bg-coral hover:bg-coral/90 text-ink rounded-lg pl-5 pr-4 h-11 transition-all duration-300 ${
+              className={`min-h-11 h-auto w-full whitespace-normal rounded-lg bg-coral pl-5 pr-4 py-3 text-ink transition-all duration-300 hover:bg-coral/90 sm:w-auto ${
                 isHovered ? "shadow-md shadow-coral/20" : ""
               }`}
             >
@@ -175,7 +175,7 @@ export function ProductDemo() {
             <motion.div
               key={card.title}
               className="bg-white border md:border-t-4 md:border-t-coral border-border/40 p-5 rounded-xl shadow-sm"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 1, y: 0 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 + idx * 0.1 }}
@@ -194,7 +194,7 @@ export function ProductDemo() {
           <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
             {productDemo.stepsSubtitle}
           </span>
-          <h3 className="text-3xl md:text-4xl font-serif text-ink tracking-tight mb-8">
+          <h3 className="text-3xl md:text-4xl font-serif text-ink mb-8">
             {productDemo.stepsTitle}
           </h3>
           <div className="grid md:grid-cols-3 gap-4">
@@ -202,7 +202,7 @@ export function ProductDemo() {
               <motion.div
                 key={step.title}
                 className="bg-white border border-border/40 p-5 rounded-xl shadow-sm"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 1, y: 0 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 + idx * 0.1 }}

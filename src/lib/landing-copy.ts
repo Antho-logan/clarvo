@@ -154,7 +154,7 @@ export const landingCopy: Record<Locale, LandingCopy> = {
       languageLabel: "Language",
     },
     hero: {
-      banner: "Private beta · Invitation only",
+      banner: "Private beta - Invitation only",
       titleLead: "Dutch legal research,",
       titleAccent: "grounded in sources.",
       description:
@@ -410,7 +410,7 @@ export const landingCopy: Record<Locale, LandingCopy> = {
       languageLabel: "Taal",
     },
     hero: {
-      banner: "Private beta · Alleen op uitnodiging",
+      banner: "Private beta - Alleen op uitnodiging",
       titleLead: "Nederlands juridisch onderzoek,",
       titleAccent: "gebaseerd op bronnen.",
       description:

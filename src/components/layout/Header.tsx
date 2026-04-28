@@ -46,7 +46,7 @@ export function Header() {
       <div className="container mx-auto px-6 h-20 flex items-center justify-between">
         <Link
           href="/"
-          className="font-serif text-2xl font-bold tracking-tight text-ink"
+          className="font-serif text-2xl font-bold text-ink"
         >
           VERIDICTA
         </Link>
@@ -105,7 +105,7 @@ export function Header() {
           </Link>
           <Button
             asChild
-            className="bg-coral text-ink hover:bg-coral/90 rounded border-0"
+            className="h-10 bg-coral px-5 text-sm text-ink hover:bg-coral/90 rounded border-0"
           >
             <Link href={betaAccessHref}>{copy.header.requestDemo}</Link>
           </Button>
@@ -169,7 +169,7 @@ export function Header() {
             </Link>
             <Button
               asChild
-              className="bg-coral text-ink hover:bg-coral/90 w-full justify-center"
+              className="min-h-11 h-auto w-full whitespace-normal bg-coral px-5 py-3 text-ink hover:bg-coral/90 justify-center"
             >
               <Link
                 href={betaAccessHref}
