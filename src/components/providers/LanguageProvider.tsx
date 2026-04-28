@@ -2,9 +2,10 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/lib/landing-copy";
 
 const STORAGE_KEY = "veridicta-landing-locale";
+const LANGUAGE_CHANGE_EVENT = "veridicta-language-change";
 
 type LanguageContextValue = {
   locale: Locale;
@@ -24,26 +26,57 @@ type LanguageContextValue = {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    if (typeof window === "undefined") {
-      return defaultLocale;
-    }
+function getCookieLocale() {
+  const cookieLocale = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${STORAGE_KEY}=`))
+    ?.split("=")[1];
 
-    const storedLocale = window.localStorage.getItem(STORAGE_KEY);
-    return isLocale(storedLocale) ? storedLocale : defaultLocale;
-  });
+  return isLocale(cookieLocale) ? cookieLocale : null;
+}
+
+function subscribeToLocale(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener(LANGUAGE_CHANGE_EVENT, callback);
+
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener(LANGUAGE_CHANGE_EVENT, callback);
+  };
+}
+
+type LanguageProviderProps = {
+  children: ReactNode;
+  initialLocale?: Locale;
+};
+
+export function LanguageProvider({
+  children,
+  initialLocale = defaultLocale,
+}: LanguageProviderProps) {
+  const locale = useSyncExternalStore(
+    subscribeToLocale,
+    () => getCookieLocale() ?? initialLocale,
+    () => initialLocale,
+  );
 
   useEffect(() => {
     document.documentElement.lang = locale;
     window.localStorage.setItem(STORAGE_KEY, locale);
   }, [locale]);
 
+  const setLocale = useCallback((nextLocale: Locale) => {
+    document.documentElement.lang = nextLocale;
+    window.localStorage.setItem(STORAGE_KEY, nextLocale);
+    document.cookie = `${STORAGE_KEY}=${nextLocale}; path=/; max-age=31536000; samesite=lax`;
+    window.dispatchEvent(new Event(LANGUAGE_CHANGE_EVENT));
+  }, []);
+
   return (
     <LanguageContext.Provider
       value={{
         locale,
-        setLocale: setLocaleState,
+        setLocale,
         copy: landingCopy[locale],
       }}
     >

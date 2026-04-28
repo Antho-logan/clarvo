@@ -12,7 +12,7 @@ export function Hero() {
   const hero = copy.hero;
 
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center bg-ivory overflow-hidden pt-20">
+    <section className="relative flex min-h-[90svh] items-center justify-center overflow-hidden bg-ivory pt-24 pb-28 md:pt-28 md:pb-32">
       <div
         className="absolute inset-0 z-0 opacity-70 bg-[url('https://images.unsplash.com/photo-1589391886645-d51941baf7fb?q=80&w=2940&auto=format&fit=crop')] bg-cover bg-center mix-blend-multiply"
         aria-hidden="true"
