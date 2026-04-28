@@ -51,3 +51,6 @@ htmlcov/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.venv
+.codex-logs/
+.embedding_checkpoint.json
