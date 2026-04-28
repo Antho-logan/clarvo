@@ -39,8 +39,8 @@ export function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-ivory/90 dark:bg-ink/90 backdrop-blur-md shadow-sm border-b border-border/50"
-          : "bg-transparent"
+          ? "bg-ivory/95 backdrop-blur-md shadow-sm border-b border-stucco-mid/30"
+          : "bg-ivory/70 backdrop-blur-sm border-b border-stucco-mid/15"
       }`}
     >
       <div className="container mx-auto px-6 h-20 flex items-center justify-between">
@@ -105,7 +105,7 @@ export function Header() {
           </Link>
           <Button
             asChild
-            className="h-10 bg-coral px-5 text-sm text-ink hover:bg-coral/90 rounded border-0"
+            className="h-10 rounded-md border-0 bg-coral px-5 text-sm font-medium text-white shadow-sm hover:bg-coral/90"
           >
             <Link href={betaAccessHref}>{copy.header.requestDemo}</Link>
           </Button>
@@ -148,7 +148,7 @@ export function Header() {
                   type="button"
                   className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                     locale === language.code
-                      ? "border-coral bg-coral text-ink"
+                      ? "border-coral bg-coral text-white"
                       : "border-border text-ink hover:bg-accent/50"
                   }`}
                   onClick={() => setLocale(language.code)}
@@ -169,7 +169,7 @@ export function Header() {
             </Link>
             <Button
               asChild
-              className="min-h-11 h-auto w-full whitespace-normal bg-coral px-5 py-3 text-ink hover:bg-coral/90 justify-center"
+              className="h-11 w-full whitespace-nowrap bg-coral px-5 font-medium text-white shadow-sm hover:bg-coral/90 justify-center"
             >
               <Link
                 href={betaAccessHref}

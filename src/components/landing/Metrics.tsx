@@ -10,7 +10,7 @@ export function Metrics() {
   return (
     <section className="bg-stucco-light/40 text-ink py-24 border-b border-border/40 md:py-28 lg:py-32">
       <div className="container mx-auto px-6">
-        <h2 className="mb-12 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] md:text-5xl">
+        <h2 className="mb-12 text-3xl font-serif text-ink md:text-5xl">
           {metrics.title}
         </h2>
         <div className="grid md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-border/60">

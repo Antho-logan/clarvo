@@ -40,8 +40,11 @@ export function ProductDemo() {
           <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
             {productDemo.eyebrow}
           </span>
-          <h2 className="mb-6 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] sm:text-4xl md:text-5xl">
-            {productDemo.titleLead} <br /> {productDemo.titleAccent}
+          <h2 className="mb-6 text-3xl font-serif leading-tight text-ink sm:text-4xl md:text-5xl">
+            {productDemo.titleLead}{" "}
+            <span className="italic text-stucco-dark">
+              {productDemo.titleAccent}
+            </span>
           </h2>
           <p className="text-lg text-stucco-dark max-w-2xl mx-auto">
             {productDemo.description}
@@ -78,7 +81,7 @@ export function ProductDemo() {
           </div>
 
           <div className="p-5 pb-4 sm:p-8 sm:pb-4">
-            <p className="mb-8 break-words font-serif text-xl leading-relaxed text-ink [overflow-wrap:anywhere] sm:text-2xl">
+            <p className="mb-8 font-serif text-xl leading-relaxed text-ink sm:text-2xl">
               {productDemo.prompt.beforeLaw}
               <span className="text-coral bg-coral/5 px-1 rounded">
                 {productDemo.prompt.highlightedLaw}
@@ -154,7 +157,7 @@ export function ProductDemo() {
 
             <Button
               asChild
-              className={`min-h-11 h-auto w-full whitespace-normal rounded-lg bg-coral pl-5 pr-4 py-3 text-ink transition-all duration-300 hover:bg-coral/90 sm:w-auto ${
+              className={`h-11 w-full whitespace-nowrap rounded-lg bg-coral px-5 font-medium text-white transition-all duration-300 hover:bg-coral/90 sm:w-auto ${
                 isHovered ? "shadow-md shadow-coral/20" : ""
               }`}
             >

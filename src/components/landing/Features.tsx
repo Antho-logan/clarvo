@@ -28,7 +28,7 @@ export function Features() {
           <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
             {copy.features.eyebrow}
           </span>
-          <h2 className="mb-6 break-words text-3xl font-serif leading-tight text-ink [overflow-wrap:anywhere] sm:text-4xl md:text-5xl">
+          <h2 className="mb-6 text-3xl font-serif leading-tight text-ink sm:text-4xl md:text-5xl">
             {copy.features.titleLead}{" "}
             <span className="italic text-stucco-dark">
               {copy.features.titleAccent}
@@ -56,7 +56,7 @@ export function Features() {
               <div className="inline-flex w-fit rounded-full border border-coral/30 bg-coral/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-coral">
                 {feature.badge}
               </div>
-              <h3 className="mb-4 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] md:text-4xl">
+              <h3 className="mb-4 text-3xl font-serif text-ink md:text-4xl">
                 {feature.title}
               </h3>
               <p className="text-lg text-stucco-dark leading-relaxed">

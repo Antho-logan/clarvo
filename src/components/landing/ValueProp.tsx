@@ -17,7 +17,7 @@ export function ValueProp() {
             <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
               {valueProp.eyebrow}
             </span>
-            <h2 className="break-words text-3xl font-serif leading-tight text-ink [overflow-wrap:anywhere] sm:text-4xl md:text-5xl">
+            <h2 className="text-3xl font-serif leading-tight text-ink sm:text-4xl md:text-5xl">
               {valueProp.titleLead}
               <br className="hidden md:block" /> {valueProp.titleAccent}
             </h2>

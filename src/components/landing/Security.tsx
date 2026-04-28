@@ -32,7 +32,7 @@ export function Security() {
             <Lock className="w-3.5 h-3.5" />
             <span>{copy.security.badge}</span>
           </div>
-          <h2 className="break-words text-3xl font-serif leading-tight text-ink [overflow-wrap:anywhere] sm:text-4xl md:text-5xl">
+          <h2 className="text-3xl font-serif leading-tight text-ink sm:text-4xl md:text-5xl">
             {copy.security.titleLead}
             <br /> {copy.security.titleAccent}
           </h2>

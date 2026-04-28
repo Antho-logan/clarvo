@@ -27,7 +27,7 @@ export function Cta() {
           <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
             {cta.betaEyebrow}
           </span>
-          <h2 className="mb-6 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] md:text-5xl">
+          <h2 className="mb-6 text-3xl font-serif leading-tight text-ink md:text-5xl">
             {cta.betaTitle}
           </h2>
           <p className="text-lg text-stucco-dark leading-relaxed mb-6">
@@ -51,14 +51,15 @@ export function Cta() {
           </ul>
           <Button
             asChild
-            className="min-h-12 h-auto whitespace-normal bg-coral px-6 py-3 text-base text-ink hover:bg-coral/90"
+            size="lg"
+            className="h-12 bg-coral px-6 text-base font-medium text-white shadow-md shadow-coral/20 hover:bg-coral/90"
           >
             <Link href={betaAccessHref}>{cta.betaCta}</Link>
           </Button>
         </div>
 
         <div className="text-center">
-          <h2 className="mb-8 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] sm:text-4xl md:text-6xl">
+          <h2 className="mb-8 text-3xl font-serif leading-tight text-ink sm:text-4xl md:text-6xl">
             {cta.titleLead} <br /> {cta.titleAccent}
           </h2>
           <p className="text-xl text-stucco-dark leading-relaxed mb-12 max-w-2xl mx-auto">
@@ -69,7 +70,7 @@ export function Cta() {
             <Button
               asChild
               size="lg"
-              className="min-h-14 h-auto w-full whitespace-normal bg-coral px-8 py-4 text-base text-ink shadow-xl shadow-coral/20 hover:bg-coral/90 sm:w-auto"
+              className="h-14 w-full whitespace-nowrap bg-coral px-8 text-base font-medium text-white shadow-xl shadow-coral/20 hover:bg-coral/90 sm:w-auto"
             >
               <Link href={betaAccessHref}>{cta.primaryCta}</Link>
             </Button>
@@ -77,7 +78,7 @@ export function Cta() {
               asChild
               size="lg"
               variant="outline"
-              className="min-h-14 h-auto w-full whitespace-normal border-border px-8 py-4 text-base text-ink hover:bg-white sm:w-auto group"
+              className="h-14 w-full whitespace-nowrap border-stucco-mid/50 bg-white/80 px-8 text-base text-ink hover:bg-white sm:w-auto group"
             >
               <Link href={walkthroughHref}>
                 {cta.secondaryCta}

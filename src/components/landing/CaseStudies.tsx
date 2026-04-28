@@ -12,7 +12,7 @@ export function CaseStudies() {
     <section className="bg-ivory py-24 border-b border-border/40 md:py-28 lg:py-32">
       <div className="container mx-auto px-6">
         <div className="text-center mb-20">
-          <h2 className="mb-4 break-words text-3xl font-serif text-ink [overflow-wrap:anywhere] md:text-5xl">
+          <h2 className="mb-4 text-3xl font-serif text-ink md:text-5xl">
             {caseStudies.titleLead}{" "}
             <span className="italic text-stucco-dark">
               {caseStudies.titleAccent}
