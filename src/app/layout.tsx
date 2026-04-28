@@ -14,8 +14,9 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Veridicta | Professional-Grade Legal AI",
-  description: "AI Agents for Europe's Legal Teams. Built for legal work that demands precision.",
+  title: "Veridicta — Dutch legal research, grounded in sources",
+  description:
+    "A research assistant for Dutch legal professionals. Ask source-backed questions across Dutch legislation and case law, and inspect every citation. Currently in private beta, focused on employment and tenancy law.",
 };
 
 export default function RootLayout({

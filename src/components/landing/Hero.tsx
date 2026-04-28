@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { betaAccessHref, walkthroughHref } from "@/lib/landing-copy";
 
 export function Hero() {
   const { copy } = useLanguage();
@@ -47,10 +48,11 @@ export function Hero() {
             className="flex flex-col sm:flex-row gap-4"
           >
             <Button
+              asChild
               size="lg"
               className="bg-coral hover:bg-coral/90 text-ink border-0 h-14 px-8 text-base"
             >
-              {hero.primaryCta}
+              <Link href={betaAccessHref}>{hero.primaryCta}</Link>
             </Button>
             <Button
               asChild
@@ -58,7 +60,7 @@ export function Hero() {
               variant="outline"
               className="h-14 px-8 text-base border-white/20 text-ink hover:bg-white/10 glassmorphism bg-transparent"
             >
-              <Link href="/dashboard">
+              <Link href={walkthroughHref}>
                 <PlayCircle className="mr-2 w-5 h-5" />
                 {hero.secondaryCta}
               </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { betaAccessHref } from "@/lib/landing-copy";
 
 const CHIP_ICONS = [FileText, Landmark, BookOpen, Briefcase, Clock] as const;
 
@@ -113,6 +115,8 @@ export function ProductDemo() {
           <div className="bg-white p-4 border-t border-border/40 flex items-center justify-between">
             <div className="flex items-center space-x-1 sm:space-x-2">
               <Button
+                aria-label={productDemo.chips[0]}
+                disabled
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:bg-stucco-light hover:text-ink rounded-lg h-9 w-9"
@@ -120,6 +124,8 @@ export function ProductDemo() {
                 <Paperclip className="w-4 h-4" />
               </Button>
               <Button
+                aria-label={productDemo.chips[1]}
+                disabled
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:bg-stucco-light hover:text-ink rounded-lg h-9 w-9"
@@ -127,6 +133,8 @@ export function ProductDemo() {
                 <Wand2 className="w-4 h-4" />
               </Button>
               <Button
+                aria-label={productDemo.chips[2]}
+                disabled
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:bg-stucco-light hover:text-ink rounded-lg h-9 w-9"
@@ -134,6 +142,8 @@ export function ProductDemo() {
                 <GitCompare className="w-4 h-4" />
               </Button>
               <Button
+                aria-label={productDemo.chips[3]}
+                disabled
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:bg-stucco-light hover:text-ink rounded-lg h-9 w-9"
@@ -143,34 +153,72 @@ export function ProductDemo() {
             </div>
 
             <Button
+              asChild
               className={`bg-coral hover:bg-coral/90 text-ink rounded-lg pl-5 pr-4 h-11 transition-all duration-300 ${
                 isHovered ? "shadow-md shadow-coral/20" : ""
               }`}
             >
-              {productDemo.primaryCta}
-              <ArrowRight
-                className={`ml-2 w-4 h-4 transition-transform ${
-                  isHovered ? "translate-x-1" : ""
-                }`}
-              />
+              <Link href={betaAccessHref}>
+                {productDemo.primaryCta}
+                <ArrowRight
+                  className={`ml-2 w-4 h-4 transition-transform ${
+                    isHovered ? "translate-x-1" : ""
+                  }`}
+                />
+              </Link>
             </Button>
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-          {productDemo.resultCards.map((card, idx) => (
+        <div className="grid md:grid-cols-2 gap-4 mt-8">
+          {productDemo.capabilities.map((card, idx) => (
             <motion.div
-              key={card}
-              className="bg-white border md:border-t-4 md:border-t-coral border-border/40 p-4 rounded-xl shadow-sm flex items-center justify-between"
+              key={card.title}
+              className="bg-white border md:border-t-4 md:border-t-coral border-border/40 p-5 rounded-xl shadow-sm"
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 + idx * 0.1 }}
             >
-              <span className="text-sm font-medium text-ink">{card}</span>
-              <div className="w-2 h-2 rounded-full bg-coral/80" />
+              <h3 className="text-sm font-semibold text-ink mb-2">
+                {card.title}
+              </h3>
+              <p className="text-sm text-stucco-dark leading-relaxed">
+                {card.description}
+              </p>
             </motion.div>
           ))}
+        </div>
+
+        <div className="mt-16">
+          <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
+            {productDemo.stepsSubtitle}
+          </span>
+          <h3 className="text-3xl md:text-4xl font-serif text-ink tracking-tight mb-8">
+            {productDemo.stepsTitle}
+          </h3>
+          <div className="grid md:grid-cols-3 gap-4">
+            {productDemo.steps.map((step, idx) => (
+              <motion.div
+                key={step.title}
+                className="bg-white border border-border/40 p-5 rounded-xl shadow-sm"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 + idx * 0.1 }}
+              >
+                <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-coral">
+                  Step {idx + 1}
+                </div>
+                <h4 className="text-base font-semibold text-ink mb-2">
+                  {step.title}
+                </h4>
+                <p className="text-sm text-stucco-dark leading-relaxed">
+                  {step.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

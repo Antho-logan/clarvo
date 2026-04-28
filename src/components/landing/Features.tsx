@@ -1,7 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
@@ -25,6 +24,21 @@ export function Features() {
       className="bg-ivory py-32 border-b border-border/40 scroll-mt-24"
     >
       <div className="container mx-auto px-6 space-y-32">
+        <div className="max-w-3xl">
+          <span className="text-coral font-semibold tracking-wider uppercase text-sm mb-4 block">
+            {copy.features.eyebrow}
+          </span>
+          <h2 className="text-4xl md:text-5xl font-serif text-ink tracking-tight leading-tight mb-6">
+            {copy.features.titleLead}{" "}
+            <span className="italic text-stucco-dark">
+              {copy.features.titleAccent}
+            </span>
+          </h2>
+          <p className="text-lg text-stucco-dark leading-relaxed">
+            {copy.features.description}
+          </p>
+        </div>
+
         {features.map((feature) => (
           <div
             key={feature.title}
@@ -39,6 +53,9 @@ export function Features() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
+              <div className="inline-flex w-fit rounded-full border border-coral/30 bg-coral/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-coral">
+                {feature.badge}
+              </div>
               <h3 className="text-3xl md:text-4xl font-serif text-ink tracking-tight mb-4">
                 {feature.title}
               </h3>
@@ -58,13 +75,9 @@ export function Features() {
                 ))}
               </ul>
 
-              <Button
-                variant="link"
-                className="p-0 text-coral hover:text-coral/80 text-base group"
-              >
+              <p className="text-sm font-semibold uppercase tracking-wider text-coral">
                 {copy.features.exploreWorkflow}
-                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </Button>
+              </p>
             </motion.div>
 
             <motion.div
@@ -103,6 +116,10 @@ export function Features() {
             </motion.div>
           </div>
         ))}
+
+        <p className="max-w-3xl text-base text-stucco-dark leading-relaxed">
+          {copy.features.footerLine}
+        </p>
       </div>
     </section>
   );

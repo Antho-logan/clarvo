@@ -1,6 +1,6 @@
 "use client";
 
-import { Quote } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
@@ -23,9 +23,9 @@ export function CaseStudies() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {caseStudies.testimonials.map((testimonial, idx) => (
+          {caseStudies.principles.map((principle, idx) => (
             <motion.div
-              key={testimonial.author}
+              key={principle.title}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
@@ -33,18 +33,13 @@ export function CaseStudies() {
               className="bg-white border border-border/50 p-8 rounded-2xl hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between h-full"
             >
               <div>
-                <Quote className="w-8 h-8 text-stucco-mid mb-6 opacity-50" />
+                <CheckCircle2 className="w-8 h-8 text-coral mb-6 opacity-80" />
+                <h3 className="text-lg font-semibold text-ink mb-4">
+                  {principle.title}
+                </h3>
                 <p className="text-ink font-serif text-xl leading-relaxed mb-8">
-                  {testimonial.quote}
+                  {principle.body}
                 </p>
-              </div>
-
-              <div className="border-t border-border/40 pt-6">
-                <p className="font-semibold text-ink text-sm uppercase tracking-wider mb-1">
-                  {testimonial.author}
-                </p>
-                <p className="text-stucco-dark text-sm">{testimonial.title}</p>
-                <p className="text-coral text-sm mt-1">{testimonial.firm}</p>
               </div>
             </motion.div>
           ))}

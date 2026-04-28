@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import { isLocale, supportedLocales } from "@/lib/landing-copy";
+import { betaAccessHref, isLocale, supportedLocales } from "@/lib/landing-copy";
 
 const NAV_ITEMS = [
   { href: "#workflows", key: "workflows" },
@@ -103,8 +103,11 @@ export function Header() {
           >
             {copy.header.login}
           </Link>
-          <Button className="bg-coral text-ink hover:bg-coral/90 rounded border-0">
-            {copy.header.requestDemo}
+          <Button
+            asChild
+            className="bg-coral text-ink hover:bg-coral/90 rounded border-0"
+          >
+            <Link href={betaAccessHref}>{copy.header.requestDemo}</Link>
           </Button>
         </div>
 
@@ -164,8 +167,16 @@ export function Header() {
             >
               {copy.header.login}
             </Link>
-            <Button className="bg-coral text-ink hover:bg-coral/90 w-full justify-center">
-              {copy.header.requestDemo}
+            <Button
+              asChild
+              className="bg-coral text-ink hover:bg-coral/90 w-full justify-center"
+            >
+              <Link
+                href={betaAccessHref}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {copy.header.requestDemo}
+              </Link>
             </Button>
           </div>
         </div>

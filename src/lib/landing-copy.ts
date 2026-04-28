@@ -7,6 +7,14 @@ export type Locale = (typeof supportedLocales)[number]["code"];
 
 export const defaultLocale: Locale = "en";
 
+export const betaAccessHref =
+  "mailto:hello@veridicta.nl?subject=Veridicta%20beta%20access%20request&body=Naam%3A%0AOrganisatie%3A%0ARechtsgebied%3A%0AKorte%20toelichting%3A%0A";
+
+export const walkthroughHref =
+  "mailto:hello@veridicta.nl?subject=Veridicta%20walkthrough%20request&body=Naam%3A%0AOrganisatie%3A%0ARechtsgebied%3A%0AVoorkeur%20tijdstip%3A%0A";
+
+export const directEmailHref = "mailto:hello@veridicta.nl";
+
 type NavKey = "workflows" | "practiceAreas" | "security" | "company";
 
 type LandingCopy = {
@@ -56,11 +64,26 @@ type LandingCopy = {
     };
     chips: string[];
     primaryCta: string;
-    resultCards: string[];
+    capabilities: Array<{
+      title: string;
+      description: string;
+    }>;
+    stepsTitle: string;
+    stepsSubtitle: string;
+    steps: Array<{
+      title: string;
+      description: string;
+    }>;
   };
   features: {
+    eyebrow: string;
+    titleLead: string;
+    titleAccent: string;
+    description: string;
+    footerLine: string;
     items: Array<{
       title: string;
+      badge: string;
       description: string;
       bullets: string[];
     }>;
@@ -69,20 +92,19 @@ type LandingCopy = {
     analysisSummary: string;
   };
   metrics: {
-    stats: Array<{
-      label: string;
-      value: string;
+    title: string;
+    columns: Array<{
+      title: string;
+      items: string[];
     }>;
   };
   caseStudies: {
     titleLead: string;
     titleAccent: string;
     subtitle: string;
-    testimonials: Array<{
-      quote: string;
-      author: string;
+    principles: Array<{
       title: string;
-      firm: string;
+      body: string;
     }>;
   };
   security: {
@@ -90,24 +112,29 @@ type LandingCopy = {
     titleLead: string;
     titleAccent: string;
     description: string;
-    compliances: Array<{
+    principles: Array<{
       title: string;
       desc: string;
     }>;
   };
   cta: {
+    betaEyebrow: string;
+    betaTitle: string;
+    betaDescription: string;
+    betaPartnerLine: string;
+    betaListTitle: string;
+    betaList: string[];
+    betaCta: string;
     titleLead: string;
     titleAccent: string;
     description: string;
     primaryCta: string;
     secondaryCta: string;
+    tertiaryLine: string;
   };
   footer: {
     description: string;
-    columns: Array<{
-      title: string;
-      links: string[];
-    }>;
+    betaDisclaimer: string;
     rightsReserved: string;
     legalLinks: [string, string, string];
   };
@@ -117,477 +144,513 @@ export const landingCopy: Record<Locale, LandingCopy> = {
   en: {
     header: {
       nav: {
-        workflows: "Workflows",
-        practiceAreas: "Practice Areas",
-        security: "Security",
+        workflows: "How it works",
+        practiceAreas: "Practice areas",
+        security: "Trust",
         company: "Company",
       },
-      login: "Login",
-      requestDemo: "Request Demo",
+      login: "Sign in",
+      requestDemo: "Request beta access",
       languageLabel: "Language",
     },
     hero: {
-      banner: "Dutch & EU Legal Intelligence is now live",
-      titleLead: "Intelligence for",
-      titleAccent: "Dutch Legal Work.",
+      banner: "Private beta · Invitation only",
+      titleLead: "Dutch legal research,",
+      titleAccent: "grounded in sources.",
       description:
-        "Accelerate research, draft with context, and run structured workflows across your matters. Source-backed AI built for serious legal practitioners.",
-      primaryCta: "Request a Demo",
-      secondaryCta: "Explore Platform",
-      panelLabel: "Matter Analysis",
-      riskBadge: "Risk Identified",
-      lawBadge: "German Law",
-      panelAction: "View Details",
+        "Veridicta is a research assistant for Dutch legal professionals. Ask a question, get an answer backed by Dutch legislation and case law, and inspect every citation before you rely on it.",
+      primaryCta: "Request beta access",
+      secondaryCta: "Book a walkthrough",
+      panelLabel: "Citation inspection",
+      riskBadge: "Source-backed",
+      lawBadge: "Dutch law",
+      panelAction: "Inspect source",
       trustStrip: [
-        "Grounded in Dutch & EU Law",
-        "Private by Design",
-        "Built for MKB & Legal Professionals",
+        "Built for lawyers",
+        "Focused on employment and tenancy law",
+        "Supports research; does not replace legal judgment",
       ],
     },
     valueProp: {
-      eyebrow: "Core Capabilities",
-      titleLead: "Built for Legal Reality.",
-      titleAccent: "Not General Chat.",
+      eyebrow: "The research problem",
+      titleLead: "Legal research is slow because",
+      titleAccent: "the sources are scattered.",
       description:
-        "Veridicta transforms how premium legal teams handle complex analysis. Upload case files and let our agentic architecture run structured, traceable workflows that accelerate your judgment.",
+        "Statutes live in one system, case law in another, internal memos in a third. Verifying a single answer means switching tabs, re-reading articles, and tracking down the exact passage that supports the conclusion. Veridicta is built around the opposite assumption: the citation is the answer. The prose is just how you get there.",
       pillars: [
         {
-          title: "Structured Workflows",
+          title: "Fragmented sources.",
           description:
-            "Run standardized, repeatable analyses on contracts, appeals, and dossiers based on Dutch legal frameworks.",
+            "Legislation, case law, and commentary sit in separate systems. Cross-checking one question takes longer than answering it.",
         },
         {
-          title: "Matter Intelligence",
+          title: "Citation overhead.",
           description:
-            "Keep documents, research, chronologies, and generated memos organized strictly within the context of the case.",
+            "Every claim needs a source. Reading, copying, and verifying passages is the slowest part of any memo.",
         },
         {
-          title: "Source-Backed Assistant",
+          title: "Ungrounded AI is risky.",
           description:
-            "Query your documents and our curated Dutch & EU legal databases with full citation traceability. Zero hallucinations.",
-        },
-        {
-          title: "Document Vault",
-          description:
-            "Securely upload and categorize contracts, evidence files, and rulings to build an instant knowledge base.",
+            "A confident paragraph without a citation is not research. It is a draft you still have to verify from scratch.",
         },
       ],
-      discoverCapability: "Discover capability",
+      discoverCapability: "Read more",
     },
     productDemo: {
-      eyebrow: "Interactive Agents",
-      titleLead: "The power of an associate.",
-      titleAccent: "The speed of compute.",
-      description:
-        "Orchestrate complex legal reviews in natural language across your firm's entire corpus of knowledge and European law.",
-      matterBadge: "Matter: Project Orion",
-      languageBadge: "Language: EN / NL",
+      eyebrow: "What Veridicta does",
+      titleLead: "A research workflow built",
+      titleAccent: "around verifiable sources.",
+      description: "Four capabilities, all available in the current beta.",
+      matterBadge: "Dutch legal research",
+      languageBadge: "Source inspection",
       prompt: {
-        beforeLaw:
-          "Review the attached Orion supply agreement, identify termination risks under ",
-        highlightedLaw: "Dutch and German law",
-        between:
-          ", summarize the most material negotiation points, and draft a ",
-        highlightedDeliverable: "client-ready memo in English and Dutch",
-        after: ".",
+        beforeLaw: "Ask whether a dismissal issue is supported by ",
+        highlightedLaw: "Dutch employment law",
+        between: ", review the cited ruling, and prepare a ",
+        highlightedDeliverable: "source-backed research note",
+        after: " before drafting.",
       },
       chips: [
-        "Contracts",
-        "EU Legislation",
-        "Court Filings",
-        "Internal Policies",
-        "Case Notes",
+        "Legislation",
+        "Case law",
+        "Citation context",
+        "Research notes",
+        "Lawyer review",
       ],
-      primaryCta: "Analyze Matter",
-      resultCards: [
-        "Risk Summary",
-        "Cross-Border Notes",
-        "Draft Memo Ready",
-        "Citations Included",
+      primaryCta: "Request beta access",
+      capabilities: [
+        {
+          title: "Search Dutch legal materials",
+          description:
+            "Search across ingested Dutch legislation and case law from a single interface. Results link to the underlying source, not a paraphrase.",
+        },
+        {
+          title: "Ask source-backed questions",
+          description:
+            "Pose a legal question in natural language. Veridicta returns an answer with inline citations to the specific articles and rulings it relied on. When the corpus does not support a confident answer, it says so instead of guessing.",
+        },
+        {
+          title: "Inspect every citation",
+          description:
+            "Open any citation to see the source passage in context, on its own detail page. You decide whether the cited authority actually supports the answer.",
+        },
+        {
+          title: "Prepare research faster",
+          description:
+            "Pull together statutes, rulings, and answers in one place so you can move from research to drafting without rebuilding the trail.",
+        },
+      ],
+      stepsTitle: "Three steps. No black box.",
+      stepsSubtitle: "How it works",
+      steps: [
+        {
+          title: "Ask or search",
+          description:
+            "Type a legal question or search Dutch legislation and case law directly. The interface is designed for how lawyers actually work, not for general-purpose chat.",
+        },
+        {
+          title: "Get cited sources",
+          description:
+            "Veridicta retrieves the relevant statutes and rulings, drafts an answer, and attaches the citations it used. Every claim is traceable.",
+        },
+        {
+          title: "Inspect and decide",
+          description:
+            "Open each source on its detail page, read the passage in context, and judge for yourself. Use what holds up; discard what does not. The lawyer stays in the loop.",
+        },
       ],
     },
     features: {
+      eyebrow: "Current focus",
+      titleLead: "Deep before",
+      titleAccent: "broad.",
+      description:
+        "Veridicta is built one practice area at a time. We would rather be genuinely useful in two domains than shallow across ten.",
+      footerLine:
+        "Other practice areas are not yet supported. If yours is not on this list, Veridicta is not ready for it yet - and we would rather tell you now.",
       items: [
         {
-          title: "Arbeidsrecht & Huurrecht Workflow Analysis",
+          title: "Employment law",
+          badge: "Available",
           description:
-            "Standardize contract reviews. Instantly detect non-compliant termination clauses, service fee disputes, and employer obligations against current Dutch law and jurisprudence.",
-          bullets: [
-            "Clause Detection",
-            "Risk Matrix Generation",
-            "Jurisprudence Matching",
-          ],
+            "Dutch employment legislation and selected case law, including dismissal, contracts, and working conditions.",
+          bullets: ["Dismissal", "Contracts", "Working conditions"],
         },
         {
-          title: "Bestuursrecht & Bezwaar Preparation",
+          title: "Tenancy law",
+          badge: "Available",
           description:
-            "Transform municipal decisions into structured appeal chronologies. Veridicta automatically extracts procedural deadlines and identifies missing evidence in your dossier.",
-          bullets: [
-            "Deadline Extraction",
-            "Timeline Building",
-            "Dossier Triage",
-          ],
+            "Residential and commercial tenancy questions, grounded in relevant Burgerlijk Wetboek provisions and available case law.",
+          bullets: ["Residential tenancy", "Commercial tenancy", "BW provisions"],
         },
         {
-          title: "MKB Corporate & Vreemdelingenrecht",
+          title: "Administrative law",
+          badge: "Expanding",
           description:
-            "Automate heavy compliance lifting. Scan supplier contracts for uncapped liabilities, or verify residence permit applications against required document checklists in seconds.",
-          bullets: [
-            "Liability Scanning",
-            "Verification Checklists",
-            "Next-Step Guidance",
-          ],
+            "Coverage is being extended into Dutch administrative law. Available to design partners during the beta.",
+          bullets: ["Beta coverage", "Design partners", "Dutch matters"],
         },
       ],
-      exploreWorkflow: "Explore Workflow",
-      analysisComplete: "Analysis Complete",
-      analysisSummary: "7 key risks identified across 450 pages.",
+      exploreWorkflow: "Current beta focus",
+      analysisComplete: "Coverage status",
+      analysisSummary: "Limited to selected Dutch practice areas.",
     },
     metrics: {
-      stats: [
-        { label: "Hours saved per month\nper lawyer", value: "20+" },
-        { label: "Matters accelerated\nacross the EU", value: "1,000+" },
-        { label: "Major European\nlanguages supported", value: "6" },
-        { label: "Platform uptime for\nenterprise SLA", value: "99.9%" },
+      title: "What Veridicta is - and is not",
+      columns: [
+        {
+          title: "What Veridicta is today",
+          items: [
+            "A research assistant for Dutch employment and tenancy law",
+            "Source-backed answers",
+            "Inspectable citations",
+            "Built for lawyer review",
+          ],
+        },
+        {
+          title: "What Veridicta is not",
+          items: [
+            "A full EU law platform",
+            "A case management system",
+            "A certified enterprise security product",
+            "A replacement for legal judgment",
+          ],
+        },
       ],
     },
     caseStudies: {
-      titleLead: "Relied upon by",
-      titleAccent: "the vanguard",
-      subtitle: "What leading European legal teams are saying.",
-      testimonials: [
+      titleLead: "Design",
+      titleAccent: "principles",
+      subtitle: "The product is shaped around verification, not persuasion.",
+      principles: [
         {
-          quote:
-            "Veridicta fundamentally changed our intake speed. We use it across cross-border M&A deals to synthesize 100+ documents overnight.",
-          author: "Helena Rostova",
-          title: "Managing Partner",
-          firm: "Rostova & Partners LLP",
+          title: "Source-first answers",
+          body: "Every substantive answer is anchored to Dutch legal materials.",
         },
         {
-          quote:
-            "Finally, a platform that understands legal nuance across four different languages. It feels like an elite extension of our associates.",
-          author: "Julien Vasseur",
-          title: "General Counsel",
-          firm: "Lumiere Holdings",
+          title: "Citations are inspectable",
+          body: "Every cited statute and ruling can be opened and reviewed in context.",
         },
         {
-          quote:
-            "The ability to compare contract risk profiles instantly against European benchmark legislation has saved us roughly 500 hours this quarter.",
-          author: "Markus Becker",
-          title: "Head of Legal Operations",
-          firm: "Becker Law Group",
+          title: "Refusal over fabrication",
+          body: "When the corpus does not support a confident answer, Veridicta says so.",
         },
       ],
     },
     security: {
-      badge: "Bank-Grade Security",
-      titleLead: "Compliance built for",
-      titleAccent: "law firm procurement.",
+      badge: "How we think about trust",
+      titleLead: "Principles,",
+      titleAccent: "not promises.",
       description:
-        "Veridicta does not train models on your client data. We use zero-retention APIs and offer explicit data residency guarantees across Europe. Auditable, role-based, and secure by default.",
-      compliances: [
+        "Veridicta is in private beta. We do not yet hold enterprise security certifications, and we will not claim ones we do not have. What we can commit to today is how the product behaves.",
+      principles: [
         {
-          title: "GDPR Ready",
-          desc: "Built inside the EU for EU legal teams.",
+          title: "Source-first answers",
+          desc: "Every substantive answer is anchored to Dutch legal materials. If the system cannot ground a claim in a source, the claim does not ship.",
         },
         {
-          title: "ISO 27001",
-          desc: "Certified information security management.",
+          title: "Citations are inspectable",
+          desc: "No hidden references. Every cited statute and ruling has its own detail page, viewable in full context.",
         },
         {
-          title: "Data Residency",
-          desc: "Your data stays in Frankfurt, Paris, or localized regions.",
+          title: "Refusal over fabrication",
+          desc: "When the corpus does not support a confident answer, Veridicta says so. We would rather return less than return something wrong.",
         },
         {
-          title: "SOC 2 Type II",
-          desc: "Audited controls for maximum enterprise security.",
+          title: "Lawyer review is required",
+          desc: "Veridicta is a research assistant. Output is a starting point for a qualified professional, never a substitute for one.",
+        },
+        {
+          title: "Security foundations in progress",
+          desc: "Standard practices for data handling are in place for the beta. Formal certifications such as ISO 27001 and SOC 2 are on the roadmap, not in hand.",
         },
       ],
     },
     cta: {
-      titleLead: "Stop Chatting.",
-      titleAccent: "Start Running Workflows.",
+      betaEyebrow: "Private beta",
+      betaTitle: "We are working with a small group of Dutch legal teams.",
+      betaDescription:
+        "Veridicta is in invitation-only beta. We are partnering with a limited number of Dutch lawyers, in-house teams, and firms who want to evaluate AI-assisted research on real matters - and who are willing to tell us where it falls short.",
+      betaPartnerLine:
+        "Design partners get direct access to the team, influence over the roadmap, and a product shaped around their workflows.",
+      betaListTitle: "Who we are looking for",
+      betaList: [
+        "Dutch lawyers and paralegals working in employment, tenancy, or administrative law",
+        "In-house legal teams handling Dutch matters",
+        "Firms validating AI-assisted research workflows for production use",
+      ],
+      betaCta: "Request beta access",
+      titleLead: "See it on",
+      titleAccent: "your own questions.",
       description:
-        "Transform how your firm handles Huurrecht, Arbeidsrecht, and Bestuursrecht. Give your lawyers the intelligence, structure, and traceability they need.",
-      primaryCta: "Explore Platform",
-      secondaryCta: "See Practice Areas",
+        "The fastest way to evaluate Veridicta is to bring a real research question and watch how the system handles it. Walkthroughs are run by the team, take about thirty minutes, and end with you deciding whether beta access is worth your time.",
+      primaryCta: "Request beta access",
+      secondaryCta: "Book a walkthrough",
+      tertiaryLine: "Or email us directly: hello@veridicta.nl",
     },
     footer: {
       description:
-        "Professional-grade legal AI for Europe’s leading firms. Built for work that demands precision and trust.",
-      columns: [
-        {
-          title: "Platform",
-          links: [
-            "Contract Analysis",
-            "Legal Research",
-            "Multilingual Workflows",
-            "AI Agents",
-          ],
-        },
-        {
-          title: "Solutions",
-          links: [
-            "For Law Firms",
-            "For In-House Counsel",
-            "Cross-Border Teams",
-            "Compliance & Risk",
-          ],
-        },
-        {
-          title: "Security",
-          links: [
-            "GDPR Readiness",
-            "ISO 27001",
-            "Data Residency",
-            "Trust Center",
-          ],
-        },
-        {
-          title: "Company",
-          links: ["About Us", "Careers", "Press", "Contact"],
-        },
-      ],
+        "Veridicta supports legal research. It does not provide legal advice and does not replace professional legal judgment. Output must be reviewed by a qualified legal professional before being relied upon.",
+      betaDisclaimer:
+        "Veridicta is in private beta. Features, coverage, and performance are evolving. Coverage is currently limited to selected Dutch practice areas.",
       rightsReserved: "All rights reserved.",
-      legalLinks: ["Privacy Policy", "Terms of Service", "Cookie Policy"],
+      legalLinks: ["Privacy", "Terms", "Contact"],
     },
   },
   nl: {
     header: {
       nav: {
-        workflows: "Workflows",
+        workflows: "Werkwijze",
         practiceAreas: "Rechtsgebieden",
-        security: "Beveiliging",
-        company: "Over ons",
+        security: "Vertrouwen",
+        company: "Bedrijf",
       },
       login: "Inloggen",
-      requestDemo: "Demo aanvragen",
+      requestDemo: "Beta-toegang aanvragen",
       languageLabel: "Taal",
     },
     hero: {
-      banner: "Nederlandse en EU-juridische intelligence is nu live",
-      titleLead: "Intelligentie voor",
-      titleAccent: "Nederlands juridisch werk.",
+      banner: "Private beta · Alleen op uitnodiging",
+      titleLead: "Nederlands juridisch onderzoek,",
+      titleAccent: "gebaseerd op bronnen.",
       description:
-        "Versnel onderzoek, stel concepten op met context en voer gestructureerde workflows uit over al je dossiers. Brongebouwde AI voor serieuze juridische professionals.",
-      primaryCta: "Demo aanvragen",
-      secondaryCta: "Platform verkennen",
-      panelLabel: "Zaakanalyse",
-      riskBadge: "Risico gevonden",
-      lawBadge: "Duits recht",
-      panelAction: "Bekijk details",
+        "Veridicta is een onderzoeksassistent voor Nederlandse juridische professionals. Stel een vraag, krijg een antwoord met Nederlandse wetgeving en rechtspraak als onderbouwing, en controleer elke bron voordat je erop vertrouwt.",
+      primaryCta: "Beta-toegang aanvragen",
+      secondaryCta: "Plan een walkthrough",
+      panelLabel: "Broncontrole",
+      riskBadge: "Met bronnen",
+      lawBadge: "Nederlands recht",
+      panelAction: "Controleer bron",
       trustStrip: [
-        "Gebaseerd op Nederlands en EU-recht",
-        "Privacy by design",
-        "Gebouwd voor mkb en juridische professionals",
+        "Gebouwd voor juristen",
+        "Focus op arbeidsrecht en huurrecht",
+        "Ondersteunt onderzoek; vervangt geen juridisch oordeel",
       ],
     },
     valueProp: {
-      eyebrow: "Kernmogelijkheden",
-      titleLead: "Gebouwd voor de juridische praktijk.",
-      titleAccent: "Niet voor algemene chat.",
+      eyebrow: "Het onderzoeksprobleem",
+      titleLead: "Juridisch onderzoek kost tijd omdat",
+      titleAccent: "bronnen verspreid zijn.",
       description:
-        "Veridicta verandert hoe hoogwaardige juridische teams complexe analyses uitvoeren. Upload zaakdossiers en laat onze agentische architectuur gestructureerde, herleidbare workflows draaien die jouw oordeel versnellen.",
+        "Wetgeving staat in het ene systeem, rechtspraak in een ander, interne memo's in een derde. Een enkel antwoord controleren betekent tabs wisselen, artikelen herlezen en de exacte passage zoeken die de conclusie draagt. Veridicta is gebouwd rond het omgekeerde uitgangspunt: de bron is het antwoord.",
       pillars: [
         {
-          title: "Gestructureerde workflows",
+          title: "Verspreide bronnen.",
           description:
-            "Voer gestandaardiseerde, herhaalbare analyses uit op contracten, bezwaren en dossiers op basis van Nederlandse juridische kaders.",
+            "Wetgeving, rechtspraak en commentaar staan in aparte systemen. Een vraag controleren duurt vaak langer dan het antwoord schrijven.",
         },
         {
-          title: "Zaakintelligentie",
+          title: "Bronlast.",
           description:
-            "Houd documenten, onderzoek, tijdlijnen en gegenereerde memo’s strikt georganiseerd binnen de context van de zaak.",
+            "Elke stelling vraagt om een bron. Lezen, kopieren en controleren van passages is vaak het langzaamste deel van een memo.",
         },
         {
-          title: "Bronverifieerde assistent",
+          title: "Ongegronde AI is riskant.",
           description:
-            "Doorzoek je documenten en onze samengestelde Nederlandse en EU-juridische databronnen met volledige bronverantwoording. Geen hallucinaties.",
-        },
-        {
-          title: "Documentkluis",
-          description:
-            "Upload en categoriseer contracten, bewijsstukken en uitspraken veilig om direct een bruikbare kennisbasis op te bouwen.",
+            "Een zelfverzekerde alinea zonder bron is geen onderzoek. Het is een concept dat je opnieuw moet controleren.",
         },
       ],
-      discoverCapability: "Ontdek deze mogelijkheid",
+      discoverCapability: "Lees verder",
     },
     productDemo: {
-      eyebrow: "Interactieve agents",
-      titleLead: "De kracht van een medewerker.",
-      titleAccent: "De snelheid van compute.",
-      description:
-        "Orkestreer complexe juridische reviews in natuurlijke taal over de volledige kennisbasis van je kantoor en Europese wetgeving.",
-      matterBadge: "Zaak: Project Orion",
-      languageBadge: "Taal: EN / NL",
+      eyebrow: "Wat Veridicta doet",
+      titleLead: "Een onderzoeksproces gebouwd",
+      titleAccent: "rond controleerbare bronnen.",
+      description: "Vier mogelijkheden, allemaal beschikbaar in de huidige beta.",
+      matterBadge: "Nederlands juridisch onderzoek",
+      languageBadge: "Broncontrole",
       prompt: {
-        beforeLaw:
-          "Beoordeel de bijgevoegde Orion-leveringsovereenkomst, identificeer beëindigingsrisico’s onder ",
-        highlightedLaw: "Nederlands en Duits recht",
-        between:
-          ", vat de belangrijkste onderhandelingspunten samen en stel een ",
-        highlightedDeliverable: "cliëntklare memo in het Engels en Nederlands",
-        after: " op.",
+        beforeLaw: "Stel een vraag over ontslag onder ",
+        highlightedLaw: "Nederlands arbeidsrecht",
+        between: ", controleer de aangehaalde uitspraak en maak een ",
+        highlightedDeliverable: "onderzoeksnotitie met bronnen",
+        after: " voordat je gaat schrijven.",
       },
       chips: [
-        "Contracten",
-        "EU-wetgeving",
-        "Processtukken",
-        "Interne beleidsstukken",
-        "Zaaknotities",
+        "Wetgeving",
+        "Rechtspraak",
+        "Broncontext",
+        "Onderzoeksnotities",
+        "Jurist beoordeelt",
       ],
-      primaryCta: "Zaak analyseren",
-      resultCards: [
-        "Risicosamenvatting",
-        "Grensoverschrijdende notities",
-        "Conceptmemo gereed",
-        "Bronverwijzingen inbegrepen",
+      primaryCta: "Beta-toegang aanvragen",
+      capabilities: [
+        {
+          title: "Doorzoek Nederlandse juridische bronnen",
+          description:
+            "Doorzoek ingelezen Nederlandse wetgeving en rechtspraak vanuit een interface. Resultaten linken naar de onderliggende bron, niet naar een parafrase.",
+        },
+        {
+          title: "Stel vragen met bronvermelding",
+          description:
+            "Stel een juridische vraag in gewone taal. Veridicta geeft een antwoord met verwijzingen naar de artikelen en uitspraken waarop het antwoord steunt.",
+        },
+        {
+          title: "Controleer elke bron",
+          description:
+            "Open elke verwijzing en bekijk de passage in context op een eigen detailpagina. Jij bepaalt of de bron de conclusie draagt.",
+        },
+        {
+          title: "Bereid onderzoek sneller voor",
+          description:
+            "Breng wetgeving, uitspraken en antwoorden bij elkaar zodat je kunt schrijven zonder het spoor opnieuw op te bouwen.",
+        },
+      ],
+      stepsTitle: "Drie stappen. Geen black box.",
+      stepsSubtitle: "Hoe het werkt",
+      steps: [
+        {
+          title: "Vraag of zoek",
+          description:
+            "Typ een juridische vraag of doorzoek Nederlandse wetgeving en rechtspraak direct. De interface is ontworpen voor juridisch werk, niet voor algemene chat.",
+        },
+        {
+          title: "Krijg bronnen met citaties",
+          description:
+            "Veridicta haalt relevante wetten en uitspraken op, maakt een antwoord en voegt de gebruikte citaties toe. Elke claim is herleidbaar.",
+        },
+        {
+          title: "Controleer en beslis",
+          description:
+            "Open elke bron op de detailpagina, lees de passage in context en oordeel zelf. Gebruik wat standhoudt; leg weg wat dat niet doet.",
+        },
       ],
     },
     features: {
+      eyebrow: "Huidige focus",
+      titleLead: "Eerst diep,",
+      titleAccent: "dan breed.",
+      description:
+        "Veridicta wordt per rechtsgebied opgebouwd. We zijn liever echt bruikbaar in twee domeinen dan oppervlakkig in tien.",
+      footerLine:
+        "Andere rechtsgebieden worden nog niet ondersteund. Staat jouw rechtsgebied niet op deze lijst, dan is Veridicta daar nog niet klaar voor.",
       items: [
         {
-          title: "Workflowanalyse voor Arbeidsrecht en Huurrecht",
+          title: "Arbeidsrecht",
+          badge: "Beschikbaar",
           description:
-            "Standaardiseer contractreviews. Detecteer direct niet-conforme beëindigingsclausules, servicekostengeschillen en werkgeversverplichtingen aan de hand van actuele Nederlandse wetgeving en jurisprudentie.",
-          bullets: [
-            "Clausuledetectie",
-            "Risicomatrixgeneratie",
-            "Jurisprudentiematching",
-          ],
+            "Nederlandse arbeidswetgeving en geselecteerde rechtspraak, waaronder ontslag, contracten en arbeidsvoorwaarden.",
+          bullets: ["Ontslag", "Contracten", "Arbeidsvoorwaarden"],
         },
         {
-          title: "Bestuursrecht en voorbereiding van bezwaar",
+          title: "Huurrecht",
+          badge: "Beschikbaar",
           description:
-            "Zet gemeentelijke besluiten om in gestructureerde bezwaarchronologieën. Veridicta haalt automatisch procedurele termijnen uit documenten en signaleert ontbrekend bewijs in je dossier.",
-          bullets: [
-            "Deadline-extractie",
-            "Tijdlijnopbouw",
-            "Dossiertriage",
-          ],
+            "Woonruimte en bedrijfsruimte, gebaseerd op relevante bepalingen uit het Burgerlijk Wetboek en beschikbare rechtspraak.",
+          bullets: ["Woonruimte", "Bedrijfsruimte", "BW-bepalingen"],
         },
         {
-          title: "MKB-ondernemingsrecht en vreemdelingenrecht",
+          title: "Bestuursrecht",
+          badge: "Uitbreiding",
           description:
-            "Automatiseer zwaar compliancewerk. Scan leverancierscontracten op onbeperkte aansprakelijkheid of controleer verblijfsvergunningsaanvragen in seconden aan de hand van vereiste documentchecklists.",
-          bullets: [
-            "Aansprakelijkheidsscan",
-            "Verificatiechecklists",
-            "Volgende-stap advies",
-          ],
+            "Dekking wordt uitgebreid naar Nederlands bestuursrecht. Beschikbaar voor design partners tijdens de beta.",
+          bullets: ["Beta-dekking", "Design partners", "Nederlandse zaken"],
         },
       ],
-      exploreWorkflow: "Bekijk workflow",
-      analysisComplete: "Analyse voltooid",
-      analysisSummary: "7 kernrisico’s gevonden in 450 pagina’s.",
+      exploreWorkflow: "Huidige beta-focus",
+      analysisComplete: "Dekkingsstatus",
+      analysisSummary: "Beperkt tot geselecteerde Nederlandse rechtsgebieden.",
     },
     metrics: {
-      stats: [
-        { label: "Uren bespaard per maand\nper jurist", value: "20+" },
-        { label: "Versnelde zaken\nbinnen de EU", value: "1.000+" },
-        { label: "Ondersteunde grote\nEuropese talen", value: "6" },
-        { label: "Platformbeschikbaarheid\nvoor enterprise SLA", value: "99,9%" },
+      title: "Wat Veridicta wel en niet is",
+      columns: [
+        {
+          title: "Wat Veridicta vandaag is",
+          items: [
+            "Een onderzoeksassistent voor Nederlands arbeidsrecht en huurrecht",
+            "Antwoorden met bronnen",
+            "Controleerbare citaties",
+            "Gebouwd voor beoordeling door juristen",
+          ],
+        },
+        {
+          title: "Wat Veridicta niet is",
+          items: [
+            "Een volledig EU-rechtplatform",
+            "Een zaaksysteem",
+            "Een gecertificeerd enterprise-beveiligingsproduct",
+            "Een vervanging voor juridisch oordeel",
+          ],
+        },
       ],
     },
     caseStudies: {
-      titleLead: "Vertrouwd door",
-      titleAccent: "de voorhoede",
-      subtitle: "Wat toonaangevende Europese juridische teams zeggen.",
-      testimonials: [
+      titleLead: "Ontwerp",
+      titleAccent: "principes",
+      subtitle: "Het product draait om controle, niet om overtuiging.",
+      principles: [
         {
-          quote:
-            "Veridicta heeft onze intakesnelheid fundamenteel veranderd. We gebruiken het bij grensoverschrijdende M&A-deals om in één nacht meer dan 100 documenten te synthetiseren.",
-          author: "Helena Rostova",
-          title: "Managing Partner",
-          firm: "Rostova & Partners LLP",
+          title: "Bronnen eerst",
+          body: "Elk inhoudelijk antwoord is verankerd in Nederlandse juridische bronnen.",
         },
         {
-          quote:
-            "Eindelijk een platform dat juridische nuance begrijpt in vier verschillende talen. Het voelt als een eliteverlengstuk van onze medewerkers.",
-          author: "Julien Vasseur",
-          title: "General Counsel",
-          firm: "Lumiere Holdings",
+          title: "Citaties zijn controleerbaar",
+          body: "Elke aangehaalde wet of uitspraak kan in context worden geopend.",
         },
         {
-          quote:
-            "De mogelijkheid om contractrisicoprofielen direct te vergelijken met Europese benchmarkwetgeving heeft ons dit kwartaal ongeveer 500 uur bespaard.",
-          author: "Markus Becker",
-          title: "Head of Legal Operations",
-          firm: "Becker Law Group",
+          title: "Weigeren boven verzinnen",
+          body: "Als de corpusbasis geen zeker antwoord draagt, zegt Veridicta dat.",
         },
       ],
     },
     security: {
-      badge: "Beveiliging op bankniveau",
-      titleLead: "Compliance gebouwd voor",
-      titleAccent: "de procurement van advocatenkantoren.",
+      badge: "Hoe wij over vertrouwen denken",
+      titleLead: "Principes,",
+      titleAccent: "geen beloften.",
       description:
-        "Veridicta traint geen modellen op cliëntdata. We gebruiken zero-retention API’s en bieden expliciete garanties voor dataresidentie binnen Europa. Auditbaar, rolgebaseerd en standaard veilig.",
-      compliances: [
+        "Veridicta is in private beta. We hebben nog geen enterprise-beveiligingscertificeringen en claimen die ook niet. Wat we vandaag kunnen toezeggen is hoe het product zich gedraagt.",
+      principles: [
         {
-          title: "AVG-klaar",
-          desc: "Gebouwd binnen de EU voor Europese juridische teams.",
+          title: "Bronnen eerst",
+          desc: "Elk inhoudelijk antwoord is verankerd in Nederlandse juridische bronnen. Als het systeem een stelling niet kan onderbouwen, wordt die stelling niet geleverd.",
         },
         {
-          title: "ISO 27001",
-          desc: "Gecertificeerd informatiebeveiligingsmanagement.",
+          title: "Citaties zijn controleerbaar",
+          desc: "Geen verborgen verwijzingen. Elke aangehaalde wet en uitspraak heeft een eigen detailpagina met context.",
         },
         {
-          title: "Dataresidentie",
-          desc: "Je data blijft in Frankfurt, Parijs of andere gelokaliseerde regio’s.",
+          title: "Weigeren boven verzinnen",
+          desc: "Als de corpusbasis geen zeker antwoord draagt, zegt Veridicta dat. Minder teruggeven is beter dan iets onjuists teruggeven.",
         },
         {
-          title: "SOC 2 Type II",
-          desc: "Geauditeerde controls voor maximale enterprise-beveiliging.",
+          title: "Juristen blijven verantwoordelijk",
+          desc: "Veridicta is een onderzoeksassistent. Output is een startpunt voor een gekwalificeerde professional, nooit een vervanger.",
+        },
+        {
+          title: "Beveiligingsfundament in ontwikkeling",
+          desc: "Standaardpraktijken voor datahandling zijn aanwezig voor de beta. Formele certificeringen zoals ISO 27001 en SOC 2 staan op de roadmap, maar zijn nog niet behaald.",
         },
       ],
     },
     cta: {
-      titleLead: "Stop met chatten.",
-      titleAccent: "Start met workflows draaien.",
+      betaEyebrow: "Private beta",
+      betaTitle: "We werken met een kleine groep Nederlandse juridische teams.",
+      betaDescription:
+        "Veridicta is alleen op uitnodiging beschikbaar. We werken met een beperkt aantal Nederlandse advocaten, juristen, in-house teams en kantoren die AI-ondersteund onderzoek op echte zaken willen beoordelen.",
+      betaPartnerLine:
+        "Design partners krijgen direct contact met het team, invloed op de roadmap en een product dat rond hun werkwijze wordt gevormd.",
+      betaListTitle: "Voor wie",
+      betaList: [
+        "Nederlandse advocaten, juristen en paralegals in arbeidsrecht, huurrecht of bestuursrecht",
+        "In-house legal teams met Nederlandse zaken",
+        "Kantoren die AI-ondersteund onderzoek willen valideren voor productiegebruik",
+      ],
+      betaCta: "Beta-toegang aanvragen",
+      titleLead: "Bekijk het met",
+      titleAccent: "je eigen vragen.",
       description:
-        "Verander hoe je kantoor omgaat met Huurrecht, Arbeidsrecht en Bestuursrecht. Geef je juristen de intelligentie, structuur en herleidbaarheid die ze nodig hebben.",
-      primaryCta: "Platform verkennen",
-      secondaryCta: "Bekijk rechtsgebieden",
+        "De snelste manier om Veridicta te beoordelen is een echte onderzoeksvraag meenemen en zien hoe het systeem daarmee omgaat. Walkthroughs worden door het team gegeven, duren ongeveer dertig minuten en eindigen met jouw oordeel of beta-toegang de moeite waard is.",
+      primaryCta: "Beta-toegang aanvragen",
+      secondaryCta: "Plan een walkthrough",
+      tertiaryLine: "Of mail direct: hello@veridicta.nl",
     },
     footer: {
       description:
-        "Juridische AI op professioneel niveau voor de leidende kantoren van Europa. Gebouwd voor werk dat precisie en vertrouwen vereist.",
-      columns: [
-        {
-          title: "Platform",
-          links: [
-            "Contractanalyse",
-            "Juridisch onderzoek",
-            "Meertalige workflows",
-            "AI-agents",
-          ],
-        },
-        {
-          title: "Oplossingen",
-          links: [
-            "Voor advocatenkantoren",
-            "Voor bedrijfsjuristen",
-            "Voor grensoverschrijdende teams",
-            "Compliance en risico",
-          ],
-        },
-        {
-          title: "Beveiliging",
-          links: [
-            "AVG-gereedheid",
-            "ISO 27001",
-            "Dataresidentie",
-            "Trust Center",
-          ],
-        },
-        {
-          title: "Bedrijf",
-          links: ["Over ons", "Careers", "Pers", "Contact"],
-        },
-      ],
+        "Veridicta ondersteunt juridisch onderzoek. Het geeft geen juridisch advies en vervangt geen professioneel juridisch oordeel. Output moet worden beoordeeld door een gekwalificeerde juridische professional voordat erop wordt vertrouwd.",
+      betaDisclaimer:
+        "Veridicta is in private beta. Functionaliteit, dekking en prestaties ontwikkelen zich. Dekking is momenteel beperkt tot geselecteerde Nederlandse rechtsgebieden.",
       rightsReserved: "Alle rechten voorbehouden.",
-      legalLinks: ["Privacybeleid", "Gebruiksvoorwaarden", "Cookiebeleid"],
+      legalLinks: ["Privacy", "Voorwaarden", "Contact"],
     },
   },
 };

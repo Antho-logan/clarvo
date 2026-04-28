@@ -29,11 +29,11 @@ describe("landing hero", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /request a demo/i }),
-    ).toBeInTheDocument();
+      screen.getByRole("link", { name: /request beta access/i }),
+    ).toHaveAttribute("href", expect.stringContaining("hello@veridicta.nl"));
     expect(
       screen.getByRole("heading", {
-        name: /intelligence for dutch legal work/i,
+        name: /dutch legal research, grounded in sources/i,
       }),
     ).toBeInTheDocument();
   });

@@ -1,16 +1,16 @@
 "use client";
 
-import { ShieldCheck, Lock, Server, FileSignature } from "lucide-react";
+import { ShieldCheck, Lock, Server, FileSignature, Scale } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
-const COMPLIANCE_ICONS = [FileSignature, ShieldCheck, Server, Lock] as const;
+const TRUST_ICONS = [FileSignature, ShieldCheck, Lock, Scale, Server] as const;
 
 export function Security() {
   const { copy } = useLanguage();
-  const compliances = copy.security.compliances.map((item, idx) => ({
+  const principles = copy.security.principles.map((item, idx) => ({
     ...item,
-    icon: COMPLIANCE_ICONS[idx],
+    icon: TRUST_ICONS[idx],
   }));
 
   return (
@@ -42,7 +42,7 @@ export function Security() {
         </motion.div>
 
         <div className="lg:col-span-6 lg:col-start-7 grid sm:grid-cols-2 gap-4">
-          {compliances.map((item, idx) => (
+          {principles.map((item, idx) => (
             <motion.div
               key={item.title}
               initial={{ opacity: 0, y: 30 }}

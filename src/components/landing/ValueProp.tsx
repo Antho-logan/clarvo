@@ -1,7 +1,6 @@
 "use client";
 
-import { FileText, Scale, GitMerge, Globe2, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FileText, Scale, GitMerge, Globe2 } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const PILLAR_ICONS = [GitMerge, FileText, Scale, Globe2] as const;
@@ -49,13 +48,9 @@ export function ValueProp() {
                   {pillar.description}
                 </p>
 
-                <Button
-                  variant="ghost"
-                  className="p-0 text-coral hover:bg-transparent hover:text-coral/80 h-auto group/btn"
-                >
+                <p className="text-xs font-semibold uppercase tracking-wider text-coral">
                   {valueProp.discoverCapability}
-                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-                </Button>
+                </p>
               </div>
             );
           })}
