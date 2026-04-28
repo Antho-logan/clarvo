@@ -6,11 +6,13 @@ import { BrowserExtensionErrorGuard } from "@/components/providers/BrowserExtens
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "optional",
 });
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
+  display: "optional",
 });
 
 export const metadata: Metadata = {
