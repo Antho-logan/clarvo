@@ -8,9 +8,9 @@ describe("assistant streaming page", () => {
     vi.restoreAllMocks();
   });
 
-  function mockAssistantStream(events: Array<Record<string, unknown>>) {
+  function createAssistantStream(events: Array<Record<string, unknown>>) {
     const encoder = new TextEncoder();
-    const stream = new ReadableStream<Uint8Array>({
+    return new ReadableStream<Uint8Array>({
       start(controller) {
         for (const event of events) {
           controller.enqueue(
@@ -20,10 +20,12 @@ describe("assistant streaming page", () => {
         controller.close();
       },
     });
+  }
 
+  function mockAssistantStream(events: Array<Record<string, unknown>>) {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(stream, { status: 200 })),
+      vi.fn(async () => new Response(createAssistantStream(events), { status: 200 })),
     );
   }
 
@@ -75,8 +77,63 @@ describe("assistant streaming page", () => {
     });
 
     expect(await screen.findByText(/Eerste Tweede./)).toBeInTheDocument();
-    expect(await screen.findByText("Source grounded")).toBeInTheDocument();
+    expect(await screen.findByText("Grounded answer")).toBeInTheDocument();
     expect(await screen.findByText("BW Boek 7")).toBeInTheDocument();
+  });
+
+  it("keeps previous answers visible when a new question starts", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          createAssistantStream([
+            { type: "token", content: "Antwoord huur." },
+            {
+              type: "done",
+              status: "grounded",
+              source_ids: ["BWBR0005290"],
+              tool_trace: [],
+            },
+          ]),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          createAssistantStream([
+            { type: "token", content: "Antwoord ontslag." },
+            {
+              type: "done",
+              status: "grounded",
+              source_ids: ["ECLI:NL:HR:1"],
+              tool_trace: [],
+            },
+          ]),
+          { status: 200 },
+        ),
+      );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { rerender } = render(
+      <AssistantStreamingPage query="huur opzegging" domain="tenancy_law" />,
+    );
+
+    expect(await screen.findByText("Antwoord huur.")).toBeInTheDocument();
+
+    rerender(
+      <AssistantStreamingPage
+        query="ontslag op staande voet"
+        domain="employment_law"
+      />,
+    );
+
+    expect(await screen.findByText("Antwoord ontslag.")).toBeInTheDocument();
+    expect(screen.getByText("Antwoord huur.")).toBeInTheDocument();
+    expect(screen.getByText("huur opzegging")).toBeInTheDocument();
+    expect(screen.getAllByText("ontslag op staande voet").length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("explains mixed multi-question refusals", async () => {
@@ -99,9 +156,8 @@ describe("assistant streaming page", () => {
     );
 
     expect(
-      await screen.findByText("Ask one legal question at a time"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("One question at a time")).toBeInTheDocument();
+      await screen.findAllByText("Ask one legal question at a time"),
+    ).toHaveLength(2);
     expect(
       screen.getByText(
         "This prompt contains multiple separate legal questions. Veridicta retrieves sources per legal issue. Ask one question at a time so the assistant can attach the right citations.",
@@ -112,7 +168,9 @@ describe("assistant streaming page", () => {
         name: "Wat geldt bij opzegging van huur van woonruimte?",
       }),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Not enough supporting sources")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Not enough supporting sources"),
+    ).not.toBeInTheDocument();
   });
 
   it("explains out-of-scope refusals without citation UI", async () => {
@@ -134,14 +192,17 @@ describe("assistant streaming page", () => {
       />,
     );
 
-    expect(await screen.findByText("Outside current coverage")).toBeInTheDocument();
-    expect(screen.getByText("Outside coverage")).toBeInTheDocument();
+    expect(await screen.findAllByText("Outside current coverage")).toHaveLength(
+      2,
+    );
     expect(
       screen.getByText(
         "Veridicta currently supports selected Dutch legal research workflows. This question is outside the current corpus or requires professional advice beyond the product scope.",
       ),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Cited Sources")).not.toBeInTheDocument();
-    expect(screen.queryByText("Not enough supporting sources")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cited sources")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Not enough supporting sources"),
+    ).not.toBeInTheDocument();
   });
 });

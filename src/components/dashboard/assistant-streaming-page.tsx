@@ -1,8 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { Bot, Briefcase, FileText, Scale, Send, Sparkles } from "lucide-react";
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  Bot,
+  Briefcase,
+  CheckCircle2,
+  ExternalLink,
+  FileText,
+  Loader2,
+  Scale,
+  Send,
+  Sparkles,
+  UserCircle,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,7 +56,19 @@ type AssistantStreamingPageProps = {
   domain?: string;
 };
 
-type StreamState = "idle" | "streaming" | "grounded" | "insufficient_sources";
+type StreamState = "streaming" | "grounded" | "insufficient_sources" | "error";
+
+type ConversationTurn = {
+  id: string;
+  query: string;
+  domain?: string;
+  state: StreamState;
+  answerText: string;
+  citations: AssistantCitation[];
+  sourceIds: string[];
+  toolTrace: Array<Record<string, unknown>>;
+  error?: string;
+};
 
 type AssistantStreamEvent =
   | { type: "token"; content: string }
@@ -145,7 +175,7 @@ function getRefusalDisplay(query: string) {
   if (appearsToContainMultipleQuestions(query)) {
     return {
       kind: "multi-question",
-      statusLabel: "One question at a time",
+      statusLabel: "Ask one legal question at a time",
       title: "Ask one legal question at a time",
       body:
         "This prompt contains multiple separate legal questions. Veridicta retrieves sources per legal issue. Ask one question at a time so the assistant can attach the right citations.",
@@ -156,7 +186,7 @@ function getRefusalDisplay(query: string) {
   if (isOutOfScopeQuestion(query)) {
     return {
       kind: "out-of-scope",
-      statusLabel: "Outside coverage",
+      statusLabel: "Outside current coverage",
       title: "Outside current coverage",
       body:
         "Veridicta currently supports selected Dutch legal research workflows. This question is outside the current corpus or requires professional advice beyond the product scope.",
@@ -166,7 +196,7 @@ function getRefusalDisplay(query: string) {
 
   return {
     kind: "insufficient-sources",
-    statusLabel: "Needs sources",
+    statusLabel: "Not enough supporting sources",
     title: "Not enough supporting sources",
     body: "",
     suggestions: SUGGESTED_PROMPTS.map((item) => item.prompt),
@@ -190,35 +220,80 @@ function readSseEvents(buffer: string) {
   return { events, remainder };
 }
 
+function makeTurnId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function formatCitationMeta(citation: AssistantCitation) {
+  return [
+    citation.source_id,
+    citation.article ? `Art. ${citation.article}` : null,
+    citation.court,
+    citation.decision_date,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function getTurnDomains(turn: ConversationTurn) {
+  return Array.from(
+    new Set(
+      turn.citations
+        .map((item) => item.domain)
+        .filter((item): item is string => Boolean(item)),
+    ),
+  );
+}
+
 export function AssistantStreamingPage({
   query,
   domain,
 }: AssistantStreamingPageProps) {
-  const [streamState, setStreamState] = useState<StreamState>(
-    query ? "streaming" : "idle",
-  );
-  const [answerText, setAnswerText] = useState("");
-  const [citations, setCitations] = useState<AssistantCitation[]>([]);
-  const [sourceIds, setSourceIds] = useState<string[]>([]);
-  const [toolTrace, setToolTrace] = useState<Array<Record<string, unknown>>>(
+  const [turns, setTurns] = useState<ConversationTurn[]>([]);
+  const [draftQuery, setDraftQuery] = useState(query);
+  const [selectedDomain, setSelectedDomain] = useState(domain || "");
+  const startedUrlQueryRef = useRef("");
+  const abortControllersRef = useRef<Set<AbortController>>(new Set());
+
+  const updateTurn = useCallback(
+    (
+      turnId: string,
+      updater: (turn: ConversationTurn) => ConversationTurn,
+    ) => {
+      setTurns((current) =>
+        current.map((turn) => (turn.id === turnId ? updater(turn) : turn)),
+      );
+    },
     [],
   );
-  const [searchError, setSearchError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!query) {
-      return;
-    }
+  const startResearch = useCallback(
+    async (question: string, requestedDomain?: string) => {
+      const trimmedQuestion = question.trim();
+      if (!trimmedQuestion) {
+        return;
+      }
 
-    const abortController = new AbortController();
+      const turnId = makeTurnId();
+      const abortController = new AbortController();
+      abortControllersRef.current.add(abortController);
 
-    async function streamAnswer() {
-      setStreamState("streaming");
-      setAnswerText("");
-      setCitations([]);
-      setSourceIds([]);
-      setToolTrace([]);
-      setSearchError(null);
+      setTurns((current) => [
+        ...current,
+        {
+          id: turnId,
+          query: trimmedQuestion,
+          domain: requestedDomain,
+          state: "streaming",
+          answerText: "",
+          citations: [],
+          sourceIds: [],
+          toolTrace: [],
+        },
+      ]);
 
       try {
         const response = await fetch("/api/agent/stream", {
@@ -227,8 +302,8 @@ export function AssistantStreamingPage({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            question: query,
-            domain,
+            question: trimmedQuestion,
+            domain: requestedDomain,
             max_iterations: 2,
           }),
           signal: abortController.signal,
@@ -256,49 +331,65 @@ export function AssistantStreamingPage({
           buffer += decoder.decode(value, { stream: true });
           const parsed = readSseEvents(buffer);
           buffer = parsed.remainder;
+
           for (const event of parsed.events) {
             if (event.type === "token") {
               streamedAnswer += event.content;
-              setAnswerText((current) => current + event.content);
+              updateTurn(turnId, (turn) => ({
+                ...turn,
+                answerText: turn.answerText + event.content,
+              }));
             } else if (event.type === "citation" && event.citation) {
               streamedCitations = [
                 ...streamedCitations,
                 event.citation as AssistantCitation,
               ];
-              setCitations((current) => [
-                ...current,
-                event.citation as AssistantCitation,
-              ]);
+              updateTurn(turnId, (turn) => ({
+                ...turn,
+                citations: [
+                  ...turn.citations,
+                  event.citation as AssistantCitation,
+                ],
+              }));
             } else if (event.type === "insufficient_sources") {
               sawFinalEvent = true;
               const answer =
-                event.answer?.trim() || getInsufficientMessage(query, domain);
+                event.answer?.trim() ||
+                getInsufficientMessage(trimmedQuestion, requestedDomain);
               streamedAnswer = answer;
               streamedCitations = [];
-              setAnswerText(answer);
-              setCitations([]);
-              setSourceIds(event.source_ids || []);
-              setToolTrace(event.tool_trace || []);
-              setStreamState("insufficient_sources");
+              updateTurn(turnId, (turn) => ({
+                ...turn,
+                answerText: answer,
+                citations: [],
+                sourceIds: event.source_ids || [],
+                toolTrace: event.tool_trace || [],
+                state: "insufficient_sources",
+              }));
             } else if (event.type === "done") {
               sawFinalEvent = true;
               const finalAnswer = streamedAnswer.trim();
               if (!finalAnswer || isRefusalAnswer(finalAnswer)) {
-                setAnswerText(
-                  finalAnswer || getInsufficientMessage(query, domain),
-                );
-                streamedCitations = [];
-                setCitations([]);
-                setSourceIds([]);
-                setToolTrace(event.tool_trace || []);
-                setStreamState("insufficient_sources");
+                updateTurn(turnId, (turn) => ({
+                  ...turn,
+                  answerText:
+                    finalAnswer ||
+                    getInsufficientMessage(trimmedQuestion, requestedDomain),
+                  citations: [],
+                  sourceIds: [],
+                  toolTrace: event.tool_trace || [],
+                  state: "insufficient_sources",
+                }));
                 continue;
               }
 
-              setCitations(streamedCitations);
-              setSourceIds(event.source_ids || []);
-              setToolTrace(event.tool_trace || []);
-              setStreamState("grounded");
+              updateTurn(turnId, (turn) => ({
+                ...turn,
+                citations: streamedCitations,
+                sourceIds: event.source_ids || [],
+                toolTrace: event.tool_trace || [],
+                state: "grounded",
+              }));
             }
           }
         }
@@ -306,310 +397,181 @@ export function AssistantStreamingPage({
         if (!sawFinalEvent) {
           const finalAnswer = streamedAnswer.trim();
           if (!finalAnswer || isRefusalAnswer(finalAnswer)) {
-            setAnswerText(finalAnswer || getInsufficientMessage(query, domain));
-            setCitations([]);
-            setSourceIds([]);
-            setStreamState("insufficient_sources");
+            updateTurn(turnId, (turn) => ({
+              ...turn,
+              answerText:
+                finalAnswer ||
+                getInsufficientMessage(trimmedQuestion, requestedDomain),
+              citations: [],
+              sourceIds: [],
+              state: "insufficient_sources",
+            }));
           } else {
-            setCitations(streamedCitations);
-            setStreamState("grounded");
+            updateTurn(turnId, (turn) => ({
+              ...turn,
+              citations: streamedCitations,
+              state: "grounded",
+            }));
           }
         }
       } catch (error) {
-        if (abortController.signal.aborted) {
-          return;
+        if (!abortController.signal.aborted) {
+          updateTurn(turnId, (turn) => ({
+            ...turn,
+            error:
+              error instanceof Error
+                ? error.message
+                : "The assistant could not retrieve grounded results.",
+            state: "error",
+          }));
         }
-        setSearchError(
-          error instanceof Error
-            ? error.message
-            : "The assistant could not retrieve grounded results.",
-        );
-        setStreamState("idle");
+      } finally {
+        abortControllersRef.current.delete(abortController);
       }
+    },
+    [updateTurn],
+  );
+
+  useEffect(() => {
+    setDraftQuery(query);
+    setSelectedDomain(domain || "");
+
+    if (!query) {
+      return;
     }
 
-    void streamAnswer();
+    const urlQueryKey = `${query}\u0000${domain || ""}`;
+    if (startedUrlQueryRef.current === urlQueryKey) {
+      return;
+    }
 
-    return () => abortController.abort();
-  }, [query, domain]);
+    startedUrlQueryRef.current = urlQueryKey;
+    void startResearch(query, domain);
+  }, [query, domain, startResearch]);
 
-  const domainsFound = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          citations
-            .map((item) => item.domain)
-            .filter((item): item is string => Boolean(item)),
-        ),
-      ),
-    [citations],
+  useEffect(() => {
+    const controllers = abortControllersRef.current;
+    return () => {
+      controllers.forEach((controller) => controller.abort());
+      controllers.clear();
+    };
+  }, []);
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmedQuestion = draftQuery.trim();
+    if (!trimmedQuestion) {
+      return;
+    }
+
+    const nextDomain = selectedDomain || undefined;
+    startedUrlQueryRef.current = `${trimmedQuestion}\u0000${nextDomain || ""}`;
+    if (typeof window !== "undefined") {
+      window.history.pushState(
+        null,
+        "",
+        buildAssistantHref(trimmedQuestion, nextDomain),
+      );
+    }
+    setDraftQuery("");
+    void startResearch(trimmedQuestion, nextDomain);
+  }
+
+  const totalToolEvents = useMemo(
+    () => turns.reduce((count, turn) => count + turn.toolTrace.length, 0),
+    [turns],
   );
-  const hasActiveDomainFilter = Boolean(domain);
-  const showAnswer =
-    answerText && streamState !== "insufficient_sources" && !searchError;
-  const sourceCount = sourceIds.length || citations.length;
-  const refusalDisplay = useMemo(() => getRefusalDisplay(query), [query]);
+  const hasConversation = turns.length > 0;
 
   return (
-    <div className="max-w-5xl mx-auto pb-12 min-h-[calc(100vh-8rem)] flex flex-col">
-      <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4 shrink-0">
+    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-6xl flex-col pb-8">
+      <div className="mb-6 flex shrink-0 flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="text-3xl font-serif text-[#1F1D1A] tracking-tight mb-2 flex items-center">
-            <Bot className="w-8 h-8 mr-3 text-[#BDA989]" /> Source-Backed
-            Assistant
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
+            Source-backed legal research
+          </p>
+          <h1 className="flex items-center text-3xl font-serif tracking-tight text-[#1F1D1A] md:text-4xl">
+            <Bot className="mr-3 h-8 w-8 text-[#DD3300]" />
+            Legal Research Assistant
           </h1>
-          <p className="text-[#63534B] max-w-3xl">
-            This assistant is retrieval-first. Ask a legal question and it will
-            return the strongest matching backend sources instead of inventing a
-            freeform answer.
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-[#63534B]">
+            Ask one Dutch legal research question. The assistant checks stored
+            sources first, answers only when support is strong, and keeps the
+            citations visible in the conversation.
           </p>
         </div>
       </div>
 
-      <Card className="flex-1 bg-white border-[#D8D2C8] shadow-sm flex flex-col overflow-hidden">
-        <CardContent className="flex-1 p-8 overflow-y-auto">
-          {!query ? (
-            <div className="flex flex-col items-center justify-center text-center h-full">
-              <div className="w-16 h-16 bg-[#EEEDE4] rounded-2xl flex items-center justify-center mb-6">
-                <Sparkles className="w-8 h-8 text-[#DD3300]" />
-              </div>
-              <h2 className="text-xl font-serif text-[#1F1D1A] mb-2">
-                Ask a grounded legal question
-              </h2>
-              <p className="text-[#63534B] max-w-md mx-auto mb-8">
-                The assistant uses stored BWB and Rechtspraak rows and answers
-                only with cited support.
-              </p>
+      <Card className="flex min-h-[640px] flex-1 flex-col overflow-hidden border-[#D8D2C8] bg-white shadow-sm">
+        <CardContent className="flex-1 overflow-y-auto bg-[#F8F6F1] p-0">
+          <div className="mx-auto flex min-h-full max-w-5xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+            {!hasConversation ? (
+              <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
+                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#D8D2C8] bg-white shadow-sm">
+                  <Sparkles className="h-8 w-8 text-[#DD3300]" />
+                </div>
+                <h2 className="mb-2 text-2xl font-serif text-[#1F1D1A]">
+                  Start with one legal issue
+                </h2>
+                <p className="mx-auto mb-8 max-w-xl text-sm leading-7 text-[#63534B]">
+                  Veridicta retrieves sources per legal issue. Focus the prompt
+                  so the answer can attach the right citations.
+                </p>
 
-              <div className="grid sm:grid-cols-2 gap-4 w-full max-w-3xl text-left">
-                {SUGGESTED_PROMPTS.map((item) => (
-                  <Link
-                    key={item.prompt}
-                    href={buildAssistantHref(item.prompt, item.domain)}
-                    className="p-4 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] hover:bg-white hover:border-[#DD3300]/30 hover:shadow-sm transition-all text-left flex flex-col h-full group"
-                  >
-                    <div className="flex items-center space-x-2 mb-2">
-                      <item.icon className="w-4 h-4 text-[#BDA989] group-hover:text-[#DD3300] transition-colors" />
-                      <span className="text-xs font-semibold uppercase tracking-wider text-[#63534B]">
-                        Focus: {getDomainLabel(item.domain)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-[#1F1D1A] leading-relaxed">
-                      &ldquo;{item.prompt}&rdquo;
-                    </p>
-                    <p className="mt-3 text-xs leading-5 text-[#7C746B]">
-                      {item.description}
-                    </p>
-                  </Link>
+                <div className="grid w-full max-w-4xl gap-4 text-left md:grid-cols-3">
+                  {SUGGESTED_PROMPTS.map((item) => (
+                    <Link
+                      key={item.prompt}
+                      href={buildAssistantHref(item.prompt, item.domain)}
+                      className="group flex h-full flex-col rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#DD3300]/30 hover:shadow-md motion-reduce:hover:translate-y-0"
+                    >
+                      <div className="mb-3 flex items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#F5F5F4]">
+                          <item.icon className="h-4 w-4 text-[#BDA989] transition-colors group-hover:text-[#DD3300]" />
+                        </span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
+                          {getDomainLabel(item.domain)}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium leading-6 text-[#1F1D1A]">
+                        {item.prompt}
+                      </p>
+                      <p className="mt-3 text-xs leading-5 text-[#7C746B]">
+                        {item.description}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {turns.map((turn) => (
+                  <ConversationTurnView key={turn.id} turn={turn} />
                 ))}
               </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="grid md:grid-cols-[minmax(0,2fr)_1fr] gap-4">
-                <div className="rounded-2xl bg-[#1F1D1A] p-6 text-white">
-                  <p className="text-xs uppercase tracking-[0.18em] text-white/60 mb-2">
-                    Retrieval Query
-                  </p>
-                  <h2 className="text-3xl font-serif mb-3">{query}</h2>
-                  <p className="text-sm text-white/70 leading-7">
-                    The assistant answers only when stored sources support the
-                    question. Citations below link back to source detail views
-                    where possible.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-[#D8D2C8] bg-[#F5F5F4] p-6">
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#7C746B] mb-2">
-                    Retrieval View
-                  </p>
-                  <p className="text-2xl font-serif text-[#1F1D1A]">
-                    {streamState === "grounded"
-                      ? "Grounded"
-                      : streamState === "streaming"
-                        ? "Streaming"
-                        : refusalDisplay.statusLabel}
-                  </p>
-                  <p className="text-sm text-[#63534B] mt-2">
-                    Domains surfaced:{" "}
-                    {domainsFound.length > 0
-                      ? domainsFound
-                          .map((item) => getDomainLabel(item))
-                          .join(", ")
-                      : "None"}
-                  </p>
-                  <p className="text-sm text-[#63534B] mt-1">
-                    Search scope:{" "}
-                    {domain ? getDomainLabel(domain) : "All domains"}
-                  </p>
-                </div>
-              </div>
-
-              {searchError ? (
-                <div className="rounded-2xl border border-[#DD3300]/20 bg-white p-6">
-                  <p className="font-medium text-[#1F1D1A] mb-1">
-                    Retrieval unavailable
-                  </p>
-                  <p className="text-sm text-[#63534B] leading-6">
-                    {searchError}
-                  </p>
-                </div>
-              ) : null}
-
-              {!searchError && streamState === "insufficient_sources" ? (
-                <div className="rounded-2xl border border-[#D8D2C8] bg-[#F5F5F4] p-8 text-center">
-                  <h2 className="text-2xl font-serif text-[#1F1D1A] mb-3">
-                    {refusalDisplay.title}
-                  </h2>
-                  <p className="text-[#63534B] max-w-2xl mx-auto leading-7">
-                    {refusalDisplay.body || answerText}
-                  </p>
-                  <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                    {hasActiveDomainFilter &&
-                    refusalDisplay.kind === "insufficient-sources" ? (
-                      <Link
-                        href={buildAssistantHref(query)}
-                        className="inline-flex items-center rounded-full border border-[#DD3300]/20 bg-white px-4 py-2 text-sm font-medium text-[#DD3300] hover:border-[#DD3300]/40"
-                      >
-                        Search all domains
-                      </Link>
-                    ) : null}
-                    {refusalDisplay.suggestions.map((prompt) => (
-                      <Link
-                        key={`retry-${prompt}`}
-                        href={buildAssistantHref(prompt)}
-                        className="inline-flex items-center rounded-full border border-[#D8D2C8] bg-white px-4 py-2 text-sm text-[#63534B] hover:border-[#DD3300]/30 hover:text-[#1F1D1A]"
-                      >
-                        {prompt}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              {showAnswer ? (
-                <div className="space-y-3">
-                  <div className="rounded-2xl border border-[#D8D2C8] bg-[#F5F5F4] p-6">
-                    <div className="flex items-center justify-between gap-3 mb-4">
-                      <h3 className="text-xl font-serif text-[#1F1D1A]">
-                        Answer
-                      </h3>
-                      <Badge
-                        variant="outline"
-                        className={
-                          streamState === "grounded"
-                            ? "text-emerald-700 border-emerald-200 bg-emerald-50"
-                            : "text-[#63534B] border-[#D8D2C8] bg-white"
-                        }
-                      >
-                        {streamState === "grounded"
-                          ? "Source grounded"
-                          : "Streaming"}
-                      </Badge>
-                    </div>
-                    <p className="whitespace-pre-wrap text-sm leading-7 text-[#1F1D1A]">
-                      {answerText}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-serif text-[#1F1D1A]">
-                      Cited Sources
-                    </h3>
-                    <Badge
-                      variant="outline"
-                      className="text-[#63534B] border-[#D8D2C8] bg-[#F5F5F4]"
-                    >
-                      {sourceCount} citations
-                    </Badge>
-                  </div>
-
-                  <div className="space-y-4">
-                    {citations.map((citation) => {
-                      const citationTarget = citation.source_id || citation.id;
-                      const citationBody = (
-                        <>
-                          <div className="flex flex-wrap items-center gap-2 mb-3">
-                            <Badge
-                              variant="outline"
-                              className="border-[#D8D2C8] bg-[#F5F5F4] text-[#63534B]"
-                            >
-                              {citation.source_type === "case_law"
-                                ? "Case law"
-                                : "Legislation"}
-                            </Badge>
-                            <Badge
-                              variant="outline"
-                              className="border-[#D8D2C8] bg-[#EEEDE4] text-[#63534B]"
-                            >
-                              {getDomainLabel(citation.domain)}
-                            </Badge>
-                          </div>
-                          <p className="font-medium text-[#1F1D1A]">
-                            {citation.title ||
-                              citation.source_id ||
-                              citation.id}
-                          </p>
-                          <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#7C746B]">
-                            {[
-                              citation.source_id,
-                              citation.article
-                                ? `Art. ${citation.article}`
-                                : null,
-                              citation.court,
-                            ]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </p>
-                          <p className="mt-3 text-sm leading-7 text-[#63534B]">
-                            {citation.snippet}
-                          </p>
-                        </>
-                      );
-
-                      return citationTarget ? (
-                        <Link
-                          key={citation.id || citation.source_id}
-                          href={`/dashboard/documents/${encodeURIComponent(
-                            citationTarget,
-                          )}${citation.domain ? `?domain=${encodeURIComponent(citation.domain)}` : ""}`}
-                          className="block rounded-2xl border border-[#D8D2C8] bg-white p-5 hover:border-[#DD3300]/30 transition-colors"
-                        >
-                          {citationBody}
-                        </Link>
-                      ) : (
-                        <div
-                          key={citation.snippet}
-                          className="rounded-2xl border border-[#D8D2C8] bg-white p-5"
-                        >
-                          {citationBody}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          )}
+            )}
+          </div>
         </CardContent>
 
-        <div className="p-4 border-t border-[#D8D2C8] bg-[#F5F5F4] shrink-0">
+        <div className="shrink-0 border-t border-[#D8D2C8] bg-white p-4">
           <form
-            method="get"
-            className="max-w-4xl mx-auto relative flex items-end bg-white rounded-xl border border-[#D8D2C8] shadow-sm focus-within:border-[#DD3300] focus-within:ring-1 focus-within:ring-[#DD3300]/20 transition-all p-2"
+            onSubmit={handleSubmit}
+            className="mx-auto flex max-w-4xl items-end rounded-xl border border-[#D8D2C8] bg-white p-2 shadow-sm transition-all focus-within:border-[#DD3300] focus-within:ring-2 focus-within:ring-[#DD3300]/10"
           >
             <textarea
               name="q"
-              className="flex-1 max-h-32 min-h-[44px] bg-transparent border-none resize-none px-3 py-3 text-sm text-[#1F1D1A] placeholder:text-[#BDA989] focus:outline-none"
-              placeholder="Ask a Dutch legal question, for example: huurcontract opzegtermijn"
-              defaultValue={query}
+              className="min-h-[46px] flex-1 resize-none bg-transparent px-3 py-3 text-sm text-[#1F1D1A] placeholder:text-[#BDA989] focus:outline-none"
+              placeholder="Ask one Dutch legal question, for example: huurcontract opzegtermijn"
+              value={draftQuery}
+              onChange={(event) => setDraftQuery(event.target.value)}
               rows={1}
             />
 
             <select
               name="domain"
-              defaultValue={domain || ""}
-              className="h-[44px] rounded-lg border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-xs text-[#1F1D1A] focus:outline-none mr-2 hidden sm:block"
+              value={selectedDomain}
+              onChange={(event) => setSelectedDomain(event.target.value)}
+              className="mr-2 hidden h-[46px] rounded-lg border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-xs text-[#1F1D1A] transition-colors focus:border-[#DD3300]/50 focus:outline-none sm:block"
             >
               <option value="">All domains</option>
               {DOMAIN_OPTIONS.map((option) => (
@@ -622,16 +584,18 @@ export function AssistantStreamingPage({
             <Button
               type="submit"
               size="icon"
-              className="shrink-0 bg-[#DD3300] text-white hover:bg-[#DD3300]/90 rounded-lg ml-2 h-[44px] w-[44px]"
+              className="ml-2 h-[46px] w-[46px] shrink-0 rounded-lg bg-[#DD3300] text-white shadow-sm transition-all hover:bg-[#C22D00] hover:shadow-md disabled:opacity-50"
+              disabled={!draftQuery.trim()}
+              aria-label="Send question"
             >
-              <Send className="w-4 h-4" />
+              <Send className="h-4 w-4" />
             </Button>
           </form>
 
-          <div className="text-center mt-3 flex items-center justify-center space-x-2">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-center">
             <Badge
               variant="outline"
-              className="text-[10px] uppercase font-semibold text-[#BDA989] border-[#D8D2C8]"
+              className="border-[#D8D2C8] text-[10px] font-semibold uppercase text-[#BDA989]"
             >
               Context: Stored sources
             </Badge>
@@ -641,7 +605,225 @@ export function AssistantStreamingPage({
           </div>
         </div>
       </Card>
-      <span className="sr-only">{toolTrace.length} tool events inspected.</span>
+      <span className="sr-only">{totalToolEvents} tool events inspected.</span>
     </div>
+  );
+}
+
+function ConversationTurnView({ turn }: { turn: ConversationTurn }) {
+  const refusalDisplay = getRefusalDisplay(turn.query);
+  const domainsFound = getTurnDomains(turn);
+  const sourceCount = turn.sourceIds.length || turn.citations.length;
+  const showSources = turn.state === "grounded" && turn.citations.length > 0;
+  const loadingLabel = turn.answerText
+    ? "Checking citations..."
+    : "Researching sources...";
+
+  return (
+    <article className="space-y-4 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2">
+      <div className="flex items-start gap-3">
+        <div className="mt-1 hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#D8D2C8] bg-white sm:flex">
+          <UserCircle className="h-5 w-5 text-[#7C746B]" />
+        </div>
+        <div className="min-w-0 flex-1 rounded-lg border border-[#D8D2C8] bg-white px-5 py-4 shadow-sm">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
+              Question
+            </span>
+            <Badge
+              variant="outline"
+              className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+            >
+              {turn.domain ? getDomainLabel(turn.domain) : "All domains"}
+            </Badge>
+          </div>
+          <p className="whitespace-pre-wrap text-base leading-7 text-[#1F1D1A]">
+            {turn.query}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-3">
+        <div className="mt-1 hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#D8D2C8] bg-[#1F1D1A] sm:flex">
+          <Bot className="h-5 w-5 text-white" />
+        </div>
+        <div className="min-w-0 flex-1 space-y-4">
+          {turn.state === "error" ? (
+            <div className="rounded-lg border border-[#DD3300]/20 bg-white px-5 py-4 shadow-sm">
+              <p className="mb-1 font-medium text-[#1F1D1A]">
+                Retrieval unavailable
+              </p>
+              <p className="text-sm leading-6 text-[#63534B]">{turn.error}</p>
+            </div>
+          ) : null}
+
+          {turn.state === "streaming" ? (
+            <div className="rounded-lg border border-[#D8D2C8] bg-white px-5 py-4 shadow-sm">
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#63534B]">
+                <Loader2 className="h-4 w-4 text-[#DD3300] motion-safe:animate-spin" />
+                {loadingLabel}
+              </div>
+              {turn.answerText ? (
+                <p className="whitespace-pre-wrap text-sm leading-7 text-[#1F1D1A]">
+                  {turn.answerText}
+                </p>
+              ) : (
+                <div className="space-y-2" aria-hidden="true">
+                  <div className="h-3 w-2/3 rounded-full bg-[#EEEDE4] motion-safe:animate-pulse" />
+                  <div className="h-3 w-5/6 rounded-full bg-[#EEEDE4] motion-safe:animate-pulse" />
+                  <div className="h-3 w-1/2 rounded-full bg-[#EEEDE4] motion-safe:animate-pulse" />
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {turn.state === "insufficient_sources" ? (
+            <div className="rounded-lg border border-[#D8D2C8] bg-white px-5 py-5 text-left shadow-sm">
+              <Badge
+                variant="outline"
+                className="mb-3 border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+              >
+                {refusalDisplay.statusLabel}
+              </Badge>
+              <h2 className="mb-2 text-xl font-serif text-[#1F1D1A]">
+                {refusalDisplay.title}
+              </h2>
+              <p className="max-w-2xl text-sm leading-7 text-[#63534B]">
+                {refusalDisplay.body || turn.answerText}
+              </p>
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                {turn.domain &&
+                refusalDisplay.kind === "insufficient-sources" ? (
+                  <Link
+                    href={buildAssistantHref(turn.query)}
+                    className="inline-flex items-center rounded-full border border-[#DD3300]/20 bg-[#FFF8F5] px-4 py-2 text-sm font-medium text-[#DD3300] transition-colors hover:border-[#DD3300]/40"
+                  >
+                    Search all domains
+                  </Link>
+                ) : null}
+                {refusalDisplay.suggestions.map((prompt) => (
+                  <Link
+                    key={`retry-${turn.id}-${prompt}`}
+                    href={buildAssistantHref(prompt)}
+                    className="inline-flex items-center rounded-full border border-[#D8D2C8] bg-[#F8F6F1] px-4 py-2 text-sm text-[#63534B] transition-colors hover:border-[#DD3300]/30 hover:bg-white hover:text-[#1F1D1A]"
+                  >
+                    {prompt}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {turn.state === "grounded" ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-[#D8D2C8] bg-white px-5 py-5 shadow-sm">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <Badge
+                    variant="outline"
+                    className="border-emerald-200 bg-emerald-50 text-emerald-700"
+                  >
+                    <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                    Grounded answer
+                  </Badge>
+                  <p className="text-xs text-[#7C746B]">
+                    Domains surfaced:{" "}
+                    {domainsFound.length > 0
+                      ? domainsFound
+                          .map((item) => getDomainLabel(item))
+                          .join(", ")
+                      : "None"}
+                  </p>
+                </div>
+                <p className="whitespace-pre-wrap text-sm leading-7 text-[#1F1D1A]">
+                  {turn.answerText}
+                </p>
+              </div>
+
+              {showSources ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-base font-serif text-[#1F1D1A]">
+                      Cited sources
+                    </h3>
+                    <Badge
+                      variant="outline"
+                      className="border-[#D8D2C8] bg-white text-[#63534B]"
+                    >
+                      {sourceCount} citations
+                    </Badge>
+                  </div>
+
+                  <div className="grid gap-3">
+                    {turn.citations.map((citation, index) => {
+                      const citationTarget = citation.source_id || citation.id;
+                      const citationMeta = formatCitationMeta(citation);
+                      const citationBody = (
+                        <>
+                          <div className="mb-3 flex flex-wrap items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+                            >
+                              {citation.source_type === "case_law"
+                                ? "Case law"
+                                : "Legislation"}
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className="border-[#D8D2C8] bg-[#EEEDE4] text-[#63534B]"
+                            >
+                              {getDomainLabel(citation.domain)}
+                            </Badge>
+                          </div>
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-medium leading-6 text-[#1F1D1A]">
+                                {citation.title ||
+                                  citation.source_id ||
+                                  citation.id}
+                              </p>
+                              {citationMeta ? (
+                                <p className="mt-2 text-xs uppercase tracking-[0.14em] text-[#7C746B]">
+                                  {citationMeta}
+                                </p>
+                              ) : null}
+                            </div>
+                            {citationTarget ? (
+                              <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-[#BDA989] transition-colors group-hover:text-[#DD3300]" />
+                            ) : null}
+                          </div>
+                          <p className="mt-3 line-clamp-3 text-sm leading-6 text-[#63534B]">
+                            {citation.snippet}
+                          </p>
+                        </>
+                      );
+
+                      return citationTarget ? (
+                        <Link
+                          key={`${turn.id}-${citation.id || citation.source_id || index}`}
+                          href={`/dashboard/documents/${encodeURIComponent(
+                            citationTarget,
+                          )}${citation.domain ? `?domain=${encodeURIComponent(citation.domain)}` : ""}`}
+                          className="group block rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#DD3300]/30 hover:shadow-md motion-reduce:hover:translate-y-0"
+                        >
+                          {citationBody}
+                        </Link>
+                      ) : (
+                        <div
+                          key={`${turn.id}-${citation.snippet || index}`}
+                          className="rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm"
+                        >
+                          {citationBody}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </article>
   );
 }

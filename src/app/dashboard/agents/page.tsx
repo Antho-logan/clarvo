@@ -17,11 +17,5 @@ export default async function AssistantPage({
   const rawDomain = readSingleValue(params.domain) || "";
   const domain = isValidDomain(rawDomain) ? rawDomain : undefined;
 
-  return (
-    <AssistantStreamingPage
-      key={`${query}:${domain || "all"}`}
-      query={query}
-      domain={domain}
-    />
-  );
+  return <AssistantStreamingPage query={query} domain={domain} />;
 }
