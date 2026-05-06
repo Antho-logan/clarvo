@@ -15,6 +15,19 @@ from tools import CiteLookupTool, KnowledgeLookupTool
 
 LOGGER = get_logger("agentic_orchestrator")
 MIN_GROUNDED_SOURCES = 1
+MAX_LLM_SOURCES = 6
+MAX_CONTEXT_CHARS_PER_SOURCE = 1400
+MAX_EXTRACTIVE_SNIPPET_CHARS = 520
+UNSUPPORTED_QUESTION_PATTERNS = (
+    "belastingaangifte",
+    "duits arbeidsrecht",
+    "duitse arbeidsrecht",
+    "strafrecht",
+    "voorlopige hechtenis",
+    "advocaat vervangen",
+    "vervangt mijn advocaat",
+    "mijn advocaat vervangen",
+)
 
 
 def _source_label(hit: dict) -> str:
@@ -45,6 +58,25 @@ def _deduplicate_hits(hits: list[dict]) -> list[dict]:
     return list(merged.values())
 
 
+def _is_unsupported_question(question: str) -> bool:
+    normalized = compact_text(question).lower()
+    return any(pattern in normalized for pattern in UNSUPPORTED_QUESTION_PATTERNS)
+
+
+def _is_refusal_answer(answer: str) -> bool:
+    normalized = compact_text(answer).lower()
+    refusal_markers = (
+        "kan deze vraag niet betrouwbaar beantwoorden",
+        "kan ik deze vraag niet betrouwbaar beantwoorden",
+        "bronnen bevatten geen informatie",
+        "onvoldoende bronnen",
+        "niet ondersteund door de verstrekte bronnen",
+        "niet beantwoorden op basis van de verstrekte bronnen",
+        "niet betrouwbaar beantwoorden met de huidige opgeslagen bronnen",
+    )
+    return any(marker in normalized for marker in refusal_markers)
+
+
 def _refusal(question: str, hits: list[dict], tool_trace: list[dict]) -> dict:
     return {
         "status": "insufficient_sources",
@@ -54,7 +86,7 @@ def _refusal(question: str, hits: list[dict], tool_trace: list[dict]) -> dict:
         ),
         "question": question,
         "source_ids": [],
-        "citations": [_citation(hit) for hit in hits[:5]],
+        "citations": [],
         "tool_trace": tool_trace,
     }
 
@@ -68,7 +100,7 @@ def _extractive_answer(question: str, hits: list[dict]) -> str:
         label = _source_label(hit)
         article = hit.get("article")
         heading = hit.get("title") or hit.get("subject") or label
-        snippet = compact_text(hit.get("text") or "")[:520]
+        snippet = compact_text(hit.get("text") or "")[:MAX_EXTRACTIVE_SNIPPET_CHARS]
         prefix = f"{index}. {heading}"
         if article:
             prefix = f"{prefix}, artikel {article}"
@@ -88,9 +120,10 @@ def _llm_answer(question: str, hits: list[dict]) -> str:
 
     context_blocks = []
     allowed_labels = []
-    for hit in hits[:8]:
+    for hit in hits[:MAX_LLM_SOURCES]:
         label = _source_label(hit)
         allowed_labels.append(label)
+        source_text = compact_text(hit.get("text") or "")[:MAX_CONTEXT_CHARS_PER_SOURCE]
         context_blocks.append(
             "\n".join(
                 [
@@ -102,7 +135,7 @@ def _llm_answer(question: str, hits: list[dict]) -> str:
                     f"Section: {hit.get('section')}",
                     f"Court: {hit.get('court')}",
                     f"Decision date: {hit.get('decision_date')}",
-                    f"Text: {hit.get('text')}",
+                    f"Text: {source_text}",
                 ]
             )
         )
@@ -128,11 +161,13 @@ def generate_answer(question: str, collected_hits: list[dict]) -> dict:
     hits = _deduplicate_hits(collected_hits)
     if len(hits) < MIN_GROUNDED_SOURCES:
         return _refusal(question, hits, [])
-
     if os.getenv("OPENAI_API_KEY"):
         answer = _llm_answer(question, hits)
     else:
         answer = _extractive_answer(question, hits)
+
+    if _is_refusal_answer(answer):
+        return _refusal(question, [], [])
 
     cited_labels = {_source_label(hit) for hit in hits}
     if not any(f"[{label}]" in answer for label in cited_labels):
@@ -150,6 +185,11 @@ def generate_answer(question: str, collected_hits: list[dict]) -> dict:
 def chat(question: str, max_iterations: int = 2, domain: str | None = None) -> dict:
     """Run a minimal source-backed assistant lookup."""
     tool_trace: list[dict] = []
+
+    if domain is None and _is_unsupported_question(question):
+        final = _refusal(question, [], tool_trace)
+        LOGGER.info("assistant status=%s sources=%s", final["status"], len(final.get("citations", [])))
+        return final
 
     exact_identifier = next(
         (part.strip(".,;:()[]") for part in question.split() if part.startswith(("ECLI:", "BWBR"))),
