@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional
+from typing import Any, Optional
 
 import json
 import time
@@ -39,12 +39,14 @@ from repositories.legal_documents import (
 )
 from repositories.matters import (
     MatterInput,
+    ResearchNoteInput,
     create_matter,
     delete_matter,
     get_matter,
     link_document,
     link_run,
     list_matters,
+    save_research_note,
     update_matter,
 )
 from repositories.user_settings import get_or_create_settings, update_settings
@@ -121,6 +123,18 @@ class MatterLinkRunRequest(BaseModel):
 
     run_id: str
     run_type: Optional[str] = None
+
+
+class MatterResearchNoteRequest(BaseModel):
+    """Request body for saving a grounded assistant answer to a matter."""
+
+    matter_id: Optional[str] = None
+    question: str
+    answer: str
+    status: str
+    citations: list[dict[str, Any]]
+    source_ids: list[str] = []
+    domains: list[str] = []
 
 
 class SettingsRequest(BaseModel):
@@ -385,6 +399,32 @@ def post_matter(
         ),
     )
     return {"matter": matter.as_dict()}
+
+
+@app.post("/matters/research-notes")
+def post_matter_research_note(
+    request: MatterResearchNoteRequest,
+    user: AuthenticatedUser = Depends(get_current_user),
+) -> dict:
+    """Save a grounded assistant research note to a matter."""
+    try:
+        matter, note = save_research_note(
+            user_id=user.user_id,
+            values=ResearchNoteInput(
+                matter_id=request.matter_id,
+                question=request.question,
+                answer=request.answer,
+                status=request.status,
+                citations=request.citations,
+                source_ids=request.source_ids,
+                domains=request.domains,
+            ),
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"matter": matter.as_dict(), "note": note}
 
 
 @app.get("/matters/{matter_id}")

@@ -156,6 +156,21 @@ export type Matter = {
   updated_at: string;
 };
 
+export type MatterResearchNote = {
+  id: string;
+  type: "assistant_research_note";
+  matter_id: string;
+  matter_title: string;
+  question: string;
+  answer: string;
+  status: string;
+  source_ids: string[];
+  citations: AssistantCitation[];
+  citation_count: number;
+  domains: string[];
+  created_at: string;
+};
+
 export type MattersResponse = {
   count: number;
   matters: Matter[];

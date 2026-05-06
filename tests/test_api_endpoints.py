@@ -298,6 +298,70 @@ def test_link_document_and_run(
     assert missing.status_code == 404
 
 
+def test_save_research_note_persists_on_default_matter(
+    api_client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = api_client.post(
+        "/matters/research-notes",
+        headers=auth_headers,
+        json={
+            "question": "Wat geldt bij opzegging van huur van woonruimte?",
+            "answer": "Brononderbouwd antwoord.",
+            "status": "grounded",
+            "source_ids": ["BWBR0005290"],
+            "domains": ["tenancy_law"],
+            "citations": [
+                {
+                    "id": "doc-1",
+                    "source_id": "BWBR0005290",
+                    "source_type": "legislation",
+                    "domain": "tenancy_law",
+                    "title": "BW Boek 7",
+                    "article": "7:271",
+                    "section": None,
+                    "court": None,
+                    "decision_date": None,
+                    "source_url": None,
+                    "snippet": "Opzegging huur.",
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["matter"]["title"] == "Demo Matter"
+    assert body["note"]["citation_count"] == 1
+    assert body["note"]["citations"][0]["source_id"] == "BWBR0005290"
+
+    listed = api_client.get("/matters", headers=auth_headers)
+    assert listed.status_code == 200
+    matter = listed.json()["matters"][0]
+    research_notes = matter["tags"]["research_notes"]
+    assert research_notes[0]["question"] == "Wat geldt bij opzegging van huur van woonruimte?"
+    assert research_notes[0]["answer"] == "Brononderbouwd antwoord."
+    assert research_notes[0]["citations"][0]["article"] == "7:271"
+
+
+def test_save_research_note_rejects_refusal(
+    api_client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = api_client.post(
+        "/matters/research-notes",
+        headers=auth_headers,
+        json={
+            "question": "Kun je mijn volledige belastingaangifte doen?",
+            "answer": "Outside current coverage.",
+            "status": "insufficient_sources",
+            "source_ids": [],
+            "domains": [],
+            "citations": [],
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_settings_get_and_patch(
     api_client: TestClient, auth_headers: dict[str, str], ensure_user
 ) -> None:

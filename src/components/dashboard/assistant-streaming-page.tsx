@@ -68,6 +68,8 @@ type ConversationTurn = {
   sourceIds: string[];
   toolTrace: Array<Record<string, unknown>>;
   error?: string;
+  saveState?: "saving" | "saved" | "error";
+  saveMessage?: string;
 };
 
 type AssistantStreamEvent =
@@ -241,11 +243,37 @@ function formatCitationMeta(citation: AssistantCitation) {
 function getTurnDomains(turn: ConversationTurn) {
   return Array.from(
     new Set(
-      turn.citations
-        .map((item) => item.domain)
-        .filter((item): item is string => Boolean(item)),
+      [
+        turn.domain,
+        ...turn.citations
+          .map((item) => item.domain)
+          .filter((item): item is string => Boolean(item)),
+      ].filter((item): item is string => Boolean(item)),
     ),
   );
+}
+
+async function readSaveError(response: Response) {
+  const body = await response.text();
+  if (!body) {
+    return response.statusText || "Save failed.";
+  }
+
+  try {
+    const parsed = JSON.parse(body) as unknown;
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "detail" in parsed &&
+      typeof parsed.detail === "string"
+    ) {
+      return parsed.detail;
+    }
+  } catch {
+    return body;
+  }
+
+  return response.statusText || "Save failed.";
 }
 
 export function AssistantStreamingPage({
@@ -432,6 +460,65 @@ export function AssistantStreamingPage({
     [updateTurn],
   );
 
+  const saveTurnToMatter = useCallback(
+    async (turn: ConversationTurn) => {
+      if (turn.state !== "grounded" || turn.citations.length === 0) {
+        updateTurn(turn.id, (current) => ({
+          ...current,
+          saveState: "error",
+          saveMessage: "Only grounded answers with citations can be saved.",
+        }));
+        return;
+      }
+
+      updateTurn(turn.id, (current) => ({
+        ...current,
+        saveState: "saving",
+        saveMessage: undefined,
+      }));
+
+      try {
+        const response = await fetch("/api/matters/research-notes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question: turn.query,
+            answer: turn.answerText,
+            status: turn.state,
+            citations: turn.citations,
+            source_ids: turn.sourceIds,
+            domains: getTurnDomains(turn),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(await readSaveError(response));
+        }
+
+        const body = (await response.json()) as {
+          matter?: { title?: string };
+        };
+        updateTurn(turn.id, (current) => ({
+          ...current,
+          saveState: "saved",
+          saveMessage: `Saved to ${body.matter?.title || "matter"}.`,
+        }));
+      } catch (error) {
+        updateTurn(turn.id, (current) => ({
+          ...current,
+          saveState: "error",
+          saveMessage:
+            error instanceof Error
+              ? error.message
+              : "The research note could not be saved.",
+        }));
+      }
+    },
+    [updateTurn],
+  );
+
   useEffect(() => {
     setDraftQuery(query);
     setSelectedDomain(domain || "");
@@ -546,7 +633,11 @@ export function AssistantStreamingPage({
             ) : (
               <div className="space-y-8">
                 {turns.map((turn) => (
-                  <ConversationTurnView key={turn.id} turn={turn} />
+                  <ConversationTurnView
+                    key={turn.id}
+                    turn={turn}
+                    onSave={saveTurnToMatter}
+                  />
                 ))}
               </div>
             )}
@@ -610,7 +701,13 @@ export function AssistantStreamingPage({
   );
 }
 
-function ConversationTurnView({ turn }: { turn: ConversationTurn }) {
+function ConversationTurnView({
+  turn,
+  onSave,
+}: {
+  turn: ConversationTurn;
+  onSave: (turn: ConversationTurn) => void;
+}) {
   const refusalDisplay = getRefusalDisplay(turn.query);
   const domainsFound = getTurnDomains(turn);
   const sourceCount = turn.sourceIds.length || turn.citations.length;
@@ -737,6 +834,34 @@ function ConversationTurnView({ turn }: { turn: ConversationTurn }) {
                 <p className="whitespace-pre-wrap text-sm leading-7 text-[#1F1D1A]">
                   {turn.answerText}
                 </p>
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#EEEDE4] pt-4">
+                  <div aria-live="polite" className="text-sm text-[#63534B]">
+                    {turn.saveState === "saved" ? (
+                      <span className="text-emerald-700">
+                        {turn.saveMessage}
+                      </span>
+                    ) : null}
+                    {turn.saveState === "error" ? (
+                      <span className="text-[#8A2408]">
+                        {turn.saveMessage}
+                      </span>
+                    ) : null}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-[#D8D2C8] bg-white text-[#1F1D1A] hover:border-[#DD3300]/30 hover:bg-[#FFF8F5]"
+                    disabled={turn.saveState === "saving" || turn.saveState === "saved"}
+                    onClick={() => onSave(turn)}
+                  >
+                    <Briefcase className="mr-2 h-4 w-4 text-[#DD3300]" />
+                    {turn.saveState === "saving"
+                      ? "Saving..."
+                      : turn.saveState === "saved"
+                        ? "Saved to Matter"
+                        : "Save to Matter"}
+                  </Button>
+                </div>
               </div>
 
               {showSources ? (

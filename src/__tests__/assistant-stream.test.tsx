@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AssistantStreamingPage } from "@/components/dashboard/assistant-streaming-page";
@@ -134,6 +134,123 @@ describe("assistant streaming page", () => {
     expect(screen.getAllByText("ontslag op staande voet").length).toBeGreaterThan(
       0,
     );
+  });
+
+  it("saves grounded answers to a matter with citation payload", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          createAssistantStream([
+            { type: "token", content: "Antwoord huur." },
+            {
+              type: "citation",
+              citation: {
+                id: "doc-1",
+                source_type: "legislation",
+                source_id: "BWBR0005290",
+                domain: "tenancy_law",
+                title: "BW Boek 7",
+                article: "7:271",
+                section: null,
+                court: null,
+                decision_date: null,
+                source_url: null,
+                snippet: "Opzegging huur.",
+              },
+            },
+            {
+              type: "done",
+              status: "grounded",
+              source_ids: ["BWBR0005290"],
+              tool_trace: [],
+            },
+          ]),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ matter: { title: "Demo Matter" } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <AssistantStreamingPage query="huur opzegging" domain="tenancy_law" />,
+    );
+
+    expect(await screen.findByText("Antwoord huur.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save to Matter" }));
+
+    expect(await screen.findByText("Saved to Demo Matter.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Saved to Matter" }),
+    ).toBeDisabled();
+
+    const saveCall = fetchMock.mock.calls[1];
+    expect(saveCall[0]).toBe("/api/matters/research-notes");
+    const payload = JSON.parse(String(saveCall[1]?.body));
+    expect(payload.question).toBe("huur opzegging");
+    expect(payload.status).toBe("grounded");
+    expect(payload.citations[0].source_id).toBe("BWBR0005290");
+    expect(payload.domains).toEqual(["tenancy_law"]);
+  });
+
+  it("does not show save success when matter persistence fails", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          createAssistantStream([
+            { type: "token", content: "Antwoord huur." },
+            {
+              type: "citation",
+              citation: {
+                id: "doc-1",
+                source_type: "legislation",
+                source_id: "BWBR0005290",
+                domain: "tenancy_law",
+                title: "BW Boek 7",
+                article: "7:271",
+                section: null,
+                court: null,
+                decision_date: null,
+                source_url: null,
+                snippet: "Opzegging huur.",
+              },
+            },
+            {
+              type: "done",
+              status: "grounded",
+              source_ids: ["BWBR0005290"],
+              tool_trace: [],
+            },
+          ]),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ detail: "Matter save failed." }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <AssistantStreamingPage query="huur opzegging" domain="tenancy_law" />,
+    );
+
+    expect(await screen.findByText("Antwoord huur.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save to Matter" }));
+
+    expect(await screen.findByText("Matter save failed.")).toBeInTheDocument();
+    expect(screen.queryByText("Saved to Demo Matter.")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Save to Matter" }),
+    ).not.toBeDisabled();
   });
 
   it("explains mixed multi-question refusals", async () => {

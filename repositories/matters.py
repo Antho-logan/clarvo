@@ -8,14 +8,18 @@ from datetime import date
 from typing import Any, Optional
 
 from sqlalchemy import or_
+from sqlalchemy.orm import Session
 
 from backend_common import (
     Matter,
     MatterAgentRun,
     MatterDocument,
+    User,
     get_session_factory,
     utcnow,
 )
+
+DEFAULT_RESEARCH_MATTER_TITLE = "Demo Matter"
 
 
 @dataclass(frozen=True)
@@ -30,6 +34,25 @@ class MatterInput:
     rechtsgebied: Optional[str] = None
     description: Optional[str] = None
     tags: Optional[dict[str, Any]] = None
+
+
+@dataclass(frozen=True)
+class ResearchNoteInput:
+    """Validated assistant research note fields accepted by matter writes."""
+
+    question: str
+    answer: str
+    status: str
+    citations: list[dict[str, Any]]
+    source_ids: list[str]
+    domains: list[str]
+    matter_id: Optional[str] = None
+
+
+def _ensure_user_row(session: Session, user_id: str) -> None:
+    """Create a minimal user row for API-issued identities when needed."""
+    if session.get(User, user_id) is None:
+        session.add(User(id=user_id))
 
 
 def list_matters(
@@ -75,6 +98,7 @@ def create_matter(*, user_id: str, values: MatterInput) -> Matter:
     """Create a new matter for one user."""
     session_factory = get_session_factory()
     with session_factory() as session:
+        _ensure_user_row(session, user_id)
         matter = Matter(
             user_id=user_id,
             title=values.title,
@@ -90,6 +114,85 @@ def create_matter(*, user_id: str, values: MatterInput) -> Matter:
         session.commit()
         session.refresh(matter)
         return matter
+
+
+def save_research_note(
+    *, user_id: str, values: ResearchNoteInput
+) -> tuple[Matter, dict[str, Any]]:
+    """Persist a grounded assistant research note on a user matter."""
+    if values.status != "grounded":
+        raise ValueError("Only grounded assistant answers can be saved to a matter.")
+    if not values.question.strip():
+        raise ValueError("Research note question is required.")
+    if not values.answer.strip():
+        raise ValueError("Research note answer is required.")
+    if not values.citations:
+        raise ValueError("Grounded research notes require at least one citation.")
+
+    parsed_matter_id = uuid.UUID(values.matter_id) if values.matter_id else None
+    created_at = utcnow().isoformat()
+    note_id = str(uuid.uuid4())
+
+    session_factory = get_session_factory()
+    with session_factory() as session:
+        _ensure_user_row(session, user_id)
+
+        if parsed_matter_id:
+            matter = (
+                session.query(Matter)
+                .filter(Matter.user_id == user_id, Matter.id == parsed_matter_id)
+                .one_or_none()
+            )
+            if matter is None:
+                raise LookupError(f"Matter {values.matter_id} was not found.")
+        else:
+            matter = (
+                session.query(Matter)
+                .filter(
+                    Matter.user_id == user_id,
+                    Matter.title == DEFAULT_RESEARCH_MATTER_TITLE,
+                    Matter.status != "archived",
+                )
+                .order_by(Matter.created_at.asc())
+                .first()
+            )
+            if matter is None:
+                matter = Matter(
+                    user_id=user_id,
+                    title=DEFAULT_RESEARCH_MATTER_TITLE,
+                    client="Veridicta demo",
+                    status="active",
+                    opened_at=utcnow().date(),
+                    rechtsgebied=values.domains[0] if values.domains else None,
+                    description="Saved assistant research notes.",
+                    tags={},
+                )
+                session.add(matter)
+                session.flush()
+
+        note = {
+            "id": note_id,
+            "type": "assistant_research_note",
+            "matter_id": str(matter.id),
+            "matter_title": matter.title,
+            "question": values.question.strip(),
+            "answer": values.answer.strip(),
+            "status": values.status,
+            "source_ids": values.source_ids,
+            "citations": values.citations,
+            "citation_count": len(values.citations),
+            "domains": values.domains,
+            "created_at": created_at,
+        }
+        tags = dict(matter.tags or {})
+        research_notes = list(tags.get("research_notes") or [])
+        research_notes.insert(0, note)
+        tags["research_notes"] = research_notes
+        matter.tags = tags
+        matter.updated_at = utcnow()
+        session.commit()
+        session.refresh(matter)
+        return matter, note
 
 
 def update_matter(*, user_id: str, matter_id: str, values: dict[str, Any]) -> Matter:

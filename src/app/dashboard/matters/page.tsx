@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ApiError, getMatters } from "@/lib/api/client";
 import { getDomainLabel, isValidDomain } from "@/lib/legal-display";
-import { DOMAIN_OPTIONS } from "@/lib/types";
+import { DOMAIN_OPTIONS, type Matter, type MatterResearchNote } from "@/lib/types";
 
 type MattersPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -15,6 +15,47 @@ type MattersPageProps = {
 
 function readSingleValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function isResearchNote(value: unknown): value is MatterResearchNote {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    value.type === "assistant_research_note" &&
+    "question" in value &&
+    typeof value.question === "string" &&
+    "answer" in value &&
+    typeof value.answer === "string" &&
+    "citations" in value &&
+    Array.isArray(value.citations) &&
+    "domains" in value &&
+    Array.isArray(value.domains) &&
+    "citation_count" in value &&
+    typeof value.citation_count === "number"
+  );
+}
+
+function getResearchNotes(matter: Matter) {
+  const notes = matter.tags.research_notes;
+  if (!Array.isArray(notes)) {
+    return [];
+  }
+  return notes.filter(isResearchNote);
+}
+
+function formatSavedAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Saved date unknown";
+  }
+  return date.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export default async function MattersPage({ searchParams }: MattersPageProps) {
@@ -34,6 +75,7 @@ export default async function MattersPage({ searchParams }: MattersPageProps) {
   }));
   const matters = "matters" in mattersResult ? mattersResult.matters : [];
   const selectedMatter = matters.find((matter) => matter.id === selectedMatterId) || matters[0];
+  const selectedResearchNotes = selectedMatter ? getResearchNotes(selectedMatter) : [];
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-12">
@@ -91,26 +133,7 @@ export default async function MattersPage({ searchParams }: MattersPageProps) {
 
           <div className="space-y-4">
             {matters.map((matter) => (
-              <a
-                key={matter.id}
-                href={`/dashboard/matters?matter=${matter.id}`}
-                className="block rounded-xl border border-[#D8D2C8] bg-white p-5 shadow-sm transition hover:border-[#DD3300]/40"
-              >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <h2 className="font-serif text-xl text-[#1F1D1A]">{matter.title}</h2>
-                    <p className="mt-1 text-sm text-[#63534B]">
-                      {matter.client || "Client not set"} · {getDomainLabel(matter.rechtsgebied)}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="w-fit border-[#D8D2C8] text-[#63534B]">
-                    {matter.status}
-                  </Badge>
-                </div>
-                <p className="mt-4 line-clamp-2 text-sm leading-6 text-[#63534B]">
-                  {matter.description || "No notes have been added yet."}
-                </p>
-              </a>
+              <MatterListCard key={matter.id} matter={matter} />
             ))}
             {matters.length === 0 ? (
               <Card className="border-dashed border-[#D8D2C8] bg-white">
@@ -157,6 +180,78 @@ export default async function MattersPage({ searchParams }: MattersPageProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
+                {selectedResearchNotes.length > 0 ? (
+                  <section className="space-y-3">
+                    <div>
+                      <h3 className="font-serif text-lg text-[#1F1D1A]">
+                        Saved Research
+                      </h3>
+                      <p className="text-sm text-[#63534B]">
+                        Assistant answers saved with citation metadata.
+                      </p>
+                    </div>
+                    {selectedResearchNotes.map((note) => (
+                      <article
+                        key={note.id}
+                        className="rounded-lg border border-[#D8D2C8] bg-[#F8F6F1] p-4"
+                      >
+                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-200 bg-emerald-50 text-emerald-700"
+                          >
+                            {note.status}
+                          </Badge>
+                          <span className="text-xs text-[#7C746B]">
+                            {formatSavedAt(note.created_at)}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium leading-6 text-[#1F1D1A]">
+                          {note.question}
+                        </p>
+                        <p className="mt-2 line-clamp-4 text-sm leading-6 text-[#63534B]">
+                          {note.answer}
+                        </p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#7C746B]">
+                          <Badge
+                            variant="outline"
+                            className="border-[#D8D2C8] bg-white text-[#63534B]"
+                          >
+                            {note.citation_count} citations
+                          </Badge>
+                          {note.domains.map((domain) => (
+                            <Badge
+                              key={`${note.id}-${domain}`}
+                              variant="outline"
+                              className="border-[#D8D2C8] bg-white text-[#63534B]"
+                            >
+                              {getDomainLabel(domain)}
+                            </Badge>
+                          ))}
+                        </div>
+                        {note.citations.length > 0 ? (
+                          <div className="mt-3 space-y-1 border-t border-[#D8D2C8] pt-3">
+                            {note.citations.slice(0, 3).map((citation, index) => (
+                              <p
+                                key={`${note.id}-${citation.id || citation.source_id || index}`}
+                                className="truncate text-xs text-[#7C746B]"
+                              >
+                                {[
+                                  citation.source_id,
+                                  citation.article ? `Art. ${citation.article}` : null,
+                                  citation.court,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ") || citation.title || "Saved source"}
+                              </p>
+                            ))}
+                          </div>
+                        ) : null}
+                      </article>
+                    ))}
+                  </section>
+                ) : null}
+
                 <form action={updateMatterAction} className="space-y-4">
                   <input type="hidden" name="matter_id" value={selectedMatter.id} />
                   <Input name="title" defaultValue={selectedMatter.title} required />
@@ -191,5 +286,44 @@ export default async function MattersPage({ searchParams }: MattersPageProps) {
         </aside>
       </div>
     </div>
+  );
+}
+
+function MatterListCard({ matter }: { matter: Matter }) {
+  const researchNotes = getResearchNotes(matter);
+  const latestNote = researchNotes[0];
+
+  return (
+    <a
+      href={`/dashboard/matters?matter=${matter.id}`}
+      className="block rounded-xl border border-[#D8D2C8] bg-white p-5 shadow-sm transition hover:border-[#DD3300]/40"
+    >
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 className="font-serif text-xl text-[#1F1D1A]">{matter.title}</h2>
+          <p className="mt-1 text-sm text-[#63534B]">
+            {matter.client || "Client not set"} · {getDomainLabel(matter.rechtsgebied)}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {researchNotes.length > 0 ? (
+            <Badge variant="outline" className="w-fit border-[#D8D2C8] text-[#63534B]">
+              {researchNotes.length} saved research
+            </Badge>
+          ) : null}
+          <Badge variant="outline" className="w-fit border-[#D8D2C8] text-[#63534B]">
+            {matter.status}
+          </Badge>
+        </div>
+      </div>
+      <p className="mt-4 line-clamp-2 text-sm leading-6 text-[#63534B]">
+        {latestNote?.question || matter.description || "No notes have been added yet."}
+      </p>
+      {latestNote ? (
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#7C746B]">
+          {latestNote.answer}
+        </p>
+      ) : null}
+    </a>
   );
 }

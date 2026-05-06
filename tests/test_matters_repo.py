@@ -9,12 +9,14 @@ import pytest
 
 from repositories.matters import (
     MatterInput,
+    ResearchNoteInput,
     create_matter,
     delete_matter,
     get_matter,
     link_document,
     link_run,
     list_matters,
+    save_research_note,
     update_matter,
 )
 from repositories.user_settings import get_or_create_settings, update_settings
@@ -121,6 +123,62 @@ def test_link_document_and_link_run_succeed(ensure_user, db_session) -> None:
     ).fetchall()
     assert run_rows[0].run_id == "run-42"
     assert run_rows[0].run_type == "agent"
+
+
+def test_save_research_note_creates_default_matter_and_preserves_citations(db_engine) -> None:
+    user_id = "dev-bypass-user"
+
+    matter, note = save_research_note(
+        user_id=user_id,
+        values=ResearchNoteInput(
+            question="Wat geldt bij opzegging van huur van woonruimte?",
+            answer="Brononderbouwd antwoord.",
+            status="grounded",
+            source_ids=["BWBR0005290"],
+            domains=["tenancy_law"],
+            citations=[
+                {
+                    "id": "doc-1",
+                    "source_id": "BWBR0005290",
+                    "source_type": "legislation",
+                    "domain": "tenancy_law",
+                    "title": "BW Boek 7",
+                    "article": "7:271",
+                    "court": None,
+                    "snippet": "Opzegging huur.",
+                }
+            ],
+        ),
+    )
+
+    assert matter.title == "Demo Matter"
+    assert note["matter_id"] == str(matter.id)
+    assert note["matter_title"] == "Demo Matter"
+    assert note["citation_count"] == 1
+    assert note["citations"][0]["source_id"] == "BWBR0005290"
+
+    listed = list_matters(user_id=user_id)
+    assert [item.title for item in listed] == ["Demo Matter"]
+    research_notes = listed[0].tags["research_notes"]
+    assert research_notes[0]["question"] == "Wat geldt bij opzegging van huur van woonruimte?"
+    assert research_notes[0]["citations"][0]["article"] == "7:271"
+
+
+def test_save_research_note_rejects_ungrounded_answers(ensure_user) -> None:
+    user_id = ensure_user("research-refusal-user", "research-refusal@example.com")
+
+    with pytest.raises(ValueError, match="Only grounded"):
+        save_research_note(
+            user_id=user_id,
+            values=ResearchNoteInput(
+                question="Kun je mijn volledige belastingaangifte doen?",
+                answer="Outside current coverage.",
+                status="insufficient_sources",
+                source_ids=[],
+                domains=[],
+                citations=[],
+            ),
+        )
 
 
 def test_get_or_create_settings_initializes_defaults(ensure_user) -> None:
