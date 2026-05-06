@@ -6,6 +6,20 @@ import { AssistantStreamingPage } from "@/components/dashboard/assistant-streami
 describe("assistant streaming page", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    delete (
+      window as Window &
+        typeof globalThis & {
+          SpeechRecognition?: unknown;
+          webkitSpeechRecognition?: unknown;
+        }
+    ).SpeechRecognition;
+    delete (
+      window as Window &
+        typeof globalThis & {
+          SpeechRecognition?: unknown;
+          webkitSpeechRecognition?: unknown;
+        }
+    ).webkitSpeechRecognition;
   });
 
   function createAssistantStream(events: Array<Record<string, unknown>>) {
@@ -28,6 +42,144 @@ describe("assistant streaming page", () => {
       vi.fn(async () => new Response(createAssistantStream(events), { status: 200 })),
     );
   }
+
+  function installMockSpeechRecognition() {
+    const instances: Array<{
+      lang: string;
+      continuous: boolean;
+      interimResults: boolean;
+      maxAlternatives?: number;
+      start: ReturnType<typeof vi.fn>;
+      stop: ReturnType<typeof vi.fn>;
+      abort: ReturnType<typeof vi.fn>;
+      onstart: (() => void) | null;
+      onend: (() => void) | null;
+      onresult: ((event: Record<string, unknown>) => void) | null;
+      onerror: ((event: Record<string, unknown>) => void) | null;
+    }> = [];
+
+    class MockSpeechRecognition {
+      lang = "";
+      continuous = true;
+      interimResults = false;
+      maxAlternatives?: number;
+      onstart: (() => void) | null = null;
+      onend: (() => void) | null = null;
+      onresult: ((event: Record<string, unknown>) => void) | null = null;
+      onerror: ((event: Record<string, unknown>) => void) | null = null;
+      start = vi.fn(() => this.onstart?.());
+      stop = vi.fn(() => this.onend?.());
+      abort = vi.fn();
+
+      constructor() {
+        instances.push(this);
+      }
+    }
+
+    Object.defineProperty(window, "SpeechRecognition", {
+      configurable: true,
+      value: MockSpeechRecognition,
+    });
+
+    return instances;
+  }
+
+  function speechResult(transcript: string) {
+    const result = {
+      isFinal: true,
+      0: { transcript },
+      length: 1,
+      item: () => ({ transcript }),
+    };
+    return {
+      resultIndex: 0,
+      results: {
+        0: result,
+        length: 1,
+        item: () => result,
+      },
+    };
+  }
+
+  it("renders microphone fallback without crashing in unsupported browsers", async () => {
+    render(<AssistantStreamingPage query="" domain={undefined} />);
+
+    const micButton = await screen.findByRole("button", {
+      name: "Voice input not supported",
+    });
+
+    expect(micButton).toBeDisabled();
+    expect(micButton).toHaveAttribute(
+      "title",
+      "Voice input is not supported in this browser yet. Type your question instead.",
+    );
+    expect(
+      screen.getByText(/Voice input is transcribed locally by the browser/i),
+    ).toBeInTheDocument();
+  });
+
+  it("fills the assistant input from a mocked Dutch voice transcript", async () => {
+    const instances = installMockSpeechRecognition();
+
+    render(<AssistantStreamingPage query="" domain={undefined} />);
+
+    const micButton = await screen.findByRole("button", {
+      name: "Start voice input",
+    });
+    fireEvent.click(micButton);
+
+    expect(instances[0].lang).toBe("nl-NL");
+    expect(instances[0].interimResults).toBe(true);
+    expect(await screen.findByText("Listening...")).toBeInTheDocument();
+
+    act(() => {
+      instances[0].onresult?.(
+        speechResult("Wat geldt bij opzegging van huur van woonruimte?"),
+      );
+      instances[0].onend?.();
+    });
+
+    expect(screen.getByRole("textbox")).toHaveValue(
+      "Wat geldt bij opzegging van huur van woonruimte?",
+    );
+  });
+
+  it("still submits typed questions through the normal assistant path", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          createAssistantStream([
+            { type: "token", content: "Typed antwoord." },
+            {
+              type: "done",
+              status: "grounded",
+              source_ids: [],
+              tool_trace: [],
+            },
+          ]),
+          { status: 200 },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AssistantStreamingPage query="" domain={undefined} />);
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Wanneer is ontslag op staande voet geldig?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send question" }));
+
+    expect(await screen.findByText("Typed antwoord.")).toBeInTheDocument();
+    const [, requestInit] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    const payload = JSON.parse(String(requestInit.body));
+    expect(payload.question).toBe(
+      "Wanneer is ontslag op staande voet geldig?",
+    );
+    expect(payload.max_iterations).toBe(2);
+  });
 
   it("renders streamed tokens before the final done event", async () => {
     const encoder = new TextEncoder();

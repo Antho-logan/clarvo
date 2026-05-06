@@ -16,6 +16,8 @@ import {
   ExternalLink,
   FileText,
   Loader2,
+  Mic,
+  MicOff,
   Scale,
   Send,
   Sparkles,
@@ -89,6 +91,54 @@ type AssistantStreamEvent =
       citations: AssistantCitation[];
       tool_trace: Array<Record<string, unknown>>;
     };
+
+type SpeechStatus = "idle" | "listening" | "transcribing" | "error";
+
+type SpeechRecognitionAlternativeLike = {
+  transcript: string;
+};
+
+type SpeechRecognitionResultLike = {
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternativeLike;
+  [index: number]: SpeechRecognitionAlternativeLike;
+};
+
+type SpeechRecognitionEventLike = {
+  resultIndex: number;
+  results: {
+    length: number;
+    item(index: number): SpeechRecognitionResultLike;
+    [index: number]: SpeechRecognitionResultLike;
+  };
+};
+
+type SpeechRecognitionErrorEventLike = {
+  error?: string;
+};
+
+type SpeechRecognitionLike = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives?: number;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
+type SpeechRecognitionWindow = Window &
+  typeof globalThis & {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  };
 
 const ADMINISTRATIVE_LAW_INSUFFICIENT_MESSAGE =
   "Veridicta does not yet have enough administrative-law sources to answer this reliably.";
@@ -276,6 +326,19 @@ async function readSaveError(response: Response) {
   return response.statusText || "Save failed.";
 }
 
+function getSpeechRecognitionConstructor() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const speechWindow = window as SpeechRecognitionWindow;
+  return (
+    speechWindow.SpeechRecognition ||
+    speechWindow.webkitSpeechRecognition ||
+    null
+  );
+}
+
 export function AssistantStreamingPage({
   query,
   domain,
@@ -283,8 +346,12 @@ export function AssistantStreamingPage({
   const [turns, setTurns] = useState<ConversationTurn[]>([]);
   const [draftQuery, setDraftQuery] = useState(query);
   const [selectedDomain, setSelectedDomain] = useState(domain || "");
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [speechStatus, setSpeechStatus] = useState<SpeechStatus>("idle");
+  const [speechMessage, setSpeechMessage] = useState<string | null>(null);
   const startedUrlQueryRef = useRef("");
   const abortControllersRef = useRef<Set<AbortController>>(new Set());
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   const updateTurn = useCallback(
     (
@@ -520,6 +587,10 @@ export function AssistantStreamingPage({
   );
 
   useEffect(() => {
+    setSpeechSupported(Boolean(getSpeechRecognitionConstructor()));
+  }, []);
+
+  useEffect(() => {
     setDraftQuery(query);
     setSelectedDomain(domain || "");
 
@@ -541,8 +612,95 @@ export function AssistantStreamingPage({
     return () => {
       controllers.forEach((controller) => controller.abort());
       controllers.clear();
+      recognitionRef.current?.abort();
+      recognitionRef.current = null;
     };
   }, []);
+
+  function handleVoiceInput() {
+    if (speechStatus === "listening") {
+      setSpeechStatus("transcribing");
+      setSpeechMessage("Transcribing...");
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const Recognition = getSpeechRecognitionConstructor();
+    if (!Recognition) {
+      setSpeechSupported(false);
+      setSpeechStatus("error");
+      setSpeechMessage(
+        "Voice input is not supported in this browser yet. Type your question instead.",
+      );
+      return;
+    }
+
+    try {
+      const recognition = new Recognition();
+      recognition.lang = "nl-NL";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+      recognition.onstart = () => {
+        setSpeechStatus("listening");
+        setSpeechMessage("Listening...");
+      };
+      recognition.onresult = (event) => {
+        let finalTranscript = "";
+        let interimTranscript = "";
+
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          const result = event.results.item(index) || event.results[index];
+          const alternative = result.item(0) || result[0];
+          if (!alternative?.transcript) {
+            continue;
+          }
+          if (result.isFinal) {
+            finalTranscript += alternative.transcript;
+          } else {
+            interimTranscript += alternative.transcript;
+          }
+        }
+
+        const transcript = (finalTranscript || interimTranscript).trim();
+        if (transcript) {
+          setSpeechStatus(finalTranscript ? "transcribing" : "listening");
+          setSpeechMessage(finalTranscript ? "Transcribing..." : "Listening...");
+          setDraftQuery(transcript);
+        }
+      };
+      recognition.onerror = (event) => {
+        setSpeechStatus("error");
+        setSpeechMessage(
+          event.error === "not-allowed"
+            ? "Microphone access was blocked. Type your question instead."
+            : "Voice input stopped. Type your question instead.",
+        );
+        recognitionRef.current = null;
+      };
+      recognition.onend = () => {
+        setSpeechStatus((current) =>
+          current === "listening" || current === "transcribing"
+            ? "idle"
+            : current,
+        );
+        setSpeechMessage((current) =>
+          current === "Listening..." || current === "Transcribing..."
+            ? null
+            : current,
+        );
+        recognitionRef.current = null;
+      };
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setSpeechStatus("error");
+      setSpeechMessage(
+        "Voice input could not start. Type your question instead.",
+      );
+      recognitionRef.current = null;
+    }
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -658,6 +816,37 @@ export function AssistantStreamingPage({
               rows={1}
             />
 
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className={`ml-2 h-[46px] w-[46px] shrink-0 rounded-lg border-[#D8D2C8] bg-white transition-all hover:border-[#DD3300]/30 hover:bg-[#FFF8F5] ${
+                speechStatus === "listening"
+                  ? "border-[#DD3300]/40 bg-[#FFF8F5] text-[#DD3300]"
+                  : "text-[#63534B]"
+              }`}
+              disabled={!speechSupported && speechStatus !== "error"}
+              onClick={handleVoiceInput}
+              title={
+                speechSupported
+                  ? "Speak a Dutch legal question"
+                  : "Voice input is not supported in this browser yet. Type your question instead."
+              }
+              aria-label={
+                speechSupported
+                  ? speechStatus === "listening"
+                    ? "Stop voice input"
+                    : "Start voice input"
+                  : "Voice input not supported"
+              }
+            >
+              {speechSupported ? (
+                <Mic className="h-4 w-4" />
+              ) : (
+                <MicOff className="h-4 w-4" />
+              )}
+            </Button>
+
             <select
               name="domain"
               value={selectedDomain}
@@ -690,8 +879,18 @@ export function AssistantStreamingPage({
             >
               Context: Stored sources
             </Badge>
+            {speechMessage ? (
+              <Badge
+                variant="outline"
+                className="border-[#D8D2C8] bg-[#FFF8F5] text-[10px] font-semibold uppercase text-[#DD3300]"
+              >
+                {speechMessage}
+              </Badge>
+            ) : null}
             <span className="text-xs text-[#7C746B]">
-              Results are grounded in the live backend search index.
+              Results are grounded in the live backend search index. Voice input
+              is transcribed locally by the browser when supported. Review
+              before sending.
             </span>
           </div>
         </div>
