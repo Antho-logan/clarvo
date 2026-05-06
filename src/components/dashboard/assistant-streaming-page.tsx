@@ -64,6 +64,12 @@ const ADMINISTRATIVE_LAW_INSUFFICIENT_MESSAGE =
 const GENERIC_INSUFFICIENT_MESSAGE =
   "Veridicta does not have enough grounded sources to answer this reliably.";
 
+const MULTI_QUESTION_SUGGESTED_PROMPTS = [
+  "Wat geldt bij opzegging van huur van woonruimte?",
+  "Wanneer is ontslag op staande voet geldig?",
+  "Wat geldt bij loondoorbetaling tijdens ziekte?",
+] as const;
+
 const REFUSAL_PATTERNS = [
   /does not yet have enough/i,
   /not enough (supporting|grounded)?\s*sources/i,
@@ -79,6 +85,15 @@ const REFUSAL_PATTERNS = [
   /alleen.*ondersteun/i,
   /out[- ]of[- ]scope/i,
   /unsupported/i,
+] as const;
+
+const OUT_OF_SCOPE_PATTERNS = [
+  /belastingaangifte/i,
+  /\bduits(?:e)?\b.*arbeidsrecht/i,
+  /strafrecht/i,
+  /voorlopige hechtenis/i,
+  /advocaat vervangen/i,
+  /vervangen.*advocaat/i,
 ] as const;
 
 function buildAssistantHref(query: string, domain?: string) {
@@ -111,6 +126,51 @@ function getInsufficientMessage(query: string, domain?: string) {
 
 function isRefusalAnswer(answer: string) {
   return REFUSAL_PATTERNS.some((pattern) => pattern.test(answer));
+}
+
+function appearsToContainMultipleQuestions(query: string) {
+  const questionMarks = query.match(/\?/g)?.length || 0;
+  if (questionMarks > 1) {
+    return true;
+  }
+
+  return /\n\s*[-*]?\s*(wat|wanneer|welke|hoe|kun|kan|mag)\b/i.test(query);
+}
+
+function isOutOfScopeQuestion(query: string) {
+  return OUT_OF_SCOPE_PATTERNS.some((pattern) => pattern.test(query));
+}
+
+function getRefusalDisplay(query: string) {
+  if (appearsToContainMultipleQuestions(query)) {
+    return {
+      kind: "multi-question",
+      statusLabel: "One question at a time",
+      title: "Ask one legal question at a time",
+      body:
+        "This prompt contains multiple separate legal questions. Veridicta retrieves sources per legal issue. Ask one question at a time so the assistant can attach the right citations.",
+      suggestions: MULTI_QUESTION_SUGGESTED_PROMPTS,
+    } as const;
+  }
+
+  if (isOutOfScopeQuestion(query)) {
+    return {
+      kind: "out-of-scope",
+      statusLabel: "Outside coverage",
+      title: "Outside current coverage",
+      body:
+        "Veridicta currently supports selected Dutch legal research workflows. This question is outside the current corpus or requires professional advice beyond the product scope.",
+      suggestions: [],
+    } as const;
+  }
+
+  return {
+    kind: "insufficient-sources",
+    statusLabel: "Needs sources",
+    title: "Not enough supporting sources",
+    body: "",
+    suggestions: SUGGESTED_PROMPTS.map((item) => item.prompt),
+  } as const;
 }
 
 function readSseEvents(buffer: string) {
@@ -288,6 +348,7 @@ export function AssistantStreamingPage({
   const showAnswer =
     answerText && streamState !== "insufficient_sources" && !searchError;
   const sourceCount = sourceIds.length || citations.length;
+  const refusalDisplay = useMemo(() => getRefusalDisplay(query), [query]);
 
   return (
     <div className="max-w-5xl mx-auto pb-12 min-h-[calc(100vh-8rem)] flex flex-col">
@@ -367,7 +428,7 @@ export function AssistantStreamingPage({
                       ? "Grounded"
                       : streamState === "streaming"
                         ? "Streaming"
-                        : "Needs sources"}
+                        : refusalDisplay.statusLabel}
                   </p>
                   <p className="text-sm text-[#63534B] mt-2">
                     Domains surfaced:{" "}
@@ -398,13 +459,14 @@ export function AssistantStreamingPage({
               {!searchError && streamState === "insufficient_sources" ? (
                 <div className="rounded-2xl border border-[#D8D2C8] bg-[#F5F5F4] p-8 text-center">
                   <h2 className="text-2xl font-serif text-[#1F1D1A] mb-3">
-                    Not enough supporting sources
+                    {refusalDisplay.title}
                   </h2>
                   <p className="text-[#63534B] max-w-2xl mx-auto leading-7">
-                    {answerText}
+                    {refusalDisplay.body || answerText}
                   </p>
                   <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                    {hasActiveDomainFilter ? (
+                    {hasActiveDomainFilter &&
+                    refusalDisplay.kind === "insufficient-sources" ? (
                       <Link
                         href={buildAssistantHref(query)}
                         className="inline-flex items-center rounded-full border border-[#DD3300]/20 bg-white px-4 py-2 text-sm font-medium text-[#DD3300] hover:border-[#DD3300]/40"
@@ -412,13 +474,13 @@ export function AssistantStreamingPage({
                         Search all domains
                       </Link>
                     ) : null}
-                    {SUGGESTED_PROMPTS.map((item) => (
+                    {refusalDisplay.suggestions.map((prompt) => (
                       <Link
-                        key={`retry-${item.prompt}`}
-                        href={buildAssistantHref(item.prompt, item.domain)}
+                        key={`retry-${prompt}`}
+                        href={buildAssistantHref(prompt)}
                         className="inline-flex items-center rounded-full border border-[#D8D2C8] bg-white px-4 py-2 text-sm text-[#63534B] hover:border-[#DD3300]/30 hover:text-[#1F1D1A]"
                       >
-                        {item.prompt}
+                        {prompt}
                       </Link>
                     ))}
                   </div>

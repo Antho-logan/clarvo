@@ -8,6 +8,25 @@ describe("assistant streaming page", () => {
     vi.restoreAllMocks();
   });
 
+  function mockAssistantStream(events: Array<Record<string, unknown>>) {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const event of events) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+          );
+        }
+        controller.close();
+      },
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(stream, { status: 200 })),
+    );
+  }
+
   it("renders streamed tokens before the final done event", async () => {
     const encoder = new TextEncoder();
     let streamController: ReadableStreamDefaultController<Uint8Array> | null =
@@ -58,5 +77,71 @@ describe("assistant streaming page", () => {
     expect(await screen.findByText(/Eerste Tweede./)).toBeInTheDocument();
     expect(await screen.findByText("Source grounded")).toBeInTheDocument();
     expect(await screen.findByText("BW Boek 7")).toBeInTheDocument();
+  });
+
+  it("explains mixed multi-question refusals", async () => {
+    mockAssistantStream([
+      {
+        type: "insufficient_sources",
+        answer: "Ik kan deze vraag niet betrouwbaar beantwoorden.",
+        question: "mixed",
+        source_ids: [],
+        citations: [],
+        tool_trace: [],
+      },
+    ]);
+
+    render(
+      <AssistantStreamingPage
+        query="Wat geldt bij opzegging van huur van woonruimte? Wanneer is ontslag op staande voet geldig? Wat geldt bij loondoorbetaling tijdens ziekte? Kun je mijn volledige belastingaangifte doen?"
+        domain={undefined}
+      />,
+    );
+
+    expect(
+      await screen.findByText("Ask one legal question at a time"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("One question at a time")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "This prompt contains multiple separate legal questions. Veridicta retrieves sources per legal issue. Ask one question at a time so the assistant can attach the right citations.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "Wat geldt bij opzegging van huur van woonruimte?",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Not enough supporting sources")).not.toBeInTheDocument();
+  });
+
+  it("explains out-of-scope refusals without citation UI", async () => {
+    mockAssistantStream([
+      {
+        type: "insufficient_sources",
+        answer: "Ik kan deze vraag niet betrouwbaar beantwoorden.",
+        question: "tax",
+        source_ids: [],
+        citations: [],
+        tool_trace: [],
+      },
+    ]);
+
+    render(
+      <AssistantStreamingPage
+        query="Kun je mijn volledige belastingaangifte doen?"
+        domain={undefined}
+      />,
+    );
+
+    expect(await screen.findByText("Outside current coverage")).toBeInTheDocument();
+    expect(screen.getByText("Outside coverage")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Veridicta currently supports selected Dutch legal research workflows. This question is outside the current corpus or requires professional advice beyond the product scope.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Cited Sources")).not.toBeInTheDocument();
+    expect(screen.queryByText("Not enough supporting sources")).not.toBeInTheDocument();
   });
 });
