@@ -1,111 +1,114 @@
-# Veridicta MVP Readiness Report — UPDATED
+# Veridicta MVP Readiness Report
 
-**Date:** 2026-04-27 23:55 UTC
-**Agent:** Hermes (autonomous ops agent)
-**Status:** 🟢 **EMBEDDINGS WORKING — PARTIAL MVP**
+**Date:** 2026-05-06
+**Status:** Private-demo / beta-candidate ready with caveats.
 
----
+This report supersedes older readiness notes that referenced 9,649 embedded documents or zero embeddings. The current verified local corpus has 14,346 documents and complete embedding coverage.
 
 ## Executive Summary
 
-✅ Embeddings are now fully operational. 9,649 documents embedded with zero failures.
-✅ Hybrid search (BM25 + vector) working with Dutch tokenization.
-✅ End-to-end RAG chat pipeline confirmed working with cited legal answers.
+Veridicta is ready for controlled private demos and beta-candidate review. It is not ready for public self-serve production use.
 
----
+Current verified strengths:
 
-## Component Status
+- 14,346 documents loaded.
+- 14,346 embeddings completed.
+- 0 pending embeddings.
+- 0 failed embeddings.
+- Embeddings use `text-embedding-3-small` with 1,536 dimensions.
+- Curated retrieval eval passes with overall `hit@10=1.000`, `mrr@10=0.904`, `recall@10=0.967`.
+- DB integration tests pass: 114 passed.
+- Frontend verification passes: lint, typecheck, Vitest, and production build.
+- Assistant reliability fix is pushed: `9410fbdbc14c876c4a25fe63f8993d95a0ec410e`.
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| PostgreSQL + pgvector | 🟢 Running | Docker, port 5432, vector(1536) + HNSW index |
-| Redis | 🟢 Running | Docker, port 6379 |
-| Backend (FastAPI) | 🟢 Running | port 8000, health=ok |
-| Frontend (Next.js) | ⚪ Not started | port 3003 |
-| Celery worker | ⚪ Not started | |
-| Embeddings | 🟢 9,649/9,649 (100%) | text-embedding-3-small, 1536 dims |
-| Hybrid Search | 🟢 Working | BM25 (Dutch) + vector cosine |
-| RAG Chat | 🟢 Working | GPT-4o-mini with cited sources |
+Primary caveats:
 
----
+- Veridicta remains a research assistant, not a lawyer replacement.
+- Citation quality still needs lawyer review before broader beta.
+- Domain coverage is intentionally limited.
+- Administrative-law statutory retrieval needs additional targeted hardening.
 
-## What Was Fixed
-
-| # | Issue | Fix |
-|---|-------|-----|
-| 1 | New API key needed | Created new OpenAI project "Veridicta", generated new key |
-| 2 | .env missing OPENAI_API_KEY | Updated .env with new project key |
-| 3 | .env missing AUTH_SECRET | Added AUTH_SECRET=dev-secret-for-testing |
-| 4 | 9,649 docs with zero embeddings | Ran create_embeddings.py — all embedded, 0 failures |
-| 5 | Venv on /mnt/c too slow | Recreated venv on /tmp, symlinked back |
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `.env` | New OPENAI_API_KEY, added AUTH_SECRET |
-| `.venv` | Symlink to /tmp/veridicta-venv for performance |
-
-## Database State
+## Verified Data State
 
 | Metric | Value |
-|--------|-------|
-| Total documents | 9,649 |
-| Embedding coverage | **100%** (9,649/9,649) |
-| Embedding model | text-embedding-3-small |
-| Vector dimensions | 1536 |
-| Embedding failures | 0 |
+| --- | ---: |
+| Total documents | 14,346 |
+| Completed embeddings | 14,346 |
+| Pending embeddings | 0 |
+| Failed embeddings | 0 |
+| Embedding model | `text-embedding-3-small` |
+| Embedding dimensions | 1536 |
 
-### By Domain
+## Verified Eval State
 
-| source_type | domain | total | embedded |
-|-------------|--------|-------|----------|
-| legislation | employment_law | 5,893 | 5,893 |
-| legislation | tenancy_law | 3,706 | 3,706 |
-| case_law | employment_law | 50 | 50 |
+`python3 evals/run_eval.py` passed:
 
----
+| Metric | Value |
+| --- | ---: |
+| overall hit@10 | 1.000 |
+| overall mrr@10 | 0.904 |
+| overall recall@10 | 0.967 |
 
-## E2E Test Results
+## Verified Test State
 
-### Test 1: Tenancy — "Wat geldt bij opzegging van huur van woonruimte?"
-✅ Answer returned with BWBR citations. Hybrid search returned 12 merged hits.
+| Check | Result |
+| --- | --- |
+| DB pytest | 114 passed |
+| `npm run lint` | Passed |
+| `npm run typecheck` | Passed |
+| `npm test -- --run` | Passed |
+| `npm run build` | Passed |
 
-### Test 2: Employment — "Hoe berekent u de transitievergoeding?"
-✅ Answer: "De transitievergoeding wordt berekend als een derde van het maandloon per gewerkt jaar..." with BWBR0005290 citation.
+## Assistant Reliability State
 
----
+Commit `9410fbdbc14c876c4a25fe63f8993d95a0ec410e` fixed the main citation audit reliability issues:
 
-## Remaining Work
+- Source text is compressed before chat synthesis.
+- Refusal-like answers are not marked as grounded.
+- Out-of-scope refusal paths return zero citations.
+- Tax, German-law, criminal-detention, and lawyer-replacement questions short-circuit to clean refusal.
 
-| Priority | Task | Effort | Status |
-|----------|------|--------|--------|
-| P1 | Ingest 3 missing domains (admin, immigration, SME) | 30 min | Pending |
-| P1 | Ingest missing case law (ECLI pipeline) | 1 hr | Pending |
-| P2 | Start frontend (npm run dev on port 3003) | 5 min | Pending |
-| P2 | Start Celery worker | 5 min | Pending |
-| P3 | Run formal retrieval eval | 30 min | Pending |
+Verified local backend behavior:
 
----
+| Question class | Status |
+| --- | --- |
+| Tenancy opzegging | Grounded with citations |
+| Ontslag op staande voet | Grounded with citations |
+| Loondoorbetaling tijdens ziekte | Grounded with citations |
+| Combined huur/ontslag/ziekte | Grounded with citations |
+| Full tax return | `insufficient_sources`, 0 citations |
+| German labor law | `insufficient_sources`, 0 citations |
+| Criminal preliminary detention | `insufficient_sources`, 0 citations |
+| Lawyer replacement | `insufficient_sources`, 0 citations |
 
-## Commands to Run
+## MVP Readiness Classification
 
-```bash
-# Start backend (already running)
-cd /mnt/c/Desktop/veridicta
-export $(grep -v '^#' .env | grep -v '^$' | xargs)
-.venv/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+| Area | Status | Notes |
+| --- | --- | --- |
+| Corpus loaded | Ready | 14,346 documents |
+| Embeddings | Ready | 100% complete, 0 failures |
+| Retrieval eval | Ready | Current curated gate passed |
+| Assistant refusal behavior | Beta-ready | Clean refusals now return 0 citations |
+| Citation quality | Beta-candidate | Needs continued legal audit |
+| Frontend build/test | Ready | Local checks passed |
+| Public production | Not ready | Needs broader safety, monitoring, auth, and legal review |
 
-# Start frontend
-cd /mnt/c/Desktop/veridicta/web
-npm run dev -- -p 3003
+## Safe Demo Positioning
 
-# Start Celery worker
-cd /mnt/c/Desktop/veridicta
-export $(grep -v '^#' .env | grep -v '^$' | xargs)
-.venv/bin/celery -A ingestion.celery_app worker --loglevel=info
-```
+Use the product as a source-backed legal research assistant. Every demo should state that outputs are starting points for qualified professionals and citations must be inspected.
 
----
+Safe demo questions:
 
-*Updated by Hermes autonomous ops agent on 2026-04-27.*
+- `Wat geldt bij opzegging van huur van woonruimte?`
+- `Wanneer is ontslag op staande voet geldig?`
+- `Wat geldt bij loondoorbetaling tijdens ziekte?`
+- `Wat geldt bij opzegging van huur van woonruimte, ontslag op staande voet en loondoorbetaling tijdens ziekte?`
+
+Avoid public demos that imply Veridicta can replace a lawyer, provide tax filing services, answer foreign law, or cover unsupported criminal-law workflows.
+
+## Next Recommended Work
+
+1. Commit and keep the current docs/config/test cleanup separate from landing-page prototype work.
+2. Continue citation-quality audit on administrative-law statutory questions.
+3. Add regression tests for the expanded safe demo set.
+4. Keep any landing redesign in a separate branch/commit after backend/agent work is clean.

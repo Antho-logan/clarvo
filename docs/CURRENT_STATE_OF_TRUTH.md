@@ -1,91 +1,115 @@
-# Veridicta — Current State of Truth
+# Veridicta Current State Of Truth
 
-**Last verified:** 2026-04-27 against branch `codex/upgrade-to-10` after the final docs cleanup pass.
-**Verification status:** local gate passed on 2026-04-27; draft PR CI was green before this docs-only cleanup.
+**Last verified:** 2026-05-06, local workspace `/Users/antho/Desktop/VERIDICTA-full`, branch `main`.
+**Verification status:** embeddings complete, retrieval eval passed, DB integration tests passed, frontend verification passed, assistant reliability fix pushed.
 
-This is the single source of truth. Everything else in `docs/` is historical. When a planning doc contradicts this file, this file wins.
+This file is the current operational source of truth. Older reports in `docs/` are historical unless their claims are reproduced here.
 
----
+## Current Product Status
 
-## Architecture decisions locked in
+Veridicta is a **private-demo / beta-candidate** system with caveats. It is not public self-serve production-ready.
 
-| Decision | Status | Notes |
-|---|---|---|
-| Self-hosted PostgreSQL + pgvector | **Locked** | HNSW index on `documents.embedding` with `vector_cosine_ops`, built in migration `202604190002_enable_pgvector.py`. |
-| Alembic owns schema | **Locked** | Seven migrations in `migrations/versions/`. `init_db.py` is vestigial and kept only so legacy scripts do not break. |
-| FastAPI + Celery + Redis for ingestion | **Locked** | `ingestion/celery_app.py`, `ingestion/tasks.py`. All ingest endpoints are 202-enqueue, not synchronous. |
-| NextAuth (Auth.js) + Resend magic link | **Locked** | `src/auth.ts` wires `Resend` when `RESEND_API_KEY` is set. `AUTH_DEV_BYPASS=false` is the committed default; only a local override. |
-| OpenAI `text-embedding-3-small`, dim 1536 | **Locked** | Default in `backend_common.py`. Lifecycle metadata on `documents` tracks model/version/dimensions/source hash. |
-| Supabase | **Rejected** | See `REJECTED_OR_SUPERSEDED_DECISIONS.md`. Self-hosted Postgres is the path. |
-| Three priority domains only | **Locked for MVP** | employment, tenancy, administrative. Immigration and SME business law stay in seed files but are not corpus-expansion targets yet. |
+Safe current claims:
 
----
+- Dutch legal corpus is loaded locally.
+- Embedding coverage is complete locally.
+- Retrieval eval passes the current curated gate.
+- The grounded assistant can answer selected source-backed demo questions.
+- Out-of-scope refusals now return zero citations.
 
-## What is built (code, tested, CI-green)
+Not safe to claim:
 
-### Backend
-- **Schema and migrations.** Alembic with 7 revisions. `documents` table has full embedding lifecycle columns (`embedding_status`, `embedding_model`, `embedding_version`, `embedding_dimensions`, `embedding_source_hash`, `embedding_attempts`, `embedding_error`, `embedded_at`, `last_embedding_job_id`). Auth.js tables, `matter`, `user_settings`, `ingestion_jobs`, `ingestion_job_items`, `source_registry` all present and migration-managed.
-- **Ingestion.** BWB client (`sources/bwb_client.py`) and Rechtspraak client (`sources/rechtspraak_client.py`) with rate limits and retry/backoff. Curated ingestion runs via Celery tasks (`ingestion/tasks.py`) with `autoretry_for=(Exception,)`, exponential backoff, `task_acks_late=True`, `worker_prefetch_multiplier=1`.
-- **Retrieval.** SQL-native BM25 (`ts_rank_cd` + `websearch_to_tsquery('dutch', …)`), SQL-native vector search with a materialized `ann_candidates` CTE that widens to `max(limit*20, 100)` then post-filters by embedding lifecycle state. Hybrid fuses with normalized score sum. All filter pushdown (`source_type`, `domain`, `date_from`, `date_to`) happens in Postgres.
-- **Embedding lifecycle.** `repositories/embeddings.py`. Deterministic SHA-256 source hashing, `classify_embedding_state` covers missing/stale/failed/skipped/completed transitions. Coverage report CLI (`scripts/embedding_coverage_report.py`) and API (`/embeddings/coverage`).
-- **Grounded assistant.** `agentic_orchestrator.py` calls `KnowledgeLookupTool`, `CiteLookupTool`, and composes either an LLM answer (when `OPENAI_API_KEY` is set) or an extractive answer. Minimum grounded source threshold enforced. Refusal path returns `insufficient_sources` instead of hallucinating. `LEGAL_FALLBACK_TERMS` hack was removed.
-- **API surface.** 31 endpoints in `api/main.py`: `/health`, `/documents`, `/documents/{id}`, `/search`, `/laws/{bwb_id}`, `/judgments/{ecli}`, `/matters/*`, `/settings`, `/workflows/*`, `/agent/chat`, `/agent/stream` (SSE), `/ingest/*` (all 202-enqueue), `/ingestion/jobs`, `/ingestion/jobs/{id}`, `/ingestion/jobs/{id}/stream` (SSE), `/embeddings/backfill`, `/embeddings/reembed-stale`, `/embeddings/coverage`. All dashboard endpoints gated by bearer JWT shared with NextAuth.
+- Public self-serve production readiness.
+- Complete legal coverage for all Dutch legal domains.
+- Replacement of lawyer review.
+- Enterprise production readiness.
 
-### Frontend
-- **Dashboard shell.** `/dashboard/layout.tsx` with nav, auth gate, ⌘K command palette. Polished, consistent shadcn/Radix components.
-- **Routes wired to live backend:** `/dashboard` (home), `/dashboard/knowledge`, `/dashboard/documents`, `/dashboard/documents/[sourceId]`, `/dashboard/agents`, `/dashboard/matters`, `/dashboard/workflows`, `/dashboard/settings`, `/dashboard/onboarding`.
-- **Streaming assistant.** `/dashboard/agents` reads SSE from `/agent/stream` and progressively renders tokens + citation cards + refusal states.
-- **Auth.** `/login` form + `/login/check-email` confirmation. Middleware gates `/dashboard/*`. `AUTH_DEV_BYPASS` supported as local-only override.
-- **Typed API client.** `src/lib/api/` generated from `api/openapi.json` via `openapi-typescript`. Dashboard reads go through the typed client.
+## Repository And Deployment State
 
-### Evals and tests
-- **Retrieval eval harness.** `evals/curated_qa.yaml` (30 questions: 10 tenancy / 10 employment / 10 administrative). `evals/run_eval.py` computes per-domain `hit@10`, `mrr@10`, `recall@10`, writes JSON to `evals/results/latest.json`, exits non-zero below thresholds.
-- **Legacy eval.** `evals/run_milestone2_eval.py` still runs P/R/F1/MRR/nDCG on the original seed set.
-- **Pytest.** 109 tests pass. Coverage gate at `--cov-fail-under=80` for `repositories/`, `parsers/`, `sources/`, `search`, `api/`.
-- **Vitest.** Frontend snapshot + behavior tests for dashboard home, knowledge empty state, document source label, login flow, assistant streaming.
-- **CI.** `.github/workflows/ci.yml` matrix node 20/22 × python 3.11/3.12 × postgres 15/16 (pgvector). Evals gate job runs on PRs with its own Postgres + Redis services.
+| Item | Current value |
+| --- | --- |
+| Branch | `main` |
+| Latest pushed assistant reliability commit | `9410fbdbc14c876c4a25fe63f8993d95a0ec410e` |
+| Runtime DB used for verification | `veridicta_m1` |
+| Test DB used for DB integration tests | `veridicta_test_phase1` |
+| Frontend local port | `3003` |
+| Backend local port | `8000` |
 
-### Corpus state (as of the April 19 ingest pass)
-- 13,112 legislation rows.
-- 1,234 judgment rows (1,220 from the expanded Rechtspraak ingest + 14 from earlier).
-- **0 embeddings populated.** Backfill is blocked on a local `OPENAI_API_KEY`.
+`.env.local` is local-only and must remain untracked.
 
----
+## Corpus And Embedding State
 
-## What is partially built
+| Metric | Value |
+| --- | ---: |
+| Total documents | 14,346 |
+| Completed embeddings | 14,346 |
+| Pending embeddings | 0 |
+| Failed embeddings | 0 |
+| Embedding model | `text-embedding-3-small` |
+| Embedding dimensions | 1536 |
 
-| Thing | State |
-|---|---|
-| Embedding backfill | Code path fully implemented; requires `OPENAI_API_KEY` to actually run. Zero rows have populated embeddings today. |
-| Matters workspace | CRUD API + list page work. Rich linking (documents ↔ agent runs) is partial. Limited-preview UX is intentional for MVP. |
-| Workflows page | List + run-history UI exists; there are only 2 demo flows registered in `workflow_engine.py`. Expansion to real flows is deferred to the data/quality phase. |
-| Coverage-at-scale | Coverage gate is green at 80% today, but small-corpus artifacts mean nDCG@10 = 0.95 is not a trustworthy signal yet. Real signal waits on embedding + corpus expansion. |
+The previous stale claim that the local DB had zero embeddings has been superseded. The local DB is fully embedded as of this verification pass.
 
----
+## Eval State
 
-## What is deferred by design
+`python3 evals/run_eval.py` passed:
 
-- Corpus expansion beyond the curated ~18 BWB IDs per priority domain.
-- Judgment corpus past ~1,200 ECLIs.
-- Embedding backfill at volume (waits on key + corpus).
-- Reranker (cross-encoder pass over top-50).
-- Redis-cached query embeddings.
-- Broader workflow catalog.
-- EU law ingestion.
-- Enterprise auth (SSO, RBAC, per-tenant).
-- Uploads, OCR, exports, generated documents.
-- Full matter workspace depth.
+| Metric | Value |
+| --- | ---: |
+| overall hit@10 | 1.000 |
+| overall mrr@10 | 0.904 |
+| overall recall@10 | 0.967 |
 
----
+This is a retrieval-quality gate, not a legal correctness guarantee.
 
-## What is rejected / superseded
+## Verification State
 
-See `REJECTED_OR_SUPERSEDED_DECISIONS.md`. Summary: Supabase migration, broad feature expansion before corpus growth, and any agent-framework replacement in this phase are all explicitly off the table.
+| Check | Result |
+| --- | --- |
+| DB pytest with `TEST_DATABASE_URL=postgresql+psycopg://antho@localhost:5432/veridicta_test_phase1` | 114 passed |
+| `python3 evals/run_eval.py` | Passed |
+| `python3 scripts/embedding_coverage_report.py --refresh` | 14,346 completed, 0 pending, 0 failed |
+| `npm run lint` | Passed |
+| `npm run typecheck` | Passed |
+| `npm test -- --run` | Passed |
+| `npm run build` | Passed |
 
----
+Build warnings observed are non-blocking:
 
-## Current phase
+- Next.js middleware/proxy convention warning.
+- Tailwind config module-type warning.
 
-**Code-finish is complete.** The project has moved into corpus/embeddings/evals/citation audit. See `NEXT_PHASE_BRIEF.md` for what that means concretely.
+## Assistant Reliability State
 
-`REMAINING_CODE_WORK.md` is now a closure marker, not a backlog. Do not reopen code-finish unless a verified broken issue is found in the current implementation.
+Assistant reliability fix pushed in commit `9410fbdbc14c876c4a25fe63f8993d95a0ec410e`.
+
+Behavior now verified through the local backend:
+
+| Scenario | Current behavior |
+| --- | --- |
+| Tenancy opzegging question | `grounded`, citations returned |
+| Ontslag op staande voet question | `grounded`, citations returned |
+| Loondoorbetaling tijdens ziekte question | `grounded`, citations returned |
+| Combined huur/ontslag/ziekte question | `grounded`, citations returned |
+| Full tax return request | `insufficient_sources`, 0 citations |
+| German labor law request | `insufficient_sources`, 0 citations |
+| Criminal pretrial detention request | `insufficient_sources`, 0 citations |
+| "Can Veridicta replace my lawyer?" | `insufficient_sources`, 0 citations |
+
+## Safe Demo Questions
+
+- `Wat geldt bij opzegging van huur van woonruimte?`
+- `Wanneer is ontslag op staande voet geldig?`
+- `Wat geldt bij loondoorbetaling tijdens ziekte?`
+- `Wat geldt bij opzegging van huur van woonruimte, ontslag op staande voet en loondoorbetaling tijdens ziekte?`
+
+Use all demos with explicit caveats: Veridicta is a research assistant, citations must be inspected, and lawyer review remains required.
+
+## Next Backend/Agent Phase
+
+The repo is ready for the next backend/agent phase after worktree cleanup. Recommended next work:
+
+1. Tighten citation evaluation around administrative-law statutory retrieval.
+2. Add regression tests for multi-domain questions.
+3. Add source relevance checks for refusal and insufficient-source paths.
+4. Keep landing-page redesign/prototype work out of backend/agent commits.
