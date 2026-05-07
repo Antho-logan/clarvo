@@ -49,6 +49,14 @@ class ResearchNoteInput:
     matter_id: Optional[str] = None
 
 
+@dataclass(frozen=True)
+class ResearchMemoInput:
+    """Validated saved-note reference accepted by memo draft writes."""
+
+    matter_id: str
+    source_note_id: str
+
+
 def _ensure_user_row(session: Session, user_id: str) -> None:
     """Create a minimal user row for API-issued identities when needed."""
     if session.get(User, user_id) is None:
@@ -193,6 +201,130 @@ def save_research_note(
         session.commit()
         session.refresh(matter)
         return matter, note
+
+
+MEMO_BLOCK_MESSAGE = (
+    "Memo generation is only available for grounded research notes with citations."
+)
+
+
+def _is_memo_source_note(note: Any, source_note_id: str) -> bool:
+    return (
+        isinstance(note, dict)
+        and note.get("id") == source_note_id
+        and note.get("type") == "assistant_research_note"
+    )
+
+
+def _validate_memo_source_note(note: dict[str, Any]) -> list[dict[str, Any]]:
+    citations = note.get("citations")
+    citation_count = note.get("citation_count")
+    if (
+        note.get("status") != "grounded"
+        or not isinstance(citations, list)
+        or not isinstance(citation_count, int)
+        or citation_count <= 0
+        or len(citations) == 0
+    ):
+        raise ValueError(MEMO_BLOCK_MESSAGE)
+    return citations
+
+
+def _format_memo_citation(citation: dict[str, Any]) -> str:
+    parts = [
+        citation.get("source_id"),
+        f"Art. {citation.get('article')}" if citation.get("article") else None,
+        citation.get("court"),
+        citation.get("title"),
+    ]
+    return " · ".join(str(part) for part in parts if part) or "Saved source"
+
+
+def _build_research_memo_body(
+    *, question: str, answer: str, citations: list[dict[str, Any]]
+) -> str:
+    citation_lines = "\n".join(
+        f"- {_format_memo_citation(citation)}" for citation in citations
+    )
+    return (
+        "Research question\n"
+        f"{question.strip()}\n\n"
+        "Draft memo\n"
+        f"{answer.strip()}\n\n"
+        "Citation trail\n"
+        f"{citation_lines}\n\n"
+        "Lawyer review required before use."
+    )
+
+
+def create_research_memo(
+    *, user_id: str, values: ResearchMemoInput
+) -> tuple[Matter, dict[str, Any]]:
+    """Draft a native research memo from a grounded saved research note."""
+    parsed_matter_id = uuid.UUID(values.matter_id)
+    created_at = utcnow().isoformat()
+
+    session_factory = get_session_factory()
+    with session_factory() as session:
+        matter = (
+            session.query(Matter)
+            .filter(Matter.user_id == user_id, Matter.id == parsed_matter_id)
+            .one_or_none()
+        )
+        if matter is None:
+            raise LookupError(f"Matter {values.matter_id} was not found.")
+
+        tags = dict(matter.tags or {})
+        research_notes = tags.get("research_notes")
+        if not isinstance(research_notes, list):
+            raise ValueError(MEMO_BLOCK_MESSAGE)
+
+        source_note = next(
+            (
+                note
+                for note in research_notes
+                if _is_memo_source_note(note, values.source_note_id)
+            ),
+            None,
+        )
+        if source_note is None:
+            raise ValueError(MEMO_BLOCK_MESSAGE)
+
+        citations = _validate_memo_source_note(source_note)
+        question = str(source_note.get("question") or "").strip()
+        answer = str(source_note.get("answer") or "").strip()
+        if not question or not answer:
+            raise ValueError(MEMO_BLOCK_MESSAGE)
+
+        memo = {
+            "id": str(uuid.uuid4()),
+            "type": "research_memo",
+            "source_note_id": values.source_note_id,
+            "question": question,
+            "memo_body": _build_research_memo_body(
+                question=question,
+                answer=answer,
+                citations=citations,
+            ),
+            "citations": citations,
+            "citation_count": len(citations),
+            "created_at": created_at,
+            "status": "draft",
+            "lawyer_review_required": True,
+            "audit": {
+                "generated_from": "saved_research_note",
+                "source_note_id": values.source_note_id,
+                "generator": "veridicta_native_mvp",
+            },
+        }
+        research_memos = list(tags.get("research_memos") or [])
+        research_memos.insert(0, memo)
+        tags["research_memos"] = research_memos
+        matter.tags = tags
+        matter.updated_at = utcnow()
+        session.commit()
+        session.refresh(matter)
+        return matter, memo
 
 
 def update_matter(*, user_id: str, matter_id: str, values: dict[str, Any]) -> Matter:

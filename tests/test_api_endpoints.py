@@ -362,6 +362,102 @@ def test_save_research_note_rejects_refusal(
     assert response.status_code == 422
 
 
+def test_create_research_memo_from_saved_note(
+    api_client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    saved = api_client.post(
+        "/matters/research-notes",
+        headers=auth_headers,
+        json={
+            "question": "Wanneer is ontslag op staande voet geldig?",
+            "answer": "Een dringende reden en onverwijlde mededeling zijn vereist.",
+            "status": "grounded",
+            "source_ids": ["BWBR0005290"],
+            "domains": ["employment_law"],
+            "citations": [
+                {
+                    "id": "doc-2",
+                    "source_id": "BWBR0005290",
+                    "source_type": "legislation",
+                    "domain": "employment_law",
+                    "title": "Burgerlijk Wetboek Boek 7",
+                    "article": "7:677",
+                    "section": None,
+                    "court": None,
+                    "decision_date": None,
+                    "source_url": None,
+                    "snippet": "Dringende reden.",
+                }
+            ],
+        },
+    )
+    assert saved.status_code == 200
+    saved_body = saved.json()
+
+    response = api_client.post(
+        "/matters/research-memos",
+        headers=auth_headers,
+        json={
+            "matter_id": saved_body["matter"]["id"],
+            "source_note_id": saved_body["note"]["id"],
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    memo = body["memo"]
+    assert memo["type"] == "research_memo"
+    assert memo["status"] == "draft"
+    assert memo["lawyer_review_required"] is True
+    assert memo["citation_count"] == 1
+    assert memo["citations"][0]["article"] == "7:677"
+    assert body["matter"]["tags"]["research_memos"][0]["id"] == memo["id"]
+
+
+def test_create_research_memo_rejects_uncited_note(
+    api_client: TestClient, auth_headers: dict[str, str], ensure_user
+) -> None:
+    ensure_user("test-user", "test@example.com")
+    matter = api_client.post(
+        "/matters",
+        headers=auth_headers,
+        json={
+            "title": "Manual uncited matter",
+            "tags": {
+                "research_notes": [
+                    {
+                        "id": "uncited-note",
+                        "type": "assistant_research_note",
+                        "question": "Vraag zonder bron?",
+                        "answer": "Geen bron.",
+                        "status": "grounded",
+                        "source_ids": [],
+                        "citations": [],
+                        "citation_count": 0,
+                        "domains": [],
+                        "created_at": "2026-05-07T10:00:00Z",
+                    }
+                ]
+            },
+        },
+    )
+    assert matter.status_code == 200
+
+    response = api_client.post(
+        "/matters/research-memos",
+        headers=auth_headers,
+        json={
+            "matter_id": matter.json()["matter"]["id"],
+            "source_note_id": "uncited-note",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == (
+        "Memo generation is only available for grounded research notes with citations."
+    )
+
+
 def test_settings_get_and_patch(
     api_client: TestClient, auth_headers: dict[str, str], ensure_user
 ) -> None:

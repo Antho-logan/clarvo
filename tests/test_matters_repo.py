@@ -9,7 +9,9 @@ import pytest
 
 from repositories.matters import (
     MatterInput,
+    ResearchMemoInput,
     ResearchNoteInput,
+    create_research_memo,
     create_matter,
     delete_matter,
     get_matter,
@@ -177,6 +179,81 @@ def test_save_research_note_rejects_ungrounded_answers(ensure_user) -> None:
                 source_ids=[],
                 domains=[],
                 citations=[],
+            ),
+        )
+
+
+def test_create_research_memo_from_grounded_note_preserves_citations(db_engine) -> None:
+    user_id = "memo-user"
+    matter, note = save_research_note(
+        user_id=user_id,
+        values=ResearchNoteInput(
+            question="Wanneer is ontslag op staande voet geldig?",
+            answer="Een dringende reden en onverwijlde mededeling zijn vereist.",
+            status="grounded",
+            source_ids=["BWBR0005290"],
+            domains=["employment_law"],
+            citations=[
+                {
+                    "id": "doc-2",
+                    "source_id": "BWBR0005290",
+                    "source_type": "legislation",
+                    "domain": "employment_law",
+                    "title": "Burgerlijk Wetboek Boek 7",
+                    "article": "7:677",
+                    "court": None,
+                    "snippet": "Dringende reden.",
+                }
+            ],
+        ),
+    )
+
+    updated_matter, memo = create_research_memo(
+        user_id=user_id,
+        values=ResearchMemoInput(
+            matter_id=str(matter.id),
+            source_note_id=note["id"],
+        ),
+    )
+
+    assert memo["type"] == "research_memo"
+    assert memo["source_note_id"] == note["id"]
+    assert memo["status"] == "draft"
+    assert memo["lawyer_review_required"] is True
+    assert memo["citation_count"] == 1
+    assert memo["citations"][0]["article"] == "7:677"
+    assert "Lawyer review required" in memo["memo_body"]
+    assert updated_matter.tags["research_memos"][0]["id"] == memo["id"]
+
+
+def test_create_research_memo_rejects_note_without_citations(ensure_user) -> None:
+    user_id = ensure_user("memo-block-user", "memo-block@example.com")
+    matter = create_matter(
+        user_id=user_id,
+        values=MatterInput(
+            title="Memo block",
+            tags={
+                "research_notes": [
+                    {
+                        "id": "note-no-citations",
+                        "type": "assistant_research_note",
+                        "question": "Vraag zonder bron?",
+                        "answer": "Geen bron.",
+                        "status": "grounded",
+                        "citations": [],
+                        "citation_count": 0,
+                    }
+                ]
+            },
+        ),
+    )
+
+    with pytest.raises(ValueError, match="grounded research notes with citations"):
+        create_research_memo(
+            user_id=user_id,
+            values=ResearchMemoInput(
+                matter_id=str(matter.id),
+                source_note_id="note-no-citations",
             ),
         )
 

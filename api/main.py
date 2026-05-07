@@ -39,7 +39,9 @@ from repositories.legal_documents import (
 )
 from repositories.matters import (
     MatterInput,
+    ResearchMemoInput,
     ResearchNoteInput,
+    create_research_memo,
     create_matter,
     delete_matter,
     get_matter,
@@ -135,6 +137,13 @@ class MatterResearchNoteRequest(BaseModel):
     citations: list[dict[str, Any]]
     source_ids: list[str] = []
     domains: list[str] = []
+
+
+class MatterResearchMemoRequest(BaseModel):
+    """Request body for drafting a memo from a saved research note."""
+
+    matter_id: str
+    source_note_id: str
 
 
 class SettingsRequest(BaseModel):
@@ -425,6 +434,27 @@ def post_matter_research_note(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"matter": matter.as_dict(), "note": note}
+
+
+@app.post("/matters/research-memos")
+def post_matter_research_memo(
+    request: MatterResearchMemoRequest,
+    user: AuthenticatedUser = Depends(get_current_user),
+) -> dict:
+    """Draft a research memo from a grounded saved research note."""
+    try:
+        matter, memo = create_research_memo(
+            user_id=user.user_id,
+            values=ResearchMemoInput(
+                matter_id=request.matter_id,
+                source_note_id=request.source_note_id,
+            ),
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"matter": matter.as_dict(), "memo": memo}
 
 
 @app.get("/matters/{matter_id}")

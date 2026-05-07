@@ -171,6 +171,20 @@ export type MatterResearchNote = {
   created_at: string;
 };
 
+export type MatterResearchMemo = {
+  id: string;
+  type: "research_memo";
+  source_note_id: string;
+  question: string;
+  memo_body: string;
+  citations: AssistantCitation[];
+  citation_count: number;
+  created_at: string;
+  status: "draft";
+  lawyer_review_required: true;
+  audit?: Record<string, unknown>;
+};
+
 export type MattersResponse = {
   count: number;
   matters: Matter[];

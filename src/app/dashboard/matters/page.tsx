@@ -4,6 +4,7 @@ import {
   BookOpenText,
   Briefcase,
   CalendarClock,
+  FileText,
   PlusCircle,
   Search,
   SlidersHorizontal,
@@ -14,13 +15,19 @@ import {
   createMatterAction,
   updateMatterAction,
 } from "@/app/dashboard/matters/actions";
+import { DraftResearchMemoButton } from "@/components/dashboard/DraftResearchMemoButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ApiError, getMatters } from "@/lib/api/client";
 import { getDomainLabel, isValidDomain } from "@/lib/legal-display";
-import { DOMAIN_OPTIONS, type Matter, type MatterResearchNote } from "@/lib/types";
+import {
+  DOMAIN_OPTIONS,
+  type Matter,
+  type MatterResearchMemo,
+  type MatterResearchNote,
+} from "@/lib/types";
 
 type MattersPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -55,6 +62,47 @@ function getResearchNotes(matter: Matter) {
     return [];
   }
   return notes.filter(isResearchNote);
+}
+
+function isResearchMemo(value: unknown): value is MatterResearchMemo {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    value.type === "research_memo" &&
+    "source_note_id" in value &&
+    typeof value.source_note_id === "string" &&
+    "question" in value &&
+    typeof value.question === "string" &&
+    "memo_body" in value &&
+    typeof value.memo_body === "string" &&
+    "citations" in value &&
+    Array.isArray(value.citations) &&
+    "citation_count" in value &&
+    typeof value.citation_count === "number" &&
+    "created_at" in value &&
+    typeof value.created_at === "string" &&
+    "status" in value &&
+    value.status === "draft" &&
+    "lawyer_review_required" in value &&
+    value.lawyer_review_required === true
+  );
+}
+
+function getResearchMemos(matter: Matter) {
+  const memos = matter.tags.research_memos;
+  if (!Array.isArray(memos)) {
+    return [];
+  }
+  return memos.filter(isResearchMemo);
+}
+
+function canDraftMemo(note: MatterResearchNote) {
+  return (
+    note.status === "grounded" &&
+    note.citation_count > 0 &&
+    note.citations.length > 0
+  );
 }
 
 function formatSavedAt(value: string) {
@@ -113,8 +161,15 @@ export default async function MattersPage({ searchParams }: MattersPageProps) {
   const selectedResearchNotes = selectedMatter
     ? getResearchNotes(selectedMatter)
     : [];
+  const selectedResearchMemos = selectedMatter
+    ? getResearchMemos(selectedMatter)
+    : [];
   const totalResearchNotes = matters.reduce(
     (count, matter) => count + getResearchNotes(matter).length,
+    0,
+  );
+  const totalResearchMemos = matters.reduce(
+    (count, matter) => count + getResearchMemos(matter).length,
     0,
   );
 
@@ -146,6 +201,12 @@ export default async function MattersPage({ searchParams }: MattersPageProps) {
             className="w-fit border-[#D8D2C8] bg-white px-3 py-1.5 text-[#63534B]"
           >
             {formatCount(totalResearchNotes, "research note", "research notes")}
+          </Badge>
+          <Badge
+            variant="outline"
+            className="w-fit border-[#D8D2C8] bg-white px-3 py-1.5 text-[#63534B]"
+          >
+            {formatCount(totalResearchMemos, "draft memo", "draft memos")}
           </Badge>
         </div>
       </div>
@@ -241,6 +302,7 @@ export default async function MattersPage({ searchParams }: MattersPageProps) {
             <MatterWorkspace
               matter={selectedMatter}
               researchNotes={selectedResearchNotes}
+              researchMemos={selectedResearchMemos}
             />
           ) : (
             <Card className="border-dashed border-[#D8D2C8] bg-white shadow-sm">
@@ -305,9 +367,11 @@ function CreateMatterCard() {
 function MatterWorkspace({
   matter,
   researchNotes,
+  researchMemos,
 }: {
   matter: Matter;
   researchNotes: MatterResearchNote[];
+  researchMemos: MatterResearchMemo[];
 }) {
   return (
     <Card className="border-[#D8D2C8] bg-white shadow-sm">
@@ -335,6 +399,12 @@ function MatterWorkspace({
             >
               {formatCount(researchNotes.length, "research note", "research notes")}
             </Badge>
+            <Badge
+              variant="outline"
+              className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+            >
+              {formatCount(researchMemos.length, "draft memo", "draft memos")}
+            </Badge>
           </div>
         </div>
       </CardHeader>
@@ -361,7 +431,7 @@ function MatterWorkspace({
           {researchNotes.length > 0 ? (
             <div className="space-y-4">
               {researchNotes.map((note) => (
-                <ResearchNoteCard key={note.id} note={note} />
+                <ResearchNoteCard key={note.id} matterId={matter.id} note={note} />
               ))}
             </div>
           ) : (
@@ -378,6 +448,31 @@ function MatterWorkspace({
                 </p>
               </CardContent>
             </Card>
+          )}
+        </section>
+
+        <section className="space-y-4 border-t border-[#EEEDE4] pt-6">
+          <div>
+            <h2 className="font-serif text-xl text-[#1F1D1A]">
+              Draft research memos
+            </h2>
+            <p className="text-sm text-[#63534B]">
+              Native Veridicta memo drafts generated from saved, cited research
+              notes. Every draft remains marked for lawyer review.
+            </p>
+          </div>
+
+          {researchMemos.length > 0 ? (
+            <div className="space-y-4">
+              {researchMemos.map((memo) => (
+                <ResearchMemoCard key={memo.id} memo={memo} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-[#D8D2C8] bg-[#F8F6F1] p-6 text-sm leading-6 text-[#63534B]">
+              Draft memos will appear here after you generate one from a
+              grounded saved research note with citations.
+            </div>
           )}
         </section>
 
@@ -445,7 +540,13 @@ function MatterWorkspace({
   );
 }
 
-function ResearchNoteCard({ note }: { note: MatterResearchNote }) {
+function ResearchNoteCard({
+  matterId,
+  note,
+}: {
+  matterId: string;
+  note: MatterResearchNote;
+}) {
   const sourcePreview = note.citations.slice(0, 4);
 
   return (
@@ -501,6 +602,71 @@ function ResearchNoteCard({ note }: { note: MatterResearchNote }) {
           </span>
         )}
       </div>
+
+      <div className="mt-5 border-t border-[#E5DED3] pt-4">
+        <DraftResearchMemoButton
+          matterId={matterId}
+          sourceNoteId={note.id}
+          canDraft={canDraftMemo(note)}
+        />
+      </div>
+    </article>
+  );
+}
+
+function ResearchMemoCard({ memo }: { memo: MatterResearchMemo }) {
+  const sourcePreview = memo.citations.slice(0, 4);
+
+  return (
+    <article className="rounded-xl border border-[#CFC4B4] bg-white p-5 shadow-sm">
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+            >
+              {memo.status}
+            </Badge>
+            <Badge
+              variant="outline"
+              className="border-[#DD3300]/25 bg-[#FFF7F3] text-[#8A2408]"
+            >
+              Lawyer review required
+            </Badge>
+          </div>
+          <h3 className="font-serif text-lg leading-7 text-[#1F1D1A]">
+            {memo.question}
+          </h3>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 text-xs text-[#7C746B]">
+          <FileText className="h-4 w-4 text-[#BDA989]" />
+          {formatSavedAt(memo.created_at)}
+        </div>
+      </div>
+
+      <p className="whitespace-pre-line text-sm leading-7 text-[#63534B]">
+        {memo.memo_body}
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Badge
+          variant="outline"
+          className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+        >
+          {formatCount(memo.citation_count, "citation", "citations")}
+        </Badge>
+        {sourcePreview.length > 0 ? (
+          <span className="text-xs text-[#7C746B]">
+            Source trail:{" "}
+            {sourcePreview.map((citation) => getCitationLabel(citation)).join(" · ")}
+          </span>
+        ) : (
+          <span className="text-xs text-[#7C746B]">
+            Citation metadata unavailable.
+          </span>
+        )}
+      </div>
     </article>
   );
 }
@@ -513,6 +679,7 @@ function MatterListCard({
   selected: boolean;
 }) {
   const researchNotes = getResearchNotes(matter);
+  const researchMemos = getResearchMemos(matter);
   const latestNote = researchNotes[0];
 
   return (
@@ -550,6 +717,12 @@ function MatterListCard({
           className="border-[#D8D2C8] bg-white text-[#63534B]"
         >
           {formatCount(researchNotes.length, "research note", "research notes")}
+        </Badge>
+        <Badge
+          variant="outline"
+          className="border-[#D8D2C8] bg-white text-[#63534B]"
+        >
+          {formatCount(researchMemos.length, "draft memo", "draft memos")}
         </Badge>
         {latestNote ? (
           <Badge

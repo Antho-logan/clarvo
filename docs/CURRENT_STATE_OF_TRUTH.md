@@ -101,7 +101,8 @@ Behavior now verified through the local backend:
 - `Wat geldt bij opzegging van huur van woonruimte?`
 - `Wanneer is ontslag op staande voet geldig?`
 - `Wat geldt bij loondoorbetaling tijdens ziekte?`
-- `Wat geldt bij opzegging van huur van woonruimte, ontslag op staande voet en loondoorbetaling tijdens ziekte?`
+
+For demos, ask one legal question at a time. Mixed multi-question prompts are intentionally guided back to a single-question workflow.
 
 Use all demos with explicit caveats: Veridicta is a research assistant, citations must be inspected, and lawyer review remains required.
 
