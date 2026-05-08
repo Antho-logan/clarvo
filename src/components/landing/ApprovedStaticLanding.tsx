@@ -257,7 +257,7 @@ const copy = {
       eyebrow: "Het onderzoeksprobleem",
       title: "Juridisch onderzoek is traag omdat bronnen versnipperd zijn.",
       lede:
-        "Wetgeving staat in één systeem, rechtspraak in een ander, interne memo's in een derde. Het verifiëren van een enkel antwoord betekent wisselen van tabbladen, artikelen herlezen en de exacte passage opsporen die de conclusie ondersteunt. Generieke AI-tools versnellen het schrijven, maar tonen zelden hun bronnen - en een antwoord zonder bron is een risico, geen kortere weg.",
+        "Wetgeving staat in één systeem, rechtspraak in een ander, interne memo's in een derde. Het verifiëren van een enkel antwoord betekent wisselen van tabbladen, artikelen herlezen en de exacte passage opsporen die de conclusie ondersteunt. Generieke AI-tools versnellen het schrijven, maar tonen zelden hun bronnen — en een antwoord zonder bron is een risico, geen kortere weg.",
       strong:
         "Veridicta is gebouwd op de tegenovergestelde aanname: de bronvermelding is het antwoord. De tekst is slechts de weg ernaartoe.",
       cards: [
@@ -443,20 +443,20 @@ function LanguageToggle({
     <div className={mobile ? "lang-switcher-mobile" : "lang-switcher"}>
       <button
         type="button"
-        className={`language-button ${locale === "en" ? "active" : ""}`}
-        onClick={() => setLocale("en")}
-        aria-pressed={locale === "en"}
-      >
-        EN
-      </button>
-      <span className="sep">/</span>
-      <button
-        type="button"
         className={`language-button ${locale === "nl" ? "active" : ""}`}
         onClick={() => setLocale("nl")}
         aria-pressed={locale === "nl"}
       >
         NL
+      </button>
+      <span className="sep">/</span>
+      <button
+        type="button"
+        className={`language-button ${locale === "en" ? "active" : ""}`}
+        onClick={() => setLocale("en")}
+        aria-pressed={locale === "en"}
+      >
+        EN
       </button>
     </div>
   );
@@ -482,7 +482,7 @@ function NavLinks({ labels, onNavigate }: { labels: NavCopy; onNavigate?: () => 
 }
 
 export function ApprovedStaticLanding() {
-  const [locale, setLocale] = useState<Locale>("en");
+  const [locale, setLocale] = useState<Locale>("nl");
   const [menuOpen, setMenuOpen] = useState(false);
   const t = copy[locale];
   const rootClassName = useMemo(() => `${styles.root} static-landing`, []);
@@ -519,9 +519,17 @@ export function ApprovedStaticLanding() {
     <div className={rootClassName}>
       <header className="header">
         <div className="container header-container">
-          <Link href="/" className="logo" aria-label="Veridicta home">
+          <button
+            type="button"
+            className="logo logo-button"
+            aria-label="Veridicta home"
+            onClick={() => {
+              setMenuOpen(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
             Veridicta
-          </Link>
+          </button>
           <nav className="desktop-nav" aria-label="Primary">
             <NavLinks labels={t.nav} />
           </nav>

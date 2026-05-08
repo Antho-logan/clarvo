@@ -1203,8 +1203,15 @@
 
 .root :global(.language-button:focus-visible),
 .root :global(.mobile-menu-toggle:focus-visible) {
-    outline: 2px solid var(--accent-primary);
+    outline: 2px solid var(--accent);
     outline-offset: 4px;
+}
+
+.root :global(.logo-button) {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 0;
 }
 
 .root :global(.microcopy) {
