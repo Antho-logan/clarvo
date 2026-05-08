@@ -29,12 +29,27 @@ type LandingCopy = {
     titleLead: string;
     titleAccent: string;
     description: string;
+    scopeLine: string;
     primaryCta: string;
     secondaryCta: string;
     panelLabel: string;
-    riskBadge: string;
-    lawBadge: string;
+    answerLabel: string;
+    reviewBadge: string;
+    mockQuestion: string;
+    mockAnswerBefore: string;
+    mockCitationOne: string;
+    mockAnswerBetween: string;
+    mockCitationTwo: string;
+    mockAnswerAfter: string;
+    insufficientState: string;
+    sourcesLabel: string;
     panelAction: string;
+    sourceCards: Array<{
+      tag: string;
+      title: string;
+      description: string;
+    }>;
+    mockPromise: string;
     trustStrip: [string, string, string];
   };
   valueProp: {
@@ -144,10 +159,10 @@ export const landingCopy: Record<Locale, LandingCopy> = {
   en: {
     header: {
       nav: {
-        workflows: "How it works",
+        workflows: "Product",
         practiceAreas: "Practice areas",
         security: "Trust",
-        company: "Company",
+        company: "Beta",
       },
       login: "Sign in",
       requestDemo: "Request beta access",
@@ -159,12 +174,40 @@ export const landingCopy: Record<Locale, LandingCopy> = {
       titleAccent: "grounded in sources.",
       description:
         "Veridicta is a research assistant for Dutch legal professionals. Ask a question, get an answer backed by Dutch legislation and case law, and inspect every citation before you rely on it.",
+      scopeLine:
+        "Built for lawyers. Currently focused on employment and tenancy law, with administrative law expanding in beta. Veridicta supports research; it does not replace legal judgment.",
       primaryCta: "Request beta access",
       secondaryCta: "Book a walkthrough",
-      panelLabel: "Citation inspection",
-      riskBadge: "Source-backed",
-      lawBadge: "Dutch law",
+      panelLabel: "Veridicta research workspace",
+      answerLabel: "Answer draft",
+      reviewBadge: "Lawyer review required",
+      mockQuestion: "Wat geldt bij opzegging van huur van woonruimte?",
+      mockAnswerBefore:
+        "The assistant drafts an answer only after retrieving supporting Dutch legal materials. In this example, the answer points to",
+      mockCitationOne: "BWB article context",
+      mockAnswerBetween: "and a",
+      mockCitationTwo: "selected Rechtspraak source",
+      mockAnswerAfter:
+        ", then leaves the final legal judgment to the professional reviewing the matter.",
+      insufficientState:
+        "If the available corpus does not support a confident answer, Veridicta says so instead of filling the gap.",
+      sourcesLabel: "Sources cited",
       panelAction: "Inspect source",
+      sourceCards: [
+        {
+          tag: "BWB",
+          title: "Burgerlijk Wetboek, Boek 7",
+          description:
+            "Source context for tenancy-law questions, opened for verification before use.",
+        },
+        {
+          tag: "Rechtspraak",
+          title: "Selected Dutch case law",
+          description:
+            "Case-law citations remain inspectable so lawyers can decide whether the authority supports the answer.",
+        },
+      ],
+      mockPromise: "Every source can be opened and verified before you use the answer.",
       trustStrip: [
         "Built for lawyers",
         "Focused on employment and tenancy law",
@@ -200,22 +243,24 @@ export const landingCopy: Record<Locale, LandingCopy> = {
       eyebrow: "What Veridicta does",
       titleLead: "A research workflow built",
       titleAccent: "around verifiable sources.",
-      description: "Four capabilities, all available in the current beta.",
+      description:
+        "The current beta connects source search, assistant answers, saved research, memo drafting, and optional voice intake.",
       matterBadge: "Dutch legal research",
       languageBadge: "Source inspection",
       prompt: {
-        beforeLaw: "Ask whether a dismissal issue is supported by ",
-        highlightedLaw: "Dutch employment law",
-        between: ", review the cited ruling, and prepare a ",
-        highlightedDeliverable: "source-backed research note",
-        after: " before drafting.",
+        beforeLaw: "Ask a question under ",
+        highlightedLaw: "Dutch employment or tenancy law",
+        between: ", inspect the cited materials, save the answer to a ",
+        highlightedDeliverable: "Matter",
+        after: ", and draft a research memo for lawyer review.",
       },
       chips: [
         "Legislation",
         "Case law",
-        "Citation context",
-        "Research notes",
-        "Lawyer review",
+        "Inspectable citations",
+        "Saved research",
+        "Draft memo",
+        "Voice intake",
       ],
       primaryCta: "Request beta access",
       capabilities: [
@@ -237,7 +282,17 @@ export const landingCopy: Record<Locale, LandingCopy> = {
         {
           title: "Prepare research faster",
           description:
-            "Pull together statutes, rulings, and answers in one place so you can move from research to drafting without rebuilding the trail.",
+            "Save grounded answers to a Matter so the question, answer, citation count, and source trail stay together.",
+        },
+        {
+          title: "Draft a research memo",
+          description:
+            "Generate a draft memo from a saved, cited research note. Memos preserve citations and remain clearly marked for lawyer review.",
+        },
+        {
+          title: "Use voice as optional intake",
+          description:
+            "Dictate a Dutch legal research question in supported browsers, review the transcript, then submit it as a normal assistant query.",
         },
       ],
       stepsTitle: "Three steps. No black box.",
@@ -295,24 +350,24 @@ export const landingCopy: Record<Locale, LandingCopy> = {
       analysisComplete: "Coverage status",
       analysisSummary: "Limited to selected Dutch practice areas.",
     },
-    metrics: {
+      metrics: {
       title: "What Veridicta is - and is not",
       columns: [
         {
           title: "What Veridicta is today",
           items: [
-            "A research assistant for Dutch employment and tenancy law",
+            "A private-beta research assistant for selected Dutch legal workflows",
             "Source-backed answers",
             "Inspectable citations",
-            "Built for lawyer review",
+            "Saved research notes and draft memos marked for lawyer review",
           ],
         },
         {
           title: "What Veridicta is not",
           items: [
-            "A full EU law platform",
-            "A case management system",
-            "A certified enterprise security product",
+            "A platform for every legal domain or jurisdiction",
+            "A full case management system",
+            "A product claiming formal security certifications",
             "A replacement for legal judgment",
           ],
         },
@@ -342,7 +397,7 @@ export const landingCopy: Record<Locale, LandingCopy> = {
       titleLead: "Principles,",
       titleAccent: "not promises.",
       description:
-        "Veridicta is in private beta. We do not yet hold enterprise security certifications, and we will not claim ones we do not have. What we can commit to today is how the product behaves.",
+        "Veridicta is in private beta. We do not claim formal security certifications or complete legal coverage. The current product is evaluated on source-backed behavior, citation inspection, and clear refusal when coverage is insufficient.",
       principles: [
         {
           title: "Source-first answers",
@@ -359,10 +414,6 @@ export const landingCopy: Record<Locale, LandingCopy> = {
         {
           title: "Lawyer review is required",
           desc: "Veridicta is a research assistant. Output is a starting point for a qualified professional, never a substitute for one.",
-        },
-        {
-          title: "Security foundations in progress",
-          desc: "Standard practices for data handling are in place for the beta. Formal certifications such as ISO 27001 and SOC 2 are on the roadmap, not in hand.",
         },
       ],
     },
@@ -388,7 +439,7 @@ export const landingCopy: Record<Locale, LandingCopy> = {
       secondaryCta: "Book a walkthrough",
       tertiaryLine: "Or email us directly: hello@veridicta.nl",
     },
-    footer: {
+      footer: {
       description:
         "Veridicta supports legal research. It does not provide legal advice and does not replace professional legal judgment. Output must be reviewed by a qualified legal professional before being relied upon.",
       betaDisclaimer:
@@ -400,10 +451,10 @@ export const landingCopy: Record<Locale, LandingCopy> = {
   nl: {
     header: {
       nav: {
-        workflows: "Werkwijze",
+        workflows: "Product",
         practiceAreas: "Rechtsgebieden",
         security: "Vertrouwen",
-        company: "Bedrijf",
+        company: "Beta",
       },
       login: "Inloggen",
       requestDemo: "Beta-toegang aanvragen",
@@ -415,12 +466,40 @@ export const landingCopy: Record<Locale, LandingCopy> = {
       titleAccent: "gebaseerd op bronnen.",
       description:
         "Veridicta is een onderzoeksassistent voor Nederlandse juridische professionals. Stel een vraag, krijg een antwoord met Nederlandse wetgeving en rechtspraak als onderbouwing, en controleer elke bron voordat je erop vertrouwt.",
+      scopeLine:
+        "Gebouwd voor advocaten en juristen. Momenteel gericht op arbeidsrecht en huurrecht, met bestuursrecht in uitbreiding tijdens de beta. Veridicta ondersteunt onderzoek; het vervangt geen juridisch oordeel.",
       primaryCta: "Beta-toegang aanvragen",
       secondaryCta: "Plan een walkthrough",
-      panelLabel: "Broncontrole",
-      riskBadge: "Met bronnen",
-      lawBadge: "Nederlands recht",
+      panelLabel: "Veridicta onderzoekswerkruimte",
+      answerLabel: "Antwoordconcept",
+      reviewBadge: "Controle door jurist vereist",
+      mockQuestion: "Wat geldt bij opzegging van huur van woonruimte?",
+      mockAnswerBefore:
+        "De assistent maakt pas een antwoord nadat ondersteunende Nederlandse juridische bronnen zijn opgehaald. In dit voorbeeld verwijst het antwoord naar",
+      mockCitationOne: "BWB-artikelcontext",
+      mockAnswerBetween: "en een",
+      mockCitationTwo: "geselecteerde Rechtspraak-bron",
+      mockAnswerAfter:
+        ", waarna het uiteindelijke juridische oordeel bij de professional blijft.",
+      insufficientState:
+        "Als het beschikbare corpus geen betrouwbaar antwoord draagt, zegt Veridicta dat in plaats van het gat op te vullen.",
+      sourcesLabel: "Aangehaalde bronnen",
       panelAction: "Controleer bron",
+      sourceCards: [
+        {
+          tag: "BWB",
+          title: "Burgerlijk Wetboek, Boek 7",
+          description:
+            "Broncontext voor huurrechtelijke vragen, te openen voor controle voordat u het antwoord gebruikt.",
+        },
+        {
+          tag: "Rechtspraak",
+          title: "Geselecteerde Nederlandse rechtspraak",
+          description:
+            "Citaties uit rechtspraak blijven controleerbaar, zodat juristen beoordelen of de bron de conclusie draagt.",
+        },
+      ],
+      mockPromise: "Elke bron kan worden geopend en gecontroleerd voordat u het antwoord gebruikt.",
       trustStrip: [
         "Gebouwd voor juristen",
         "Focus op arbeidsrecht en huurrecht",
@@ -456,22 +535,24 @@ export const landingCopy: Record<Locale, LandingCopy> = {
       eyebrow: "Wat Veridicta doet",
       titleLead: "Een onderzoeksproces gebouwd",
       titleAccent: "rond controleerbare bronnen.",
-      description: "Vier mogelijkheden, allemaal beschikbaar in de huidige beta.",
+      description:
+        "De huidige beta verbindt bronzoekfunctie, assistent-antwoorden, opgeslagen onderzoek, memo-concepten en optionele spraakinvoer.",
       matterBadge: "Nederlands juridisch onderzoek",
       languageBadge: "Broncontrole",
       prompt: {
-        beforeLaw: "Stel een vraag over ontslag onder ",
-        highlightedLaw: "Nederlands arbeidsrecht",
-        between: ", controleer de aangehaalde uitspraak en maak een ",
-        highlightedDeliverable: "onderzoeksnotitie met bronnen",
-        after: " voordat je gaat schrijven.",
+        beforeLaw: "Stel een vraag onder ",
+        highlightedLaw: "Nederlands arbeidsrecht of huurrecht",
+        between: ", controleer de aangehaalde bronnen, sla het antwoord op in een ",
+        highlightedDeliverable: "Matter",
+        after: " en maak een memo-concept voor juristencontrole.",
       },
       chips: [
         "Wetgeving",
         "Rechtspraak",
-        "Broncontext",
-        "Onderzoeksnotities",
-        "Jurist beoordeelt",
+        "Controleerbare citaties",
+        "Opgeslagen onderzoek",
+        "Memo-concept",
+        "Spraakinvoer",
       ],
       primaryCta: "Beta-toegang aanvragen",
       capabilities: [
@@ -493,7 +574,17 @@ export const landingCopy: Record<Locale, LandingCopy> = {
         {
           title: "Bereid onderzoek sneller voor",
           description:
-            "Breng wetgeving, uitspraken en antwoorden bij elkaar zodat je kunt schrijven zonder het spoor opnieuw op te bouwen.",
+            "Sla onderbouwde antwoorden op bij een Matter zodat vraag, antwoord, aantal citaties en bronspoor bij elkaar blijven.",
+        },
+        {
+          title: "Maak een onderzoeksmemo",
+          description:
+            "Genereer een memo-concept vanuit een opgeslagen onderzoeksnotitie met bronnen. Memo's behouden citaties en blijven duidelijk gemarkeerd voor juristencontrole.",
+        },
+        {
+          title: "Gebruik spraak als optionele invoer",
+          description:
+            "Dicteer een Nederlandse onderzoeksvraag in ondersteunde browsers, controleer de transcriptie en dien die daarna in als normale assistentvraag.",
         },
       ],
       stepsTitle: "Drie stappen. Geen black box.",
@@ -557,18 +648,18 @@ export const landingCopy: Record<Locale, LandingCopy> = {
         {
           title: "Wat Veridicta vandaag is",
           items: [
-            "Een onderzoeksassistent voor Nederlands arbeidsrecht en huurrecht",
+            "Een private-beta onderzoeksassistent voor geselecteerde Nederlandse juridische workflows",
             "Antwoorden met bronnen",
             "Controleerbare citaties",
-            "Gebouwd voor beoordeling door juristen",
+            "Opgeslagen onderzoeksnotities en memo-concepten voor juristencontrole",
           ],
         },
         {
           title: "Wat Veridicta niet is",
           items: [
-            "Een volledig EU-rechtplatform",
-            "Een zaaksysteem",
-            "Een gecertificeerd enterprise-beveiligingsproduct",
+            "Een platform voor elk rechtsgebied of iedere jurisdictie",
+            "Een volledig zaaksysteem",
+            "Een product dat formele beveiligingscertificeringen claimt",
             "Een vervanging voor juridisch oordeel",
           ],
         },
@@ -598,7 +689,7 @@ export const landingCopy: Record<Locale, LandingCopy> = {
       titleLead: "Principes,",
       titleAccent: "geen beloften.",
       description:
-        "Veridicta is in private beta. We hebben nog geen enterprise-beveiligingscertificeringen en claimen die ook niet. Wat we vandaag kunnen toezeggen is hoe het product zich gedraagt.",
+        "Veridicta is in private beta. We claimen geen formele beveiligingscertificeringen of volledige juridische dekking. Het huidige product wordt beoordeeld op antwoorden met bronnen, controleerbare citaties en duidelijke weigering wanneer dekking onvoldoende is.",
       principles: [
         {
           title: "Bronnen eerst",
@@ -615,10 +706,6 @@ export const landingCopy: Record<Locale, LandingCopy> = {
         {
           title: "Juristen blijven verantwoordelijk",
           desc: "Veridicta is een onderzoeksassistent. Output is een startpunt voor een gekwalificeerde professional, nooit een vervanger.",
-        },
-        {
-          title: "Beveiligingsfundament in ontwikkeling",
-          desc: "Standaardpraktijken voor datahandling zijn aanwezig voor de beta. Formele certificeringen zoals ISO 27001 en SOC 2 staan op de roadmap, maar zijn nog niet behaald.",
         },
       ],
     },

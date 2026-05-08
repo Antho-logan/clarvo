@@ -11,29 +11,29 @@ export function Footer() {
   return (
     <footer
       id="company"
-      className="bg-stucco-light/60 text-ink py-20 border-t border-border/50 scroll-mt-24"
+      className="scroll-mt-24 border-t border-[#D8D2C8] bg-[#F4F1EA] py-20 text-ink"
     >
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
           <div className="space-y-4">
             <Link
               href="/"
-              className="font-serif text-2xl font-bold text-ink block"
+              className="block font-serif text-2xl font-semibold tracking-[0.04em] text-ink"
             >
-              VERIDICTA
+              Veridicta
             </Link>
-            <p className="text-sm text-stucco-dark max-w-lg leading-relaxed">
+            <p className="max-w-lg text-sm leading-7 text-[#63534B]">
               {footer.description}
             </p>
           </div>
 
-          <p className="text-sm text-stucco-dark leading-relaxed md:text-right">
+          <p className="text-sm leading-7 text-[#63534B] md:text-right">
             {footer.betaDisclaimer}
           </p>
         </div>
 
-        <div className="pt-8 border-t border-border/60 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-          <div className="text-sm text-stucco-dark">
+        <div className="flex flex-col items-center justify-between space-y-4 border-t border-[#D8D2C8] pt-8 md:flex-row md:space-y-0">
+          <div className="text-sm text-[#63534B]">
             Copyright {new Date().getFullYear()} Veridicta. {footer.rightsReserved}
           </div>
           <div className="flex space-x-6">
@@ -42,12 +42,12 @@ export function Footer() {
                 <Link
                   key={link}
                   href={directEmailHref}
-                  className="text-sm text-stucco-dark hover:text-ink transition-colors"
+                  className="text-sm text-[#63534B] transition-colors hover:text-ink"
                 >
                   {link}
                 </Link>
               ) : (
-                <span key={link} className="text-sm text-stucco-dark">
+                <span key={link} className="text-sm text-[#63534B]">
                   {link}
                 </span>
               ),

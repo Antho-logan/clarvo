@@ -6,7 +6,6 @@ import { ValueProp } from "@/components/landing/ValueProp";
 import { ProductDemo } from "@/components/landing/ProductDemo";
 import { Features } from "@/components/landing/Features";
 import { Metrics } from "@/components/landing/Metrics";
-import { CaseStudies } from "@/components/landing/CaseStudies";
 import { Security } from "@/components/landing/Security";
 import { Cta } from "@/components/landing/Cta";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
@@ -28,7 +27,6 @@ export default async function LandingPage() {
         <ProductDemo />
         <Features />
         <Metrics />
-        <CaseStudies />
         <Security />
         <Cta />
         <Footer />

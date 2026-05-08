@@ -2,23 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Globe, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import { betaAccessHref, isLocale, supportedLocales } from "@/lib/landing-copy";
+import { betaAccessHref, supportedLocales } from "@/lib/landing-copy";
 
 const NAV_ITEMS = [
-  { href: "#workflows", key: "workflows" },
+  { href: "#product", key: "workflows" },
   { href: "#practice-areas", key: "practiceAreas" },
   { href: "#security", key: "security" },
-  { href: "#company", key: "company" },
+  { href: "#beta", key: "company" },
 ] as const;
 
 export function Header() {
@@ -46,9 +39,9 @@ export function Header() {
       <div className="container mx-auto px-6 h-20 flex items-center justify-between">
         <Link
           href="/"
-          className="font-serif text-2xl font-bold text-ink"
+          className="font-serif text-2xl font-semibold tracking-[0.04em] text-ink"
         >
-          VERIDICTA
+          Veridicta
         </Link>
 
         <nav className="hidden md:flex items-center space-x-8">
@@ -64,38 +57,25 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center space-x-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="space-x-1 text-ink hover:text-ink/80"
-                aria-label={copy.header.languageLabel}
+          <div
+            aria-label={copy.header.languageLabel}
+            className="inline-flex rounded-md border border-stucco-mid/35 bg-white/45 p-1"
+          >
+            {supportedLocales.map((language) => (
+              <button
+                key={language.code}
+                type="button"
+                className={`rounded px-2.5 py-1 text-xs font-semibold transition-colors ${
+                  locale === language.code
+                    ? "bg-ink text-white"
+                    : "text-stucco-dark hover:text-ink"
+                }`}
+                onClick={() => setLocale(language.code)}
               >
-                <Globe className="w-4 h-4" />
-                <span>{locale.toUpperCase()}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuRadioGroup
-                value={locale}
-                onValueChange={(value) => {
-                  if (isLocale(value)) {
-                    setLocale(value);
-                  }
-                }}
-              >
-                {supportedLocales.map((language) => (
-                  <DropdownMenuRadioItem
-                    key={language.code}
-                    value={language.code}
-                  >
-                    {language.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {language.code.toUpperCase()}
+              </button>
+            ))}
+          </div>
 
           <Link
             href="/login"
@@ -105,7 +85,7 @@ export function Header() {
           </Link>
           <Button
             asChild
-            className="h-10 rounded-md border-0 bg-coral px-5 text-sm font-medium text-white shadow-sm hover:bg-coral/90"
+            className="h-10 rounded-md border-0 bg-[#D94A1E] px-5 text-sm font-medium text-white shadow-sm hover:bg-[#B83A14]"
           >
             <Link href={betaAccessHref}>{copy.header.requestDemo}</Link>
           </Button>
@@ -125,7 +105,7 @@ export function Header() {
       </div>
 
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-20 left-0 right-0 bg-background border-b border-border p-6 flex flex-col space-y-4 shadow-lg">
+        <div className="md:hidden absolute top-20 left-0 right-0 bg-ivory border-b border-border p-6 flex flex-col space-y-4 shadow-lg">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.key}
@@ -148,7 +128,7 @@ export function Header() {
                   type="button"
                   className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                     locale === language.code
-                      ? "border-coral bg-coral text-white"
+                      ? "border-[#D94A1E] bg-[#D94A1E] text-white"
                       : "border-border text-ink hover:bg-accent/50"
                   }`}
                   onClick={() => setLocale(language.code)}
@@ -169,7 +149,7 @@ export function Header() {
             </Link>
             <Button
               asChild
-              className="h-11 w-full whitespace-nowrap bg-coral px-5 font-medium text-white shadow-sm hover:bg-coral/90 justify-center"
+              className="h-11 w-full whitespace-nowrap bg-[#D94A1E] px-5 font-medium text-white shadow-sm hover:bg-[#B83A14] justify-center"
             >
               <Link
                 href={betaAccessHref}

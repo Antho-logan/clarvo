@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export function Metrics() {
@@ -8,37 +7,29 @@ export function Metrics() {
   const metrics = copy.metrics;
 
   return (
-    <section className="bg-stucco-light/40 text-ink py-24 border-b border-border/40 md:py-28 lg:py-32">
+    <section className="border-b border-[#D8D2C8] bg-[#FBFAF7] py-24 md:py-28 lg:py-32">
       <div className="container mx-auto px-6">
-        <h2 className="mb-12 text-3xl font-serif text-ink md:text-5xl">
+        <h2 className="max-w-3xl font-serif text-4xl font-medium leading-tight text-ink md:text-5xl">
           {metrics.title}
         </h2>
-        <div className="grid md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-border/60">
-          {metrics.columns.map((column, idx) => (
-            <motion.div
+        <div className="mt-10 grid gap-5 md:grid-cols-2">
+          {metrics.columns.map((column) => (
+            <article
               key={column.title}
-              initial={{ opacity: 1, y: 0 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6, delay: idx * 0.15, ease: "easeOut" }}
-              className={`pt-8 md:pt-0 ${
-                idx !== 0 ? "md:pl-8 lg:pl-12" : ""
-              }`}
+              className="rounded-xl border border-[#D8D2C8] bg-white p-6 shadow-sm"
             >
-              <h3 className="text-xl font-serif text-ink mb-6">
-                {column.title}
-              </h3>
-              <ul className="space-y-4">
+              <h3 className="font-serif text-2xl text-ink">{column.title}</h3>
+              <ul className="mt-6 space-y-4">
                 {column.items.map((item) => (
                   <li
                     key={item}
-                    className="text-stucco-dark text-sm uppercase tracking-widest leading-relaxed font-medium"
+                    className="border-t border-[#EEEDE4] pt-4 text-sm leading-7 text-[#63534B] first:border-t-0 first:pt-0"
                   >
                     {item}
                   </li>
                 ))}
               </ul>
-            </motion.div>
+            </article>
           ))}
         </div>
       </div>
