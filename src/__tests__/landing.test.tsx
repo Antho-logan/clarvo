@@ -1,40 +1,40 @@
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 
-import { Hero } from "@/components/landing/Hero";
-import { LanguageProvider } from "@/components/providers/LanguageProvider";
+import { ApprovedStaticLanding } from "@/components/landing/ApprovedStaticLanding";
 
-vi.mock("framer-motion", () => ({
-  motion: new Proxy(
-    {},
-    {
-      get: (_target, tag: string) =>
-        function MotionComponent({
-          children,
-          ...props
-        }: React.HTMLAttributes<HTMLElement>) {
-          return React.createElement(tag, props, children);
-        },
-    },
-  ),
-}));
+describe("approved static landing", () => {
+  it("renders the beta CTA and English landing copy", () => {
+    render(<ApprovedStaticLanding />);
 
-describe("landing hero", () => {
-  it("renders the localized hero CTA", () => {
-    render(
-      <LanguageProvider>
-        <Hero />
-      </LanguageProvider>,
-    );
-
-    expect(
-      screen.getByRole("link", { name: /request beta access/i }),
-    ).toHaveAttribute("href", expect.stringContaining("hello@veridicta.nl"));
     expect(
       screen.getByRole("heading", {
         name: /dutch legal research, grounded in sources/i,
       }),
     ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("link", { name: /request beta access/i })[0],
+    ).toHaveAttribute(
+      "href",
+      "mailto:hello@veridicta.nl?subject=Veridicta%20beta%20access%20request",
+    );
+    expect(screen.getByText(/does not provide legal advice/i)).toBeInTheDocument();
+  });
+
+  it("switches between English and Dutch copy", () => {
+    render(<ApprovedStaticLanding />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "NL" })[0]);
+
+    expect(
+      screen.getByRole("heading", {
+        name: /nederlands juridisch onderzoek, geworteld in bronnen/i,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /vraag bèta-toegang aan/i })[0])
+      .toHaveAttribute(
+        "href",
+        "mailto:hello@veridicta.nl?subject=Veridicta%20beta%20access%20request",
+      );
   });
 });
