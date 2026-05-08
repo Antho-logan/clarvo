@@ -153,13 +153,15 @@ export function DashboardShell({ children, user, signOutAction }: DashboardShell
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <form action={signOutAction}>
-                  <DropdownMenuItem asChild>
-                    <button type="submit" className="w-full">
-                      <LogOut className="w-4 h-4" />
-                      Sign out
-                    </button>
-                  </DropdownMenuItem>
+                <form action={signOutAction} className="-mx-1">
+                  <button
+                    type="submit"
+                    role="menuitem"
+                    className="relative flex w-full select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign out
+                  </button>
                 </form>
               </DropdownMenuContent>
             </DropdownMenu>

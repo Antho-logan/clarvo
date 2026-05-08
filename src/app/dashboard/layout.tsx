@@ -38,9 +38,9 @@ export default async function DashboardLayout({
   async function signOutAction() {
     "use server";
     if (process.env.AUTH_DEV_BYPASS === "true") {
-      redirect("/login");
+      redirect("/");
     }
-    await signOut({ redirectTo: "/login" });
+    await signOut({ redirectTo: "/" });
   }
 
   return (

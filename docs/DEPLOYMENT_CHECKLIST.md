@@ -67,6 +67,7 @@ Notes:
 
 - If deploying landing-only, dashboard routes can remain protected behind login, but `DATABASE_URL` is still used by Auth.js when login/dashboard routes render.
 - Set `AUTH_DEV_BYPASS=false` in every hosted environment.
+- Never treat dashboard routes as public pages. With `AUTH_DEV_BYPASS=false`, unauthenticated `/dashboard` requests must redirect to `/login`; with `AUTH_DEV_BYPASS=true`, local browsers can enter the dashboard with a demo identity and sign-out only returns to the landing page.
 - Do not expose `OPENAI_API_KEY` to browser-side variables. It must never be prefixed with `NEXT_PUBLIC_`.
 
 ## Backend
@@ -260,7 +261,7 @@ These are not current deployment blockers for the MVP demo.
 ## Blockers Before Full Public Production
 
 - Hosted PostgreSQL + pgvector must contain the verified corpus and embeddings.
-- `AUTH_DEV_BYPASS` must be disabled.
+- `AUTH_DEV_BYPASS` must be disabled in Vercel and every hosted environment.
 - Open signup must be disabled unless intentionally managed.
 - Secrets must be configured only in platform secret storage.
 - Backend runtime must have `OPENAI_API_KEY` and database access.
