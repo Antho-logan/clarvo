@@ -191,9 +191,9 @@ const copy = {
       ],
       isNotTitle: "What Veridicta is not:",
       isNot: [
-        "A full EU law platform",
+        "A broad cross-border law platform",
         "A complete case management system",
-        "A certified enterprise security product",
+        "A public self-serve production product",
         "A replacement for legal judgment",
       ],
     },
@@ -394,9 +394,9 @@ const copy = {
       ],
       isNotTitle: "Wat Veridicta niet is:",
       isNot: [
-        "Een volledig EU-rechtplatform",
+        "Een breed grensoverschrijdend rechtsplatform",
         "Een compleet zaakbeheersysteem",
-        "Een gecertificeerd enterprise-securityproduct",
+        "Een publiek selfservice-product",
         "Een vervanging voor juridisch oordeel",
       ],
     },

@@ -21,6 +21,16 @@ describe("approved static landing", () => {
       "href",
       "mailto:hello@veridicta.nl?subject=Veridicta%20beta%20access%20request",
     );
+    expect(
+      screen.getAllByRole("link", { name: /plan een demonstratie/i })[0],
+    ).toHaveAttribute(
+      "href",
+      "mailto:hello@veridicta.nl?subject=Veridicta%20walkthrough%20request",
+    );
+    expect(screen.getAllByRole("link", { name: /inloggen/i })[0])
+      .toHaveAttribute("href", "/login");
+    expect(screen.getAllByRole("link", { name: "hello@veridicta.nl" })[0])
+      .toHaveAttribute("href", "mailto:hello@veridicta.nl");
     expect(screen.getByText(/geeft geen juridisch advies/i)).toBeInTheDocument();
     expect(
       screen.getByText(/Generieke\s+AI-tools versnellen het schrijven/i),
