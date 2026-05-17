@@ -1,5 +1,6 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -15,11 +16,11 @@ type NavCopy = {
   request: string;
 };
 
-const betaHref =
-  "mailto:hello@veridicta.nl?subject=Veridicta%20beta%20access%20request";
 const walkthroughHref =
   "mailto:hello@veridicta.nl?subject=Veridicta%20walkthrough%20request";
 const emailHref = "mailto:hello@veridicta.nl";
+
+type LeadStatus = "idle" | "submitting" | "success" | "error";
 
 const copy = {
   en: {
@@ -484,12 +485,92 @@ function NavLinks({ labels, onNavigate }: { labels: NavCopy; onNavigate?: () => 
 export function ApprovedStaticLanding() {
   const [locale, setLocale] = useState<Locale>("nl");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [leadModalOpen, setLeadModalOpen] = useState(false);
+  const [leadStatus, setLeadStatus] = useState<LeadStatus>("idle");
+  const [leadError, setLeadError] = useState("");
   const t = copy[locale];
   const rootClassName = useMemo(() => `${styles.root} static-landing`, []);
+  const leadCopy = locale === "nl"
+    ? {
+        title: "Vraag bèta-toegang aan",
+        intro:
+          "Laat uw gegevens achter. We nemen zo spoedig mogelijk contact met u op.",
+        name: "Naam",
+        email: "E-mailadres",
+        company: "Organisatie",
+        role: "Rol of rechtsgebied",
+        message: "Waar wilt u Veridicta voor gebruiken?",
+        submit: "Verzenden",
+        submitting: "Verzenden...",
+        close: "Sluiten",
+        successTitle: "Dank u wel.",
+        success:
+          "Uw aanvraag is ontvangen. We nemen zo spoedig mogelijk contact met u op.",
+        error:
+          "De aanvraag kon niet worden verzonden. Probeer het opnieuw of mail hello@veridicta.nl.",
+      }
+    : {
+        title: "Request beta access",
+        intro:
+          "Leave your details. We will get back to you as soon as possible.",
+        name: "Name",
+        email: "Email address",
+        company: "Company",
+        role: "Role or practice area",
+        message: "What would you like to use Veridicta for?",
+        submit: "Send",
+        submitting: "Sending...",
+        close: "Close",
+        successTitle: "Thank you.",
+        success:
+          "Your request has been received. We will get back to you as soon as possible.",
+        error:
+          "The request could not be sent. Please try again or email hello@veridicta.nl.",
+      };
+
+  function openLeadModal() {
+    setMenuOpen(false);
+    setLeadStatus("idle");
+    setLeadError("");
+    setLeadModalOpen(true);
+  }
+
+  function closeLeadModal() {
+    setLeadModalOpen(false);
+    setLeadStatus("idle");
+    setLeadError("");
+  }
+
+  function renderLeadButton(label: string, className: string) {
+    return (
+      <button type="button" className={className} onClick={openLeadModal}>
+        {label}
+      </button>
+    );
+  }
 
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
+
+  useEffect(() => {
+    if (!leadModalOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeLeadModal();
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [leadModalOpen]);
 
   useEffect(() => {
     const elements = document.querySelectorAll(
@@ -515,6 +596,41 @@ export function ApprovedStaticLanding() {
     return () => observer.disconnect();
   }, [locale]);
 
+  async function submitLead(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLeadStatus("submitting");
+    setLeadError("");
+
+    const formData = new FormData(event.currentTarget);
+    const payload = {
+      locale,
+      name: String(formData.get("name") || "").trim(),
+      email: String(formData.get("email") || "").trim(),
+      company: String(formData.get("company") || "").trim(),
+      role: String(formData.get("role") || "").trim(),
+      message: String(formData.get("message") || "").trim(),
+      website: String(formData.get("website") || "").trim(),
+    };
+
+    try {
+      const response = await fetch("/api/beta-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+
+      setLeadStatus("success");
+      event.currentTarget.reset();
+    } catch {
+      setLeadStatus("error");
+      setLeadError(leadCopy.error);
+    }
+  }
+
   return (
     <div className={rootClassName}>
       <header className="header">
@@ -538,9 +654,7 @@ export function ApprovedStaticLanding() {
             <Link href="/login" className="btn-text">
               {t.nav.signIn}
             </Link>
-            <a href={betaHref} className="btn-primary btn-small">
-              {t.nav.request}
-            </a>
+            {renderLeadButton(t.nav.request, "btn-primary btn-small")}
           </div>
           <button
             className={`mobile-menu-toggle ${menuOpen ? "is-active" : ""}`}
@@ -562,9 +676,7 @@ export function ApprovedStaticLanding() {
             <Link href="/login" className="btn-text">
               {t.nav.signIn}
             </Link>
-            <a href={betaHref} className="btn-primary">
-              {t.nav.request}
-            </a>
+            {renderLeadButton(t.nav.request, "btn-primary")}
           </div>
         </div>
       </header>
@@ -577,9 +689,7 @@ export function ApprovedStaticLanding() {
               <h1 className="hero-title">{t.hero.title}</h1>
               <p className="hero-subtitle center-block">{t.hero.subtitle}</p>
               <div className="hero-ctas justify-center">
-                <a href={betaHref} className="btn-primary btn-large">
-                  {t.nav.request}
-                </a>
+                {renderLeadButton(t.nav.request, "btn-primary btn-large")}
                 <a href={walkthroughHref} className="btn-secondary btn-large">
                   {t.hero.walkthrough}
                 </a>
@@ -827,9 +937,7 @@ export function ApprovedStaticLanding() {
                 </ul>
               </div>
               <div className="beta-cta mt-lg">
-                <a href={betaHref} className="btn-primary btn-large">
-                  {t.nav.request}
-                </a>
+                {renderLeadButton(t.nav.request, "btn-primary btn-large")}
               </div>
             </div>
           </div>
@@ -841,9 +949,7 @@ export function ApprovedStaticLanding() {
               <h2 className="section-title">{t.final.title}</h2>
               <p className="section-lede center-block">{t.final.lede}</p>
               <div className="hero-ctas justify-center mt-lg">
-                <a href={betaHref} className="btn-primary btn-large">
-                  {t.nav.request}
-                </a>
+                {renderLeadButton(t.nav.request, "btn-primary btn-large")}
                 <a href={walkthroughHref} className="btn-secondary btn-large">
                   {t.hero.walkthrough}
                 </a>
@@ -888,6 +994,87 @@ export function ApprovedStaticLanding() {
           </div>
         </div>
       </footer>
+
+      {leadModalOpen ? (
+        <div className="lead-modal-backdrop" role="presentation">
+          <div
+            className="lead-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="lead-modal-title"
+          >
+            <button
+              type="button"
+              className="lead-modal-close"
+              aria-label={leadCopy.close}
+              onClick={closeLeadModal}
+            >
+              ×
+            </button>
+            {leadStatus === "success" ? (
+              <div className="lead-success">
+                <div className="eyebrow">{leadCopy.successTitle}</div>
+                <h2 id="lead-modal-title">{leadCopy.title}</h2>
+                <p>{leadCopy.success}</p>
+                <button
+                  type="button"
+                  className="btn-primary btn-large"
+                  onClick={closeLeadModal}
+                >
+                  {leadCopy.close}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="eyebrow">Private beta</div>
+                <h2 id="lead-modal-title">{leadCopy.title}</h2>
+                <p className="lead-intro">{leadCopy.intro}</p>
+                <form className="lead-form" onSubmit={submitLead}>
+                  <label>
+                    <span>{leadCopy.name}</span>
+                    <input name="name" type="text" autoComplete="name" required />
+                  </label>
+                  <label>
+                    <span>{leadCopy.email}</span>
+                    <input name="email" type="email" autoComplete="email" required />
+                  </label>
+                  <label>
+                    <span>{leadCopy.company}</span>
+                    <input
+                      name="company"
+                      type="text"
+                      autoComplete="organization"
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span>{leadCopy.role}</span>
+                    <input name="role" type="text" />
+                  </label>
+                  <label className="lead-form-wide">
+                    <span>{leadCopy.message}</span>
+                    <textarea name="message" rows={4} />
+                  </label>
+                  <label className="lead-honeypot" aria-hidden="true">
+                    Website
+                    <input name="website" type="text" tabIndex={-1} />
+                  </label>
+                  {leadError ? <p className="lead-error">{leadError}</p> : null}
+                  <button
+                    type="submit"
+                    className="btn-primary btn-large lead-submit"
+                    disabled={leadStatus === "submitting"}
+                  >
+                    {leadStatus === "submitting"
+                      ? leadCopy.submitting
+                      : leadCopy.submit}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -68,7 +68,11 @@ export function DashboardShell({ children, user, signOutAction }: DashboardShell
     <div className="flex h-screen bg-[#F5F5F4] overflow-hidden">
       <aside className="w-64 bg-[#EEEDE4] border-r border-[#D8D2C8] flex-col hidden md:flex">
         <div className="h-16 flex items-center px-6 border-b border-[#D8D2C8]">
-          <Link href="/dashboard" className="font-serif text-xl font-bold tracking-tight text-[#1F1D1A]">
+          <Link
+            href="/dashboard"
+            aria-label="Veridicta dashboard home"
+            className="font-[Georgia,'Times_New_Roman',ui-serif,serif] text-[1.6rem] font-bold uppercase tracking-[0.02em] text-[#1F1D1A]"
+          >
             VERIDICTA
           </Link>
         </div>
