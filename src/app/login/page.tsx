@@ -16,7 +16,7 @@ function readSingleValue(value: string | string[] | undefined) {
 
 function errorMessage(error: string | undefined) {
   if (error === "credentials") {
-    return "Email or password was not accepted.";
+    return "Login name or password was not accepted.";
   }
   if (error === "email_disabled") {
     return "Magic links are disabled until RESEND_API_KEY is configured.";
@@ -59,7 +59,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <CardHeader>
               <CardTitle className="font-serif text-3xl">Sign in</CardTitle>
               <p className="text-sm text-[#63534B]">
-                Use an existing account, or enable `AUTH_ALLOW_CREDENTIAL_SIGNUP=true` locally to create a test account on first login.
+                Use your MVP login name or an existing email account.
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -79,9 +79,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 <input type="hidden" name="callbackUrl" value={callbackUrl} />
                 <div>
                   <label className="mb-2 block text-sm font-medium text-[#1F1D1A]" htmlFor="email">
-                    Email
+                    Name or email
                   </label>
-                  <Input id="email" name="email" type="email" required autoComplete="email" />
+                  <Input id="email" name="email" type="text" required autoComplete="username" />
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-[#1F1D1A]" htmlFor="password">

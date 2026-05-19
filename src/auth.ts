@@ -5,6 +5,8 @@ import PostgresAdapter from "@auth/pg-adapter";
 import { Pool } from "pg";
 import argon2 from "argon2";
 
+import { resolveCredentialIdentity } from "@/lib/auth-identifiers";
+
 function normalizePostgresUrl(value: string | undefined) {
   return value
     ?.replace("postgresql+psycopg://", "postgresql://")
@@ -17,7 +19,11 @@ const pool = new Pool({
   ),
 });
 
-async function getOrCreateCredentialsUser(email: string, password: string) {
+async function getOrCreateCredentialsUser(
+  email: string,
+  password: string,
+  name: string,
+) {
   const existing = await pool.query(
     "SELECT id, name, email, image, password_hash FROM users WHERE lower(email) = lower($1) LIMIT 1",
     [email],
@@ -39,7 +45,7 @@ async function getOrCreateCredentialsUser(email: string, password: string) {
   const passwordHash = await argon2.hash(password);
   const created = await pool.query(
     'INSERT INTO users (name, email, "emailVerified", password_hash) VALUES ($1, $2, now(), $3) RETURNING id, name, email, image',
-    [email.split("@")[0], email, passwordHash],
+    [name, email, passwordHash],
   );
   return created.rows[0];
 }
@@ -48,26 +54,28 @@ const providers: NextAuthConfig["providers"] = [
   Credentials({
     name: "Email and password",
     credentials: {
-      email: { label: "Email", type: "email" },
+      email: { label: "Name or email", type: "text" },
       password: { label: "Password", type: "password" },
     },
     async authorize(credentials) {
-      const email = String(credentials?.email || "")
-        .trim()
-        .toLowerCase();
+      const identity = resolveCredentialIdentity(String(credentials?.email || ""));
       const password = String(credentials?.password || "");
-      if (!email || !password) {
+      if (!identity.email || !password) {
         return null;
       }
 
-      const user = await getOrCreateCredentialsUser(email, password);
+      const user = await getOrCreateCredentialsUser(
+        identity.email,
+        password,
+        identity.name,
+      );
       if (!user?.id || !user?.email) {
         return null;
       }
 
       return {
         id: String(user.id),
-        name: user.name || email,
+        name: user.name || identity.name || user.email,
         email: user.email,
         image: user.image || null,
       };

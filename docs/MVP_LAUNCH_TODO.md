@@ -40,3 +40,27 @@ Expected state:
 Verification:
 - `/login` returns 200 locally.
 - `/login` renders the sign-in form while `AUTH_DEV_BYPASS=true`.
+
+### Local MVP credential login
+
+Status: fixed locally on 2026-05-19.
+
+Current state:
+- `AUTH_DEV_BYPASS=false` in local `.env.local`, so dashboard routes require authentication again.
+- `AUTH_DEMO_LOGIN_NAME="Anthony Logan"` maps the visible login name to the internal auth email.
+- The local Postgres `users` row has been seeded with a password hash.
+- The login form accepts `Name or email` for password login.
+
+Local test credential:
+- Login name: `Anthony Logan`
+- Password: `login`
+
+Verification:
+- Fresh browser request to `/dashboard` redirects to `/login?callbackUrl=%2Fdashboard`.
+- Submitting `Anthony Logan` + the local password reaches `/dashboard`.
+- Dashboard greeting renders `Good evening, Anthony.`
+
+Before launch:
+- Set `AUTH_DEV_BYPASS=false` in every hosted environment.
+- Set `AUTH_ALLOW_CREDENTIAL_SIGNUP=false` unless there is an explicit invite/account flow.
+- Replace the local MVP credential with real account provisioning.
