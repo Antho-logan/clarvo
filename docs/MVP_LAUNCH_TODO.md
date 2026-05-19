@@ -33,6 +33,8 @@ P0 tasks to finish before calling the MVP demo-ready:
      - Tax return question.
      - Criminal pretrial detention question.
    - Required result: supported questions return grounded answers with citations; unsupported questions return insufficient-source/refusal behavior with zero fake citations.
+   - 2026-05-19 update: German employment-law prompt now refuses even when the employment domain is selected:
+     `Welche Kündigungsfristen gelten im deutschen Arbeitsrecht für einen Arbeitnehmer mit fünf Jahren Betriebszugehörigkeit?`
 
 3. Citation click-through pass
    - From an assistant answer, open at least one BWB citation.
@@ -186,3 +188,20 @@ Operational note:
 npm run dev -- --port 3001
 python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
+
+### German-law refusal regression
+
+Status: fixed locally on 2026-05-19.
+
+Issue:
+- A German employment-law prompt was translated into a Dutch employment-law answer and returned Dutch citations.
+- Root cause: the unsupported-question guard only matched a few Dutch phrases such as `duits arbeidsrecht`, and it only ran when no domain was selected.
+
+Fix:
+- Expanded explicit German-law jurisdiction patterns.
+- Run unsupported-question detection before domain-scoped retrieval.
+
+Verification:
+- Backend regression test covers the exact German prompt with `domain="employment_law"`.
+- Browser check through `/dashboard/agents` now shows `Not enough supporting sources`.
+- Backend log reports `assistant status=insufficient_sources sources=0`.

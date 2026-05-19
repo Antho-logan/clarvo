@@ -20,8 +20,20 @@ MAX_CONTEXT_CHARS_PER_SOURCE = 1400
 MAX_EXTRACTIVE_SNIPPET_CHARS = 520
 UNSUPPORTED_QUESTION_PATTERNS = (
     "belastingaangifte",
+    "deutschen arbeitsrecht",
+    "deutsches arbeitsrecht",
+    "deutscher arbeitsrecht",
+    "deutsche arbeitsrecht",
+    "deutschem arbeitsrecht",
+    "deutsches recht",
+    "deutschen recht",
+    "duits recht",
     "duits arbeidsrecht",
     "duitse arbeidsrecht",
+    "german law",
+    "german labor law",
+    "german labour law",
+    "german employment law",
     "strafrecht",
     "voorlopige hechtenis",
     "advocaat vervangen",
@@ -186,7 +198,7 @@ def chat(question: str, max_iterations: int = 2, domain: str | None = None) -> d
     """Run a minimal source-backed assistant lookup."""
     tool_trace: list[dict] = []
 
-    if domain is None and _is_unsupported_question(question):
+    if _is_unsupported_question(question):
         final = _refusal(question, [], tool_trace)
         LOGGER.info("assistant status=%s sources=%s", final["status"], len(final.get("citations", [])))
         return final

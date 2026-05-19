@@ -31,6 +31,17 @@ def test_assistant_refuses_unsupported_question_without_citations() -> None:
     assert result["citations"] == []
 
 
+def test_assistant_refuses_german_law_even_with_domain_selected() -> None:
+    result = chat(
+        "Welche Kündigungsfristen gelten im deutschen Arbeitsrecht für einen Arbeitnehmer mit fünf Jahren Betriebszugehörigkeit?",
+        domain="employment_law",
+    )
+
+    assert result["status"] == "insufficient_sources"
+    assert result["source_ids"] == []
+    assert result["citations"] == []
+
+
 def test_assistant_returns_citations_for_grounded_sources(
     db_session, monkeypatch: pytest.MonkeyPatch
 ) -> None:
