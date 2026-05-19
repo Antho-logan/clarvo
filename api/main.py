@@ -392,12 +392,13 @@ def post_matter(
     user: AuthenticatedUser = Depends(get_current_user),
 ) -> dict:
     """Create a user-owned matter."""
-    if not request.title:
+    title = request.title.strip() if request.title else ""
+    if not title:
         raise HTTPException(status_code=422, detail="Matter title is required.")
     matter = create_matter(
         user_id=user.user_id,
         values=MatterInput(
-            title=request.title,
+            title=title,
             client=request.client,
             status=request.status or "active",
             opened_at=request.opened_at,
@@ -467,6 +468,8 @@ def get_matter_endpoint(
         matter = get_matter(user_id=user.user_id, matter_id=matter_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"matter": matter.as_dict()}
 
 
@@ -485,6 +488,8 @@ def patch_matter(
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"matter": matter.as_dict()}
 
 
@@ -498,6 +503,8 @@ def delete_matter_endpoint(
         delete_matter(user_id=user.user_id, matter_id=matter_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"status": "archived"}
 
 
@@ -514,6 +521,8 @@ def post_matter_document_link(
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"status": "linked"}
 
 
@@ -533,6 +542,8 @@ def post_matter_run_link(
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"status": "linked"}
 
 

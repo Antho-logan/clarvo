@@ -75,6 +75,20 @@ def test_get_matter_missing_raises(ensure_user) -> None:
         get_matter(user_id=user_id, matter_id=str(uuid.uuid4()))
 
 
+def test_matter_uuid_inputs_are_validated(ensure_user) -> None:
+    user_id = ensure_user("invalid-uuid-user", "invalid-uuid@example.com")
+    with pytest.raises(ValueError, match="matter_id must be a valid UUID"):
+        get_matter(user_id=user_id, matter_id="not-a-uuid")
+
+    matter = create_matter(user_id=user_id, values=MatterInput(title="UUID validation"))
+    with pytest.raises(ValueError, match="document_id must be a valid UUID"):
+        link_document(
+            user_id=user_id,
+            matter_id=str(matter.id),
+            document_id="not-a-uuid",
+        )
+
+
 def test_update_matter_missing_raises(ensure_user) -> None:
     user_id = ensure_user("missing-user-2", "missing2@example.com")
     with pytest.raises(LookupError):

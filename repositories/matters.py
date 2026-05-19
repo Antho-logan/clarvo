@@ -22,6 +22,14 @@ from backend_common import (
 DEFAULT_RESEARCH_MATTER_TITLE = "Demo Matter"
 
 
+def _parse_uuid(value: str, field_name: str) -> uuid.UUID:
+    """Parse a UUID input and raise a user-facing validation error."""
+    try:
+        return uuid.UUID(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field_name} must be a valid UUID.") from exc
+
+
 @dataclass(frozen=True)
 class MatterInput:
     """Validated matter fields accepted by repository writes."""
@@ -89,7 +97,7 @@ def list_matters(
 
 def get_matter(*, user_id: str, matter_id: str) -> Matter:
     """Return one matter by id and owner."""
-    parsed_id = uuid.UUID(matter_id)
+    parsed_id = _parse_uuid(matter_id, "matter_id")
     session_factory = get_session_factory()
     with session_factory() as session:
         matter = (
@@ -137,7 +145,9 @@ def save_research_note(
     if not values.citations:
         raise ValueError("Grounded research notes require at least one citation.")
 
-    parsed_matter_id = uuid.UUID(values.matter_id) if values.matter_id else None
+    parsed_matter_id = (
+        _parse_uuid(values.matter_id, "matter_id") if values.matter_id else None
+    )
     created_at = utcnow().isoformat()
     note_id = str(uuid.uuid4())
 
@@ -261,7 +271,7 @@ def create_research_memo(
     *, user_id: str, values: ResearchMemoInput
 ) -> tuple[Matter, dict[str, Any]]:
     """Draft a native research memo from a grounded saved research note."""
-    parsed_matter_id = uuid.UUID(values.matter_id)
+    parsed_matter_id = _parse_uuid(values.matter_id, "matter_id")
     created_at = utcnow().isoformat()
 
     session_factory = get_session_factory()
@@ -329,7 +339,7 @@ def create_research_memo(
 
 def update_matter(*, user_id: str, matter_id: str, values: dict[str, Any]) -> Matter:
     """Patch allowed matter fields."""
-    parsed_id = uuid.UUID(matter_id)
+    parsed_id = _parse_uuid(matter_id, "matter_id")
     allowed_fields = {
         "title",
         "client",
@@ -372,7 +382,10 @@ def link_document(*, user_id: str, matter_id: str, document_id: str) -> None:
     matter = get_matter(user_id=user_id, matter_id=matter_id)
     session_factory = get_session_factory()
     with session_factory() as session:
-        link = MatterDocument(matter_id=matter.id, document_id=uuid.UUID(document_id))
+        link = MatterDocument(
+            matter_id=matter.id,
+            document_id=_parse_uuid(document_id, "document_id"),
+        )
         session.merge(link)
         session.commit()
 

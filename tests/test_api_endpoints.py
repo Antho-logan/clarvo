@@ -253,6 +253,37 @@ def test_create_matter_requires_title(
     response = api_client.post("/matters", headers=auth_headers, json={"client": "X"})
     assert response.status_code == 422
 
+    blank = api_client.post(
+        "/matters",
+        headers=auth_headers,
+        json={"title": "   ", "client": "X"},
+    )
+    assert blank.status_code == 422
+
+
+def test_matter_endpoints_reject_invalid_uuid_inputs(
+    api_client: TestClient, auth_headers: dict[str, str], ensure_user
+) -> None:
+    ensure_user("test-user", "test@example.com")
+    matter = api_client.post(
+        "/matters",
+        headers=auth_headers,
+        json={"title": "UUID validation"},
+    )
+    matter_id = matter.json()["matter"]["id"]
+
+    fetched = api_client.get("/matters/not-a-uuid", headers=auth_headers)
+    assert fetched.status_code == 422
+    assert fetched.json()["detail"] == "matter_id must be a valid UUID."
+
+    linked = api_client.post(
+        f"/matters/{matter_id}/link-document",
+        headers=auth_headers,
+        json={"document_id": "not-a-uuid"},
+    )
+    assert linked.status_code == 422
+    assert linked.json()["detail"] == "document_id must be a valid UUID."
+
 
 def test_link_document_and_run(
     api_client: TestClient, auth_headers: dict[str, str], ensure_user, db_session

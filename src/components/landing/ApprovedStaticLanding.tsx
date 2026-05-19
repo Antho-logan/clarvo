@@ -16,8 +16,6 @@ type NavCopy = {
   request: string;
 };
 
-const walkthroughHref =
-  "mailto:hello@veridicta.nl?subject=Veridicta%20walkthrough%20request";
 const emailHref = "mailto:hello@veridicta.nl";
 
 type LeadStatus = "idle" | "submitting" | "success" | "error";
@@ -30,14 +28,13 @@ const copy = {
       trust: "Trust",
       beta: "Beta",
       signIn: "Sign in",
-      request: "Request beta access",
+      request: "Request a demo",
     },
     hero: {
       beta: "Private beta · Invitation only",
       title: "Dutch legal research, grounded in sources.",
       subtitle:
         "Veridicta is a research assistant for Dutch legal professionals. Ask a question, get an answer backed by Dutch legislation and case law, and inspect every citation before you rely on it.",
-      walkthrough: "Book a walkthrough",
       disclaimer:
         "Built for lawyers. Currently focused on employment and tenancy law, with administrative law expanding in beta. Veridicta supports research; it does not replace legal judgment.",
       query: "Wat geldt bij opzegging van huur van woonruimte?",
@@ -55,7 +52,7 @@ const copy = {
       eyebrow: "The research problem",
       title: "Legal research is slow because the sources are scattered.",
       lede:
-        "Statutes live in one system, case law in another, internal memos in a third. Verifying a single answer means switching tabs, re-reading articles, and tracking down the exact passage that supports the conclusion. General-purpose AI tools speed up the writing but rarely show their work - and an answer without a source is a liability, not a shortcut.",
+        "Statutes live in one system, case law in another, internal memos in a third. Confirming a single citation can cost an associate an afternoon of tab-switching, and the partner signing off on the draft has no way to verify the work without redoing it. General-purpose AI tools speed up the writing but rarely show their sources — and an answer without an inspectable source is a liability, not a shortcut.",
       strong:
         "Veridicta is built around the opposite assumption: the citation is the answer. The prose is just how you get there.",
       cards: [
@@ -79,6 +76,13 @@ const copy = {
       lede: "Core capabilities available in the current private beta.",
       chipA: "Source inspection",
       chipB: "Source-backed answer",
+      chips: {
+        bwbHero: "BWB · Book 7",
+        bwb: "BWB",
+        rechtspraak: "Rechtspraak",
+        articleContext: "Article context",
+        selectedRuling: "Selected ruling",
+      },
       capabilities: [
         [
           "Search Dutch legal materials",
@@ -99,10 +103,6 @@ const copy = {
         [
           "Draft a research memo",
           "Turn a grounded saved note into a draft memo that preserves citations and remains clearly marked for lawyer review.",
-        ],
-        [
-          "Use optional voice intake",
-          "Dictate a Dutch research question in supported browsers, review the transcript, then submit it as a normal assistant query.",
         ],
       ],
     },
@@ -127,12 +127,12 @@ const copy = {
         [
           "Expanding",
           "Administrative law",
-          "Coverage is being extended into Dutch administrative law. Available to design partners during the beta.",
+          "Coverage is being extended into Dutch administrative law. Selected questions are supported during the beta.",
           "status-expanding",
         ],
       ],
       footer:
-        "Other practice areas are not yet supported. If yours is not on this list, Veridicta is not ready for it - and we would rather tell you now.",
+        "Other practice areas are not yet supported. If yours is not on this list, Veridicta is not ready for it — and we would rather tell you now.",
     },
     how: {
       eyebrow: "How it works",
@@ -182,7 +182,7 @@ const copy = {
       ],
     },
     clarity: {
-      title: "What Veridicta is - and is not.",
+      title: "What Veridicta is — and is not.",
       isTitle: "What Veridicta is today:",
       is: [
         "A research assistant for Dutch employment and tenancy law",
@@ -202,21 +202,21 @@ const copy = {
       eyebrow: "Private beta",
       title: "We are working with a small group of Dutch legal teams.",
       paragraphs: [
-        "Veridicta is in invitation-only beta. We are partnering with a limited number of Dutch lawyers, in-house teams, and firms who want to evaluate AI-assisted research on real matters - and who are willing to tell us where it falls short.",
-        "Design partners get direct access to the team, influence over the roadmap, and a product that is being shaped around their workflows.",
+        "Veridicta is in invitation-only private beta. A small group of Dutch legal professionals are using it on real research questions, on the understanding that the product is still being refined.",
+        "The corpus today contains 14,346 indexed Dutch legal documents — BWB legislation and Rechtspraak case law — focused on employment law, tenancy law, and selected administrative law questions.",
       ],
       whoTitle: "Who we are looking for:",
       who: [
         "Dutch lawyers and paralegals working in employment, tenancy, or administrative law",
         "In-house legal teams handling Dutch matters",
-        "Firms validating AI-assisted research workflows for production use",
+        "Firms exploring how AI fits into their research workflow",
       ],
     },
     final: {
       title: "See it on your own questions.",
       lede:
-        "The fastest way to evaluate Veridicta is to bring a real research question and watch how the system handles it. Walkthroughs are run by the team, take about thirty minutes, and end with you deciding whether beta access is worth your time.",
-      direct: "Or email us directly:",
+        "Bring a real Dutch legal question — the harder, the better. In a thirty-minute call we put it through Veridicta together: a live answer, inspectable citations, and a clear refusal when the corpus cannot back the claim up. By the end you know whether private beta access is for you.",
+      direct: "Or email directly:",
     },
     footer: {
       tagline: "Dutch legal research, grounded in sources.",
@@ -233,14 +233,13 @@ const copy = {
       trust: "Vertrouwen",
       beta: "Bèta",
       signIn: "Inloggen",
-      request: "Vraag bèta-toegang aan",
+      request: "Vraag een demo aan",
     },
     hero: {
       beta: "Besloten bèta · Alleen op uitnodiging",
-      title: "Nederlands juridisch onderzoek, geworteld in bronnen.",
+      title: "Nederlands juridisch onderzoek, onderbouwd met bronnen.",
       subtitle:
-        "Veridicta is een onderzoeksassistent voor Nederlandse juridische professionals. Stel een vraag, krijg een antwoord onderbouwd met Nederlandse wetgeving en rechtspraak, en inspecteer elke bronvermelding voordat u erop vertrouwt.",
-      walkthrough: "Plan een demonstratie",
+        "Veridicta helpt Nederlandse juridische professionals sneller zoeken, antwoorden opstellen en elke bron controleren voordat zij erop vertrouwen.",
       disclaimer:
         "Gebouwd voor advocaten en juristen. Momenteel gericht op arbeidsrecht en huurrecht, met bestuursrecht in uitbreiding. Veridicta ondersteunt onderzoek; het vervangt geen juridisch oordeel.",
       query: "Wat geldt bij opzegging van huur van woonruimte?",
@@ -258,7 +257,7 @@ const copy = {
       eyebrow: "Het onderzoeksprobleem",
       title: "Juridisch onderzoek is traag omdat bronnen versnipperd zijn.",
       lede:
-        "Wetgeving staat in één systeem, rechtspraak in een ander, interne memo's in een derde. Het verifiëren van een enkel antwoord betekent wisselen van tabbladen, artikelen herlezen en de exacte passage opsporen die de conclusie ondersteunt. Generieke AI-tools versnellen het schrijven, maar tonen zelden hun bronnen — en een antwoord zonder bron is een risico, geen kortere weg.",
+        "Wetgeving staat in één systeem, rechtspraak in een ander, interne memo's in een derde. Het controleren van één juridisch antwoord kost vaak meer tijd dan het schrijven ervan. Generieke AI-tools versnellen het schrijven maar tonen zelden hun bronnen — en een antwoord zonder inspecteerbare bron is een risico, geen kortere weg.",
       strong:
         "Veridicta is gebouwd op de tegenovergestelde aanname: de bronvermelding is het antwoord. De tekst is slechts de weg ernaartoe.",
       cards: [
@@ -282,6 +281,13 @@ const copy = {
       lede: "Kernmogelijkheden die beschikbaar zijn in de huidige besloten bèta.",
       chipA: "Broninspectie",
       chipB: "Antwoord onderbouwd met bronnen",
+      chips: {
+        bwbHero: "BWB · Boek 7",
+        bwb: "BWB",
+        rechtspraak: "Rechtspraak",
+        articleContext: "Artikelcontext",
+        selectedRuling: "Geselecteerde uitspraak",
+      },
       capabilities: [
         [
           "Doorzoek Nederlands juridisch materiaal",
@@ -296,16 +302,12 @@ const copy = {
           "Open een bronvermelding om de bronpassage in context te zien. U beslist of de geciteerde autoriteit het antwoord ondersteunt.",
         ],
         [
-          "Sla onderzoek op in een Matter",
-          "Bewaar nuttige antwoorden, vragen en bronmetadata samen in een werkruimte voor latere controle.",
+          "Sla onderzoek op in een dossier",
+          "Bewaar nuttige antwoorden, vragen en bronmetadata samen in een Matter/dossier voor latere controle.",
         ],
         [
-          "Maak een onderzoeksnotitie",
-          "Zet een onderbouwde opgeslagen notitie om in een conceptmemo dat bronvermeldingen behoudt en duidelijk gemarkeerd blijft voor juristencontrole.",
-        ],
-        [
-          "Gebruik optionele spraakinvoer",
-          "Dicteer een Nederlandse onderzoeksvraag in ondersteunde browsers, controleer het transcript en verstuur het daarna als normale assistentvraag.",
+          "Maak een conceptmemo",
+          "Zet een onderbouwde opgeslagen notitie om in een conceptmemo die bronvermeldingen behoudt en duidelijk gemarkeerd blijft voor controle door een jurist.",
         ],
       ],
     },
@@ -328,14 +330,14 @@ const copy = {
           "status-available",
         ],
         [
-          "Uitbreidend",
+          "In uitbreiding",
           "Bestuursrecht",
-          "Dekking wordt momenteel uitgebreid naar het Nederlandse bestuursrecht. Beschikbaar voor designpartners tijdens de bèta.",
+          "Dekking wordt momenteel uitgebreid naar het Nederlandse bestuursrecht. Geselecteerde vragen worden tijdens de bèta ondersteund.",
           "status-expanding",
         ],
       ],
       footer:
-        "Andere rechtsgebieden worden nog niet ondersteund. Staat uw gebied niet op deze lijst, dan is Veridicta er nog niet klaar voor - en dat vertellen we u liever direct.",
+        "Andere rechtsgebieden worden nog niet ondersteund. Staat uw gebied niet op deze lijst, dan is Veridicta er nog niet klaar voor — en dat vertellen we u liever direct.",
     },
     how: {
       eyebrow: "Hoe het werkt",
@@ -358,7 +360,7 @@ const copy = {
     },
     trust: {
       eyebrow: "Hoe we over vertrouwen denken",
-      title: "Principes, geen beloften.",
+      title: "Gebouwd voor controle, niet voor blind vertrouwen.",
       lede:
         "Veridicta is in besloten bèta. We claimen geen enterprise-certificeringen of publieke productierijpheid. Wat we vandaag kunnen toezeggen, is hoe het product zich gedraagt.",
       items: [
@@ -380,18 +382,18 @@ const copy = {
         ],
         [
           "Bèta-waarborgen in ontwikkeling",
-          "Operationele werkwijzen voor de besloten bèta worden aangescherpt. We claimen geen formele certificeringen of publieke selfservice-gereedheid voordat die werkelijk bestaan.",
+          "Operationele werkwijzen voor de besloten bèta worden aangescherpt. We claimen geen formele certificeringen of publiek selfservice-product voordat die werkelijk bestaan.",
         ],
       ],
     },
     clarity: {
-      title: "Wat Veridicta is - en niet is.",
+      title: "Wat Veridicta is — en niet is.",
       isTitle: "Wat Veridicta vandaag is:",
       is: [
         "Een onderzoeksassistent voor Nederlands arbeidsrecht en huurrecht",
         "Bestuursrechtelijke dekking in uitbreiding tijdens de bèta",
         "Antwoorden met bronnen en inspecteerbare citaties",
-        "Opgeslagen onderzoeksnotities en conceptmemo's voor juristencontrole",
+        "Opgeslagen onderzoeksnotities en conceptmemo's voor controle door een jurist",
       ],
       isNotTitle: "Wat Veridicta niet is:",
       isNot: [
@@ -405,24 +407,24 @@ const copy = {
       eyebrow: "Besloten bèta",
       title: "We werken met een kleine groep Nederlandse juridische teams.",
       paragraphs: [
-        "Veridicta is een bèta op uitnodiging. We werken samen met een beperkt aantal Nederlandse advocaten, bedrijfsjuristen en kantoren die AI-ondersteund onderzoek op echte dossiers willen evalueren - en die ons willen vertellen waar het tekortschiet.",
-        "Designpartners krijgen direct contact met het team, invloed op de roadmap en een product dat rond hun workflows wordt gevormd.",
+        "Veridicta is een besloten bèta op uitnodiging. Een kleine groep Nederlandse juridische professionals gebruikt het op echte onderzoeksvragen, met het besef dat het product nog volop wordt verfijnd.",
+        "Het corpus bevat momenteel 14.346 geïndexeerde Nederlandse juridische documenten — BWB-wetgeving en Rechtspraak-uitspraken — gericht op arbeidsrecht, huurrecht en geselecteerde bestuursrechtelijke vragen.",
       ],
       whoTitle: "Wie we zoeken:",
       who: [
-        "Nederlandse advocaten en paralegals in arbeidsrecht, huurrecht of bestuursrecht",
+        "Nederlandse advocaten en juridisch medewerkers in arbeidsrecht, huurrecht of bestuursrecht",
         "In-house juridische teams die Nederlandse zaken behandelen",
-        "Kantoren die AI-ondersteunde researchworkflows valideren voor productiegebruik",
+        "Kantoren die willen ontdekken hoe AI in hun onderzoekswerk past",
       ],
     },
     final: {
       title: "Bekijk het met uw eigen vragen.",
       lede:
-        "De snelste manier om Veridicta te beoordelen is een echte onderzoeksvraag meenemen en zien hoe het systeem daarmee omgaat. Walkthroughs worden door het team gegeven, duren ongeveer dertig minuten en eindigen met uw beslissing of bèta-toegang de moeite waard is.",
-      direct: "Of mail ons direct:",
+        "Neem een echte, lastige Nederlandse juridische vraag mee. In een gesprek van dertig minuten zetten we hem samen door Veridicta: een live antwoord, inspecteerbare bronvermeldingen, en een duidelijke weigering wanneer het corpus de bewering niet kan onderbouwen. Aan het einde weet u of bèta-toegang iets voor u is.",
+      direct: "Of mail direct:",
     },
     footer: {
-      tagline: "Nederlands juridisch onderzoek, geworteld in bronnen.",
+      tagline: "Nederlands juridisch onderzoek, onderbouwd met bronnen.",
       beta:
         "Bèta-disclaimer: Veridicta is in besloten bèta. Functies, dekking en prestaties ontwikkelen zich. Dekking is momenteel beperkt tot geselecteerde Nederlandse rechtsgebieden.",
       disclaimer:
@@ -492,38 +494,38 @@ export function ApprovedStaticLanding() {
   const rootClassName = useMemo(() => `${styles.root} static-landing`, []);
   const leadCopy = locale === "nl"
     ? {
-        title: "Vraag bèta-toegang aan",
+        title: "Vraag een demo aan",
         intro:
-          "Laat uw gegevens achter. We nemen zo spoedig mogelijk contact met u op.",
+          "Laat uw gegevens achter. We nemen contact met u op om een korte demo in te plannen.",
         name: "Naam",
         email: "E-mailadres",
         company: "Organisatie",
         role: "Rol of rechtsgebied",
         message: "Waar wilt u Veridicta voor gebruiken?",
-        submit: "Verzenden",
-        submitting: "Verzenden...",
+        submit: "Demo aanvragen",
+        submitting: "Aanvraag verzenden...",
         close: "Sluiten",
         successTitle: "Dank u wel.",
         success:
-          "Uw aanvraag is ontvangen. We nemen zo spoedig mogelijk contact met u op.",
+          "We hebben uw aanvraag ontvangen en nemen zo spoedig mogelijk contact met u op.",
         error:
           "De aanvraag kon niet worden verzonden. Probeer het opnieuw of mail hello@veridicta.nl.",
       }
     : {
-        title: "Request beta access",
+        title: "Request a demo",
         intro:
-          "Leave your details. We will get back to you as soon as possible.",
+          "Leave your details. We will contact you to schedule a short demo.",
         name: "Name",
         email: "Email address",
         company: "Company",
         role: "Role or practice area",
         message: "What would you like to use Veridicta for?",
-        submit: "Send",
-        submitting: "Sending...",
+        submit: "Request demo",
+        submitting: "Sending request...",
         close: "Close",
         successTitle: "Thank you.",
         success:
-          "Your request has been received. We will get back to you as soon as possible.",
+          "We received your request and will get back to you soon.",
         error:
           "The request could not be sent. Please try again or email hello@veridicta.nl.",
       };
@@ -601,6 +603,7 @@ export function ApprovedStaticLanding() {
     setLeadStatus("submitting");
     setLeadError("");
 
+    const form = event.currentTarget;
     const formData = new FormData(event.currentTarget);
     const payload = {
       locale,
@@ -624,7 +627,7 @@ export function ApprovedStaticLanding() {
       }
 
       setLeadStatus("success");
-      event.currentTarget.reset();
+      form.reset();
     } catch {
       setLeadStatus("error");
       setLeadError(leadCopy.error);
@@ -690,9 +693,6 @@ export function ApprovedStaticLanding() {
               <p className="hero-subtitle center-block">{t.hero.subtitle}</p>
               <div className="hero-ctas justify-center">
                 {renderLeadButton(t.nav.request, "btn-primary btn-large")}
-                <a href={walkthroughHref} className="btn-secondary btn-large">
-                  {t.hero.walkthrough}
-                </a>
               </div>
               <p className="hero-disclaimer center-block">{t.hero.disclaimer}</p>
             </div>
@@ -707,12 +707,12 @@ export function ApprovedStaticLanding() {
                   </p>
                   <div className="mockup-citations">
                     <div className="citation-chip">
-                      <span className="chip-tag">BWB · Boek 7</span>
-                      <span className="chip-text">Article context</span>
+                      <span className="chip-tag">{t.product.chips.bwbHero}</span>
+                      <span className="chip-text">{t.product.chips.articleContext}</span>
                     </div>
                     <div className="citation-chip">
-                      <span className="chip-tag">Rechtspraak</span>
-                      <span className="chip-text">Selected ruling</span>
+                      <span className="chip-tag">{t.product.chips.rechtspraak}</span>
+                      <span className="chip-text">{t.product.chips.selectedRuling}</span>
                     </div>
                   </div>
                   <div className="mockup-trust-state">
@@ -766,10 +766,10 @@ export function ApprovedStaticLanding() {
                   <div className="css-card-content">
                     <div className="css-card-chips">
                       <div className="citation-chip">
-                        <span className="chip-tag">BWB · Book 7</span>
+                        <span className="chip-tag">{t.product.chips.bwbHero}</span>
                       </div>
                       <div className="citation-chip">
-                        <span className="chip-tag">Rechtspraak</span>
+                        <span className="chip-tag">{t.product.chips.rechtspraak}</span>
                       </div>
                     </div>
                     <div className="css-card-item">{t.product.chipA}</div>
@@ -837,12 +837,12 @@ export function ApprovedStaticLanding() {
               <div className="triptych-panel panel-highlight">
                 <div className="triptych-chips">
                   <div className="citation-chip">
-                    <span className="chip-tag">BWB</span>{" "}
-                    <span className="chip-text">Article context</span>
+                    <span className="chip-tag">{t.product.chips.bwb}</span>{" "}
+                    <span className="chip-text">{t.product.chips.articleContext}</span>
                   </div>
                   <div className="citation-chip">
-                    <span className="chip-tag">Rechtspraak</span>{" "}
-                    <span className="chip-text">Selected ruling</span>
+                    <span className="chip-tag">{t.product.chips.rechtspraak}</span>{" "}
+                    <span className="chip-text">{t.product.chips.selectedRuling}</span>
                   </div>
                 </div>
                 <div className="triptych-source-card">
@@ -936,9 +936,6 @@ export function ApprovedStaticLanding() {
                   ))}
                 </ul>
               </div>
-              <div className="beta-cta mt-lg">
-                {renderLeadButton(t.nav.request, "btn-primary btn-large")}
-              </div>
             </div>
           </div>
         </section>
@@ -950,9 +947,6 @@ export function ApprovedStaticLanding() {
               <p className="section-lede center-block">{t.final.lede}</p>
               <div className="hero-ctas justify-center mt-lg">
                 {renderLeadButton(t.nav.request, "btn-primary btn-large")}
-                <a href={walkthroughHref} className="btn-secondary btn-large">
-                  {t.hero.walkthrough}
-                </a>
               </div>
               <div className="tertiary-cta">
                 {t.final.direct} <a href={emailHref}>hello@veridicta.nl</a>

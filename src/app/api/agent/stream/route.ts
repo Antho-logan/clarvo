@@ -1,25 +1,11 @@
-import { createApiUrl } from "@/lib/api/base-url";
-import { getBackendAuthToken } from "@/lib/server-auth-token";
+import { postToBackend } from "@/lib/backend-proxy";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const token = await getBackendAuthToken();
   const body = await request.text();
-  const headers: Record<string, string> = {
-    Accept: "text/event-stream",
-    "Content-Type": "application/json",
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const backendResponse = await fetch(createApiUrl("/agent/stream"), {
-    method: "POST",
-    body,
-    headers,
-    cache: "no-store",
+  const backendResponse = await postToBackend("/agent/stream", body, {
+    accept: "text/event-stream",
   });
 
   if (!backendResponse.ok) {

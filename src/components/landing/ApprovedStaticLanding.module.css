@@ -99,7 +99,7 @@
 
 .root :global(.section-intro) {
     max-width: 640px;
-    margin-bottom: 4rem;
+    margin-bottom: 5rem;
 }
 
 .root :global(.section-intro.text-center) {
@@ -110,19 +110,20 @@
 .root :global(.section-title) {
     font-size: 2.5rem;
     line-height: 1.15;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
     letter-spacing: -0.01em;
 }
 
 .root :global(.section-lede) {
     font-size: 1.25rem;
     color: var(--stucco-dark);
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
+    line-height: 1.7;
+    margin-bottom: 2rem;
 }
 
 .root :global(.section-lede-strong) {
     font-size: 1.25rem;
+    line-height: 1.6;
     font-weight: 600;
     color: var(--ink-black);
     margin-bottom: 0;
@@ -155,9 +156,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background-color: rgba(238, 237, 228, 0.85); /* Stucco Light Translucent */
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background-color: #EEEDE4;
     border-bottom: 1px solid var(--soft-gray-border);
 }
 
@@ -726,9 +725,9 @@
 }
 
 .root :global(.status-available) {
-    background-color: rgba(99, 83, 75, 0.08);
-    color: var(--stucco-dark);
-    border: 1px solid rgba(99, 83, 75, 0.15);
+    background-color: rgba(99, 83, 75, 0.14);
+    color: var(--ink-black);
+    border: 1px solid rgba(99, 83, 75, 0.38);
 }
 
 .root :global(.status-expanding) {
@@ -1266,7 +1265,23 @@
     }
     
     .root :global(.hero-title) {
-        font-size: 2.75rem;
+        font-size: 2.1rem;
+        line-height: 1.1;
+    }
+
+    .root :global(.hero-subtitle) {
+        font-size: 1.05rem;
+        line-height: 1.55;
+        max-width: 100%;
+    }
+
+    .root :global(.hero-disclaimer) {
+        max-width: 100%;
+    }
+
+    .root :global(.beta-text-simple) {
+        letter-spacing: 0.06em;
+        font-size: 0.78rem;
     }
     
     .root :global(.beta-content) {
@@ -1371,5 +1386,5 @@
 }
 
 .root :global(.capability-list.extended) {
-    gap: var(--space-4);
+    gap: 2.5rem;
 }

@@ -17,6 +17,9 @@ target_metadata = Base.metadata
 
 
 def _database_url() -> str:
+    configured_url = config.get_main_option("sqlalchemy.url")
+    if configured_url:
+        return configured_url
     return os.getenv("DATABASE_URL") or get_database_url()
 
 
