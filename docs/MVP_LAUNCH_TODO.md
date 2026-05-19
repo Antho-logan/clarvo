@@ -6,6 +6,85 @@ This file tracks small MVP blockers and follow-ups that should not interrupt the
 
 ## Open
 
+### MVP finish board
+
+Status: active.
+
+MVP definition:
+- Private demo / beta-candidate product.
+- Not public self-serve production.
+- Core promise: login works, assistant answers supported Dutch legal questions, citations are inspectable, and useful answers can be saved into matter work.
+
+P0 tasks to finish before calling the MVP demo-ready:
+
+1. Dashboard smoke pass
+   - Verify login lands on `/dashboard`.
+   - Verify the dashboard shows `Backend live` when both local servers are running.
+   - Verify source count, practice-area links, and latest source links load without error.
+   - If the dashboard says `Backend offline` while `/health` is OK, fix that status logic.
+
+2. Assistant answer and refusal pass
+   - Run the three safe demo questions:
+     - `Wat geldt bij opzegging van huur van woonruimte?`
+     - `Wanneer is ontslag op staande voet geldig?`
+     - `Wat geldt bij loondoorbetaling tijdens ziekte?`
+   - Run refusal checks:
+     - German labor law question.
+     - Tax return question.
+     - Criminal pretrial detention question.
+   - Required result: supported questions return grounded answers with citations; unsupported questions return insufficient-source/refusal behavior with zero fake citations.
+
+3. Citation click-through pass
+   - From an assistant answer, open at least one BWB citation.
+   - Open at least one ECLI/Rechtspraak citation when present.
+   - Required result: citation links land on the correct Vault/document detail page and show usable source text.
+
+4. Knowledge search pass
+   - Search the Knowledge page for `opzegging huur`, `ontslag op staande voet`, and `loondoorbetaling ziekte`.
+   - Test domain filters for tenancy and employment.
+   - Required result: results load, counts make sense, and top hits can be opened.
+
+5. Vault/document pass
+   - Open `/dashboard/documents`.
+   - Filter or browse stored documents.
+   - Open a document detail page.
+   - Required result: document metadata and text preview are visible.
+
+6. Matters and memo pass
+   - Create a test matter.
+   - Save a grounded assistant answer to a matter.
+   - Open `/dashboard/matters` and confirm the saved research note appears with citations.
+   - If the memo button is available for that note, draft a research memo and confirm it persists.
+   - Required result: no broken save, reload, or citation display path.
+
+7. Settings/onboarding pass
+   - Open `/dashboard/settings`.
+   - Save a harmless setting such as display name or firm name.
+   - Confirm there is no onboarding redirect loop.
+
+P1 tasks that can wait until after the core demo works:
+- Improve assistant streaming animation so answer chunks feel smoother.
+- Polish the login screen design.
+- Make lead email delivery work with a verified Resend sender.
+- Define a repeatable manual user-provisioning command/script.
+
+P2 tasks intentionally deferred beyond MVP:
+- Full user-management dashboard.
+- Public self-serve signup.
+- Active workflow automation runner.
+- Large dashboard redesign.
+
+Current surface decision:
+- `Workflows` remains roadmap-only for MVP. Do not build real automation there before the Assistant, Knowledge, Vault, and Matters flows are proven.
+
+Local smoke commands:
+
+```bash
+npm run dev -- --port 3001
+python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+curl http://127.0.0.1:8000/health
+```
+
 ### User account provisioning
 
 Status: intentionally deferred.
