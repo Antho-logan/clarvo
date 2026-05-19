@@ -2,6 +2,7 @@
 
 **Date:** 2026-05-06
 **Status:** Private-demo / beta-candidate ready with caveats.
+**2026-05-19 note:** DB/embedding coverage and tests were rechecked locally. Retrieval eval metrics in this report remain from the 2026-05-06 pass unless rerun.
 
 This report supersedes older readiness notes that referenced 9,649 embedded documents or zero embeddings. The current verified local corpus has 14,346 documents and complete embedding coverage.
 
@@ -27,6 +28,7 @@ Primary caveats:
 - Citation quality still needs lawyer review before broader beta.
 - Domain coverage is intentionally limited.
 - Administrative-law statutory retrieval needs additional targeted hardening.
+- Demo-request email delivery requires `RESEND_API_KEY`; local `.env.local` currently has no Resend key configured.
 
 ## Verified Data State
 

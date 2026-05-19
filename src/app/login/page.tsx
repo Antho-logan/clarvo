@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { KeyRound, Mail, ShieldCheck } from "lucide-react";
 
-import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,11 +28,6 @@ function errorMessage(error: string | undefined) {
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const session = await auth();
-  if (session?.user) {
-    redirect("/dashboard");
-  }
-
   const params = await searchParams;
   const callbackUrl = readSingleValue(params.callbackUrl) || "/dashboard";
   const error = errorMessage(readSingleValue(params.error));

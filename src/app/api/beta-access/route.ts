@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { sendDemoLeadEmail } from "@/lib/leads";
 
 export const runtime = "nodejs";
 
@@ -14,15 +14,6 @@ type LeadPayload = {
 
 function clean(value: unknown) {
   return String(value || "").trim();
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
 }
 
 export async function POST(request: Request) {
@@ -43,41 +34,23 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid lead payload" }, { status: 400 });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.BETA_LEAD_TO || "hello@veridicta.nl";
-  const from =
-    process.env.BETA_LEAD_FROM ||
-    process.env.AUTH_EMAIL_FROM ||
-    "Veridicta <onboarding@resend.dev>";
+  const result = await sendDemoLeadEmail({
+    locale,
+    name,
+    email,
+    company,
+    role,
+    message,
+  });
 
-  if (!apiKey) {
+  if (!result.ok && result.reason === "not_configured") {
     return Response.json(
-      { error: "Lead email delivery is not configured" },
+      { error: "Demo request email delivery is not configured" },
       { status: 503 },
     );
   }
 
-  const resend = new Resend(apiKey);
-  const html = `
-    <h2>New Veridicta beta access request</h2>
-    <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-    <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-    <p><strong>Company:</strong> ${escapeHtml(company)}</p>
-    <p><strong>Role / practice area:</strong> ${escapeHtml(role || "-")}</p>
-    <p><strong>Locale:</strong> ${escapeHtml(locale)}</p>
-    <p><strong>Message:</strong></p>
-    <p>${escapeHtml(message || "-").replaceAll("\n", "<br />")}</p>
-  `;
-
-  const { error } = await resend.emails.send({
-    from,
-    to,
-    replyTo: email,
-    subject: `Veridicta beta request - ${name}`,
-    html,
-  });
-
-  if (error) {
+  if (!result.ok) {
     return Response.json({ error: "Email delivery failed" }, { status: 502 });
   }
 

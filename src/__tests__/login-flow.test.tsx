@@ -33,4 +33,25 @@ describe("login flow", () => {
       screen.getByText(/a sign-in link is on its way/i),
     ).toBeInTheDocument();
   });
+
+  it("keeps the sign-in page visible when local dashboard bypass is enabled", async () => {
+    const originalDevBypass = process.env.AUTH_DEV_BYPASS;
+    process.env.AUTH_DEV_BYPASS = "true";
+    const { default: LoginPage } = await import("@/app/login/page");
+
+    render(
+      await LoginPage({
+        searchParams: Promise.resolve({ callbackUrl: "/dashboard" }),
+      }),
+    );
+
+    expect(screen.getByText("Sign in")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /continue with password/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/developer bypass is enabled/i),
+    ).toBeInTheDocument();
+    process.env.AUTH_DEV_BYPASS = originalDevBypass;
+  });
 });

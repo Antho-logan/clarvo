@@ -1,6 +1,6 @@
 # MVP Data-Quality Runbook
 
-**Last verified:** 2026-05-06.
+**Last verified:** 2026-05-19.
 
 Use this runbook for MVP data-quality verification only. It is not a feature roadmap.
 
@@ -40,7 +40,7 @@ TEST_DATABASE_URL="postgresql+psycopg://antho@localhost:5432/veridicta_test_phas
   python3 -m pytest -q -rs
 ```
 
-Expected current result: `111 passed`, zero skips.
+Expected current result: `124 passed`, zero skips.
 
 Running without `TEST_DATABASE_URL` is allowed for unit-only smoke, but DB integration tests will skip:
 
@@ -66,7 +66,7 @@ DATABASE_URL="postgresql+psycopg://antho@localhost:5432/veridicta_m1" \
   python3 scripts/embedding_coverage_report.py --refresh
 ```
 
-Current verified result: 14,346 total documents, 14,346 pending, 0 embedded.
+Current verified result: 14,346 total documents, 14,346 completed embeddings, 0 pending, 0 failed.
 
 ---
 
@@ -125,6 +125,30 @@ python3 evals/check_eval_regression.py \
   --metric ndcg@10 \
   --max-regression 0.05
 ```
+
+---
+
+## Demo Request Email Setup
+
+The landing page CTA posts to `/api/beta-access`. It requires Resend email delivery before the demo funnel is production-ready.
+
+Required env vars:
+
+```bash
+RESEND_API_KEY="re_..."
+BETA_LEAD_TO="recipient@example.com"
+BETA_LEAD_FROM="Veridicta <onboarding@resend.dev>"
+```
+
+For local testing, `BETA_LEAD_TO` may be a personal inbox. `BETA_LEAD_FROM` must be a sender Resend allows. A normal Gmail address as `BETA_LEAD_FROM` is expected to fail unless Resend has explicitly authorized it.
+
+Before launch:
+
+1. Choose the final company sender address.
+2. Verify the company domain/sender in Resend.
+3. Set `BETA_LEAD_FROM` to the verified sender, for example `Veridicta <hello@veridicta.nl>`.
+4. Set `BETA_LEAD_TO` to the inbox where demo requests should land.
+5. Submit a real landing-page test and confirm the email arrives.
 
 ---
 
