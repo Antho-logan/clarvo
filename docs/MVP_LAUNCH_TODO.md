@@ -6,6 +6,19 @@ This file tracks small MVP blockers and follow-ups that should not interrupt the
 
 ## Open
 
+### User account provisioning
+
+Status: intentionally deferred.
+
+Decision:
+- Do not build a full user-management dashboard before MVP.
+- For MVP, use manually provisioned/invited users in the existing auth database.
+- Keep `AUTH_DEV_BYPASS=false` outside throwaway local preview sessions.
+
+Next action:
+- Before real customer testing, define the minimal manual user-provisioning command or script.
+- Before public launch, replace manual provisioning with a proper invite/account flow.
+
 ### Demo request email delivery
 
 Status: blocked until sender setup is finalized.
@@ -64,3 +77,33 @@ Before launch:
 - Set `AUTH_DEV_BYPASS=false` in every hosted environment.
 - Set `AUTH_ALLOW_CREDENTIAL_SIGNUP=false` unless there is an explicit invite/account flow.
 - Replace the local MVP credential with real account provisioning.
+
+### Assistant RAG smoke test
+
+Status: fixed locally on 2026-05-19.
+
+Issue:
+- The assistant UI returned an internal server error because the Next.js app was running but the FastAPI backend on `127.0.0.1:8000` was not running.
+
+Fix:
+- Start the backend with:
+
+```bash
+python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
+
+Verification:
+- `GET http://127.0.0.1:8000/health` returned `{"status":"ok"}`.
+- Logged in as `Anthony Logan`.
+- Opened `/dashboard/agents?q=Wat%20geldt%20bij%20opzegging%20van%20huur%20van%20woonruimte%3F&domain=tenancy_law`.
+- `/api/agent/stream` returned `200 OK`.
+- Backend logs showed BM25 retrieval, vector retrieval, hybrid merged hits, and `assistant status=grounded sources=8`.
+- The assistant UI rendered tenancy-law source citations including `BWBR0005290` articles and one Rechtspraak ECLI result.
+
+Operational note:
+- For local MVP testing, run both servers:
+
+```bash
+npm run dev -- --port 3001
+python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
