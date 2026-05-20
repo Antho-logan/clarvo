@@ -193,6 +193,43 @@ describe("assistant streaming page", () => {
     expect(payload.client_documents).toEqual([]);
   });
 
+  it("fills the input from demo shortcuts without submitting automatically", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AssistantStreamingPage query="" domain={undefined} />);
+
+    expect(screen.getByText("Demo example prompts")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Citations and lawyer review are required before relying on an answer.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Use demo prompt: Wat geldt bij loondoorbetaling tijdens ziekte?",
+      }),
+    );
+
+    expect(screen.getByRole("textbox")).toHaveValue(
+      "Wat geldt bij loondoorbetaling tijdens ziekte?",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    expect(screen.getByText("Safety/refusal example")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Use demo prompt: Kun je mijn volledige belastingaangifte doen?",
+      }),
+    );
+
+    expect(screen.getByRole("textbox")).toHaveValue(
+      "Kun je mijn volledige belastingaangifte doen?",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("sends attached text documents with the assistant request", async () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {

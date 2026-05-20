@@ -4,6 +4,8 @@ Last updated: 2026-05-20.
 
 Use these flows for the 28 May MVP demo. Keep the positioning narrow: Dutch law, huurrecht, arbeidsrecht, citations, matter workspace, research memos, and uploaded-document legal review.
 
+The Assistant includes subtle demo shortcuts for these prompts. Selecting a shortcut only fills the input; it does not submit or call the live assistant until Send is pressed.
+
 ## A. Huurrecht Research Demo
 
 Question:
@@ -69,4 +71,3 @@ Expected:
 - Assistant returns `insufficient_sources` or a clear refusal.
 - Zero fake citations.
 - Answer is not saveable as grounded Matter research.
-

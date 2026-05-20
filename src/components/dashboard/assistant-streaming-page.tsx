@@ -168,6 +168,32 @@ const MULTI_QUESTION_SUGGESTED_PROMPTS = [
   "Wat geldt bij loondoorbetaling tijdens ziekte?",
 ] as const;
 
+const DEMO_PROMPT_SHORTCUTS = [
+  {
+    prompt: "Wat geldt bij opzegging van huur van woonruimte?",
+    domain: "tenancy_law",
+    label: "Huurrecht",
+  },
+  {
+    prompt: "Wanneer is ontslag op staande voet geldig?",
+    domain: "employment_law",
+    label: "Arbeidsrecht",
+  },
+  {
+    prompt: "Wat geldt bij loondoorbetaling tijdens ziekte?",
+    domain: "employment_law",
+    label: "Arbeidsrecht",
+  },
+  {
+    prompt: "Kun je mijn volledige belastingaangifte doen?",
+    domain: "",
+    label: "Safety/refusal example",
+  },
+] as const;
+
+const LEGAL_REVIEW_DEMO_PROMPT =
+  "Beoordeel deze bepaling voor een Nederlandse huurovereenkomst. Welke risico’s zie je?";
+
 const REFUSAL_PATTERNS = [
   /does not yet have enough/i,
   /not enough (supporting|grounded)?\s*sources/i,
@@ -950,6 +976,11 @@ export function AssistantStreamingPage({
     void startResearch(trimmedQuestion, nextDomain);
   }
 
+  function fillDemoPrompt(prompt: string, shortcutDomain?: string) {
+    setDraftQuery(prompt);
+    setSelectedDomain(shortcutDomain || "");
+  }
+
   const totalToolEvents = useMemo(
     () => turns.reduce((count, turn) => count + turn.toolTrace.length, 0),
     [turns],
@@ -1182,6 +1213,56 @@ export function AssistantStreamingPage({
                   Contract text is treated as user-provided facts, not legal
                   authority.
                 </span>
+              </div>
+
+              <div className="mt-3 rounded-lg border border-[#EEEDE4] bg-[#F8F6F1] px-3 py-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
+                    Demo example prompts
+                  </span>
+                  <span className="text-xs text-[#7C746B]">
+                    Citations and lawyer review are required before relying on
+                    an answer.
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {DEMO_PROMPT_SHORTCUTS.map((shortcut) => (
+                    <button
+                      key={shortcut.prompt}
+                      type="button"
+                      aria-label={`Use demo prompt: ${shortcut.prompt}`}
+                      className="rounded-full border border-[#D8D2C8] bg-white px-3 py-1.5 text-left text-xs leading-5 text-[#63534B] transition-colors hover:border-[#DD3300]/30 hover:bg-[#FFF8F5] hover:text-[#1F1D1A]"
+                      onClick={() =>
+                        fillDemoPrompt(shortcut.prompt, shortcut.domain)
+                      }
+                    >
+                      <span className="mr-2 font-semibold text-[#1F1D1A]">
+                        {shortcut.label}
+                      </span>
+                      {shortcut.prompt}
+                    </button>
+                  ))}
+                </div>
+                {clientDocuments.length > 0 ? (
+                  <div className="mt-3 border-t border-[#D8D2C8] pt-3">
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
+                      Document review example
+                    </p>
+                    <button
+                      type="button"
+                      aria-label={`Use demo prompt: ${LEGAL_REVIEW_DEMO_PROMPT}`}
+                      className="rounded-full border border-[#D8D2C8] bg-white px-3 py-1.5 text-left text-xs leading-5 text-[#63534B] transition-colors hover:border-[#DD3300]/30 hover:bg-[#FFF8F5] hover:text-[#1F1D1A]"
+                      onClick={() =>
+                        fillDemoPrompt(LEGAL_REVIEW_DEMO_PROMPT, "tenancy_law")
+                      }
+                    >
+                      <span className="mr-2 font-semibold text-[#1F1D1A]">
+                        Legal Review Mode
+                      </span>
+                      {LEGAL_REVIEW_DEMO_PROMPT}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </div>
 
