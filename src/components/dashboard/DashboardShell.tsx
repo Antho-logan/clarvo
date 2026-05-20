@@ -11,6 +11,7 @@ import {
   Globe,
   LayoutDashboard,
   LogOut,
+  Paintbrush,
   Scale,
   Settings,
   UserCircle,
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { label: "Workflows", href: "/dashboard/workflows", icon: GitMerge },
   { label: "Knowledge", href: "/dashboard/knowledge", icon: Scale },
   { label: "Vault", href: "/dashboard/documents", icon: Files },
+  { label: "UI Sandbox", href: "/dashboard/ui-sandbox", icon: Paintbrush },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

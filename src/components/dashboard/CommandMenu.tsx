@@ -8,6 +8,7 @@ import {
   Files,
   GitMerge,
   LayoutDashboard,
+  Paintbrush,
   Scale,
   Search,
   Settings,
@@ -40,6 +41,7 @@ const NAV: NavLink[] = [
   { label: "Workflows", href: "/dashboard/workflows", icon: GitMerge, keywords: ["flows", "automation"] },
   { label: "Knowledge", href: "/dashboard/knowledge", icon: Scale, keywords: ["search", "bwb", "ecli", "case law"] },
   { label: "Vault", href: "/dashboard/documents", icon: Files, keywords: ["documents", "files"] },
+  { label: "UI Sandbox", href: "/dashboard/ui-sandbox", icon: Paintbrush, keywords: ["frontend", "design", "claude", "sandbox"] },
   { label: "Settings", href: "/dashboard/settings", icon: Settings, keywords: ["profile", "account"] },
 ];
 
