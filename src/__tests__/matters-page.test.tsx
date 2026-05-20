@@ -131,6 +131,12 @@ describe("matters page", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText("1 citation").length).toBeGreaterThan(0);
     expect(screen.getByText(/BWBR0005290 · Art. 7:271/)).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Lawyer review required before use").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText(/Source trail kept for lawyer review/),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Tenancy Law").length).toBeGreaterThan(0);
     expect(screen.getByText("Draft research memo")).toBeInTheDocument();
   });
@@ -152,12 +158,15 @@ describe("matters page", () => {
     render(await MattersPage({ searchParams: Promise.resolve({}) }));
 
     expect(screen.getByText("Draft research memos")).toBeInTheDocument();
-    expect(screen.getByText("Lawyer review required before use")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Lawyer review required before use").length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByText(/Bij opzegging gelden brononderbouwde waarborgen/),
     ).toBeInTheDocument();
     expect(screen.getAllByText("1 citation").length).toBeGreaterThan(0);
     expect(screen.getByText(/Preserves source trail/)).toBeInTheDocument();
+    expect(screen.getByText(/Copy-ready draft memo/)).toBeInTheDocument();
   });
 
   it("blocks memo drafting for research notes without citations", async () => {
@@ -236,6 +245,9 @@ describe("matters page", () => {
     expect(screen.getByText("Open Assistant")).toBeInTheDocument();
     expect(
       screen.getByText(/Ask one Dutch legal question in the Assistant/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Save only grounded answers with citations/),
     ).toBeInTheDocument();
   });
 

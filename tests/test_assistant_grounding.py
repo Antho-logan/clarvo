@@ -250,8 +250,63 @@ def test_llm_answer_instructs_normal_legal_research_structure(
     assert "Korte conclusie" in captured["instructions"]
     assert "Juridisch kader" in captured["instructions"]
     assert "Toepassing op de situatie" in captured["instructions"]
-    assert "Belangrijke uitzonderingen/aandachtspunten" in captured["instructions"]
-    assert "Bronnen/citaties" in captured["instructions"]
+    assert "Belangrijke uitzonderingen / aandachtspunten" in captured["instructions"]
+    assert "Bronnen / citaties" in captured["instructions"]
     assert "Praktische vervolgstap" in captured["instructions"]
     assert "Juristencontrole vereist" in captured["instructions"]
+    assert "huurrecht" in captured["instructions"]
+    assert "arbeidsrecht" in captured["instructions"]
     assert "For ordinary Dutch legal research answers" in captured["prompt"]
+    assert "Belangrijke uitzonderingen / aandachtspunten" in captured["prompt"]
+    assert "Bronnen / citaties" in captured["prompt"]
+
+
+def test_llm_answer_keeps_contract_review_structure_separate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, str] = {}
+
+    class FakeAgent:
+        def __init__(self, **kwargs):
+            captured["instructions"] = kwargs["instructions"]
+
+    class FakeRunner:
+        @staticmethod
+        async def run(agent, prompt):
+            captured["prompt"] = prompt
+            return types.SimpleNamespace(final_output="Contractantwoord [BWBR-LAW]")
+
+    monkeypatch.setitem(
+        sys.modules,
+        "agents",
+        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+    )
+
+    answer = agentic_orchestrator._llm_answer(
+        "Beoordeel deze bepaling voor een Nederlandse huurovereenkomst.",
+        [
+            {
+                "source_id": "BWBR-LAW",
+                "source_type": "legislation",
+                "domain": "tenancy_law",
+                "title": "Huurrecht bron",
+                "article": "7:271",
+                "text": "Wettelijke opzegregels.",
+            }
+        ],
+        client_documents=[
+            {
+                "name": "huurclausule.txt",
+                "text": "Verhuurder mag op elk moment opzeggen met een maand termijn.",
+            }
+        ],
+    )
+
+    assert answer == "Contractantwoord [BWBR-LAW]"
+    assert "Contractpassage" in captured["instructions"]
+    assert "Juridische regel" in captured["instructions"]
+    assert "Risico" in captured["instructions"]
+    assert "Aanbeveling" in captured["instructions"]
+    assert "Bronnen/citaties" in captured["instructions"]
+    assert "[Contract D1.P1]" in captured["prompt"]
+    assert "Contractpassage" in captured["prompt"]

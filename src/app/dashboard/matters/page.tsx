@@ -444,7 +444,8 @@ function MatterWorkspace({
                 <p className="mt-2 max-w-md text-sm leading-6 text-[#63534B]">
                   Ask one Dutch legal question in the Assistant, inspect the
                   citations, then save the grounded answer to this matter.
-                  Refusals and unsupported answers are not saved.
+                  Save only grounded answers with citations; refusals and
+                  unsupported answers are not saved.
                 </p>
               </CardContent>
             </Card>
@@ -569,6 +570,12 @@ function ResearchNoteCard({
                 {getDomainLabel(domain)}
               </Badge>
             ))}
+            <Badge
+              variant="outline"
+              className="border-[#DD3300]/30 bg-[#FFF7F3] text-[#8A2408]"
+            >
+              Lawyer review required before use
+            </Badge>
           </div>
           <h3 className="font-serif text-lg leading-7 text-[#1F1D1A]">
             {note.question}
@@ -593,7 +600,7 @@ function ResearchNoteCard({
         </Badge>
         {sourcePreview.length > 0 ? (
           <span className="text-xs text-[#7C746B]">
-            Source trail:{" "}
+            Source trail kept for lawyer review:{" "}
             {sourcePreview.map((citation) => getCitationLabel(citation)).join(" · ")}
           </span>
         ) : (
@@ -640,6 +647,12 @@ function ResearchMemoCard({ memo }: { memo: MatterResearchMemo }) {
             >
               Preserves source trail
             </Badge>
+            <Badge
+              variant="outline"
+              className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+            >
+              Copy-ready draft memo
+            </Badge>
           </div>
           <h3 className="font-serif text-lg leading-7 text-[#1F1D1A]">
             {memo.question}
@@ -664,7 +677,7 @@ function ResearchMemoCard({ memo }: { memo: MatterResearchMemo }) {
         </Badge>
         {sourcePreview.length > 0 ? (
           <span className="text-xs text-[#7C746B]">
-            Source trail:{" "}
+            Source trail kept for lawyer review:{" "}
             {sourcePreview.map((citation) => getCitationLabel(citation)).join(" · ")}
           </span>
         ) : (
