@@ -442,9 +442,9 @@ function MatterWorkspace({
                   No saved research yet
                 </h3>
                 <p className="mt-2 max-w-md text-sm leading-6 text-[#63534B]">
-                  Ask a grounded legal question in the Assistant, then save the
-                  answer to this matter. Refusals and unsupported answers are
-                  not saved.
+                  Ask one Dutch legal question in the Assistant, inspect the
+                  citations, then save the grounded answer to this matter.
+                  Refusals and unsupported answers are not saved.
                 </p>
               </CardContent>
             </Card>
@@ -630,9 +630,15 @@ function ResearchMemoCard({ memo }: { memo: MatterResearchMemo }) {
             </Badge>
             <Badge
               variant="outline"
-              className="border-[#DD3300]/25 bg-[#FFF7F3] text-[#8A2408]"
+              className="border-[#DD3300]/30 bg-[#FFF7F3] text-[#8A2408]"
             >
-              Lawyer review required
+              Lawyer review required before use
+            </Badge>
+            <Badge
+              variant="outline"
+              className="border-emerald-200 bg-emerald-50 text-emerald-700"
+            >
+              Preserves source trail
             </Badge>
           </div>
           <h3 className="font-serif text-lg leading-7 text-[#1F1D1A]">

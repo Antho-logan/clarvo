@@ -152,11 +152,12 @@ describe("matters page", () => {
     render(await MattersPage({ searchParams: Promise.resolve({}) }));
 
     expect(screen.getByText("Draft research memos")).toBeInTheDocument();
-    expect(screen.getByText("Lawyer review required")).toBeInTheDocument();
+    expect(screen.getByText("Lawyer review required before use")).toBeInTheDocument();
     expect(
       screen.getByText(/Bij opzegging gelden brononderbouwde waarborgen/),
     ).toBeInTheDocument();
     expect(screen.getAllByText("1 citation").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Preserves source trail/)).toBeInTheDocument();
   });
 
   it("blocks memo drafting for research notes without citations", async () => {
@@ -234,7 +235,7 @@ describe("matters page", () => {
     expect(screen.getByText("No saved research yet")).toBeInTheDocument();
     expect(screen.getByText("Open Assistant")).toBeInTheDocument();
     expect(
-      screen.getByText(/Ask a grounded legal question in the Assistant/),
+      screen.getByText(/Ask one Dutch legal question in the Assistant/),
     ).toBeInTheDocument();
   });
 

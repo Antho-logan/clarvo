@@ -30,6 +30,12 @@ describe("beta dashboard surfaces", () => {
     expect(
       screen.getByText("No workflow runner is active in this beta"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Document and legal review are available in Assistant/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/not active autonomous runners/i),
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/not yet generally available/i).length).toBeGreaterThan(
       0,
     );

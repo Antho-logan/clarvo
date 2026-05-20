@@ -15,10 +15,10 @@ const ROADMAP_WORKFLOWS = [
   {
     title: "Document review workflow",
     status: "Design partner preview",
-    availability: "Limited preview only",
+    availability: "Available in Assistant",
     icon: FileSearch,
     body:
-      "Early concept for reviewing uploaded documents against selected Dutch legal issues. This is not active automation in the beta dashboard.",
+      "Document and legal review are available in Assistant today: upload a contract, ask one Dutch legal question, and inspect the contract passages plus legal citations. A separate autonomous workflow runner is not active in this beta.",
   },
   {
     title: "Citation audit workflow",
@@ -43,8 +43,9 @@ export default async function WorkflowsPage() {
           </h1>
           <p className="max-w-3xl text-sm leading-6 text-[#63534B]">
             Veridicta currently focuses on source-backed research, saved matter
-            notes, Knowledge search, and Vault browsing. Workflow automation is
-            being designed carefully and is not generally available in this MVP.
+            notes, Knowledge search, Vault browsing, and document review inside
+            Assistant. Workflow automation is being designed carefully and is
+            not generally available in this MVP.
           </p>
         </div>
         <Badge
@@ -65,9 +66,10 @@ export default async function WorkflowsPage() {
               No workflow runner is active in this beta
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#63534B]">
-              The cards below describe intended product directions, not live
-              automation. Use the Assistant, Knowledge, Vault, and Matters pages
-              for the current private beta workflow.
+              The cards below describe intended product directions, not active
+              autonomous runners. Use Assistant for legal and document review,
+              then save grounded answers into Matters for the current private
+              beta workflow.
             </p>
           </div>
         </CardContent>

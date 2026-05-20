@@ -209,3 +209,49 @@ def test_llm_answer_includes_chat_history_and_uploaded_documents(
     assert "Juristencontrole vereist" in captured["instructions"]
     assert "Korte conclusie" in captured["prompt"]
     assert "Juristencontrole vereist" in captured["prompt"]
+
+
+def test_llm_answer_instructs_normal_legal_research_structure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, str] = {}
+
+    class FakeAgent:
+        def __init__(self, **kwargs):
+            captured["instructions"] = kwargs["instructions"]
+
+    class FakeRunner:
+        @staticmethod
+        async def run(agent, prompt):
+            captured["prompt"] = prompt
+            return types.SimpleNamespace(final_output="Antwoord [BWBR-LAW]")
+
+    monkeypatch.setitem(
+        sys.modules,
+        "agents",
+        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+    )
+
+    answer = agentic_orchestrator._llm_answer(
+        "Wat geldt bij opzegging van huur van woonruimte?",
+        [
+            {
+                "source_id": "BWBR-LAW",
+                "source_type": "legislation",
+                "domain": "tenancy_law",
+                "title": "Huurrecht bron",
+                "article": "7:271",
+                "text": "Wettelijke opzegregels.",
+            }
+        ],
+    )
+
+    assert answer == "Antwoord [BWBR-LAW]"
+    assert "Korte conclusie" in captured["instructions"]
+    assert "Juridisch kader" in captured["instructions"]
+    assert "Toepassing op de situatie" in captured["instructions"]
+    assert "Belangrijke uitzonderingen/aandachtspunten" in captured["instructions"]
+    assert "Bronnen/citaties" in captured["instructions"]
+    assert "Praktische vervolgstap" in captured["instructions"]
+    assert "Juristencontrole vereist" in captured["instructions"]
+    assert "For ordinary Dutch legal research answers" in captured["prompt"]
