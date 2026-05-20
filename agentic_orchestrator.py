@@ -21,7 +21,9 @@ MAX_EXTRACTIVE_SNIPPET_CHARS = 520
 MAX_HISTORY_MESSAGES = 8
 MAX_HISTORY_CHARS_PER_MESSAGE = 1200
 MAX_CLIENT_DOCUMENTS = 3
-MAX_CLIENT_DOCUMENT_CHARS = 12000
+MAX_CLIENT_DOCUMENT_CHARS = 30000
+MAX_CLIENT_DOCUMENT_PARAGRAPHS = 60
+MAX_CLIENT_DOCUMENT_PARAGRAPH_CHARS = 900
 UNSUPPORTED_QUESTION_PATTERNS = (
     "belastingaangifte",
     "deutschen arbeitsrecht",
@@ -154,12 +156,61 @@ def _format_client_documents(client_documents: list[dict] | None) -> str:
     blocks = ["Client-provided documents:"]
     for index, document in enumerate(client_documents[:MAX_CLIENT_DOCUMENTS], start=1):
         name = compact_text(document.get("name") or f"Document {index}")[:160]
-        text = compact_text(document.get("text") or "")[:MAX_CLIENT_DOCUMENT_CHARS]
-        if not text:
+        raw_text = str(document.get("text") or "")[:MAX_CLIENT_DOCUMENT_CHARS]
+        paragraphs = _client_document_paragraphs(raw_text)
+        if not paragraphs:
             continue
-        blocks.append(f"Document {index}: {name}\nText: {text}")
+        paragraph_lines = [
+            f"[Contract D{index}.P{paragraph_index}] {paragraph}"
+            for paragraph_index, paragraph in enumerate(paragraphs, start=1)
+        ]
+        blocks.append(
+            "\n".join(
+                [
+                    f"Document D{index}: {name}",
+                    "Contract passages:",
+                    *paragraph_lines,
+                ]
+            )
+        )
 
     return "\n\n".join(blocks) if len(blocks) > 1 else ""
+
+
+def _client_document_paragraphs(text: str) -> list[str]:
+    raw_lines = [compact_text(line) for line in text.splitlines()]
+    paragraphs = [line for line in raw_lines if line]
+    if len(paragraphs) <= 1:
+        paragraphs = _split_long_contract_line(compact_text(text))
+
+    return [
+        paragraph[:MAX_CLIENT_DOCUMENT_PARAGRAPH_CHARS]
+        for paragraph in paragraphs[:MAX_CLIENT_DOCUMENT_PARAGRAPHS]
+        if paragraph
+    ]
+
+
+def _split_long_contract_line(text: str) -> list[str]:
+    if not text:
+        return []
+    if len(text) <= MAX_CLIENT_DOCUMENT_PARAGRAPH_CHARS:
+        return [text]
+
+    paragraphs: list[str] = []
+    current = ""
+    for sentence in text.replace("; ", ". ").split(". "):
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+        sentence = sentence if sentence.endswith(".") else f"{sentence}."
+        if current and len(f"{current} {sentence}") > MAX_CLIENT_DOCUMENT_PARAGRAPH_CHARS:
+            paragraphs.append(current)
+            current = sentence
+        else:
+            current = f"{current} {sentence}".strip()
+    if current:
+        paragraphs.append(current)
+    return paragraphs or [text[:MAX_CLIENT_DOCUMENT_PARAGRAPH_CHARS]]
 
 
 def _llm_answer(
@@ -204,15 +255,19 @@ def _llm_answer(
         "and any client-provided document text. Treat client documents as user-provided facts or contract text, "
         "not as legal authority. Every legal claim must include an inline citation using one of the provided "
         "citation labels in square brackets. Contract observations may reference the document name, but legal "
-        "rules still require a legal-source citation. If the provided sources do not support the answer, refuse "
-        "briefly in Dutch."
+        "rules still require a legal-source citation. When reviewing a contract, write like a senior Dutch jurist: "
+        "identify each Probleem, cite the exact Contractpassage using labels like [Contract D1.P2], explain the "
+        "Juridische regel with a legal-source citation, describe the Risico, and end with Praktisch advies. "
+        "If the provided sources do not support a legal conclusion, say that specific point is not supported "
+        "instead of guessing. Answer in Dutch."
     )
     prompt = (
         f"Question:\n{question}\n\n"
         f"{optional_context}\n\n"
         f"Allowed citation labels: {', '.join(allowed_labels)}\n\n"
         f"Sources:\n\n{chr(10).join(context_blocks)}\n\n"
-        "Answer in Dutch, concise and source-grounded."
+        "Answer in Dutch. For contract checks, use compact sections with Probleem, Contractpassage, "
+        "Juridische regel, Risico, and Praktisch advies."
     )
     agent = Agent(name="GroundedLegalAnswerAgent", instructions=instructions, model=DEFAULT_CHAT_MODEL)
     result = asyncio.run(Runner.run(agent, prompt))

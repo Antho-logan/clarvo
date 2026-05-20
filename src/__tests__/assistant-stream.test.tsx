@@ -229,13 +229,19 @@ describe("assistant streaming page", () => {
       fireEvent.change(fileInput, { target: { files: [file] } });
     });
 
-    expect(await screen.findByText("huurcontract.txt")).toBeInTheDocument();
+    expect((await screen.findAllByText("huurcontract.txt")).length).toBeGreaterThan(1);
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Wat betekent dit voor mijn contract?" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Send question" }));
 
     expect(await screen.findByText("Contractantwoord.")).toBeInTheDocument();
+    expect(screen.getByText("Research context")).toBeInTheDocument();
+    expect(screen.getByText("Contract context")).toBeInTheDocument();
+    expect(screen.getAllByText("huurcontract.txt").length).toBeGreaterThan(1);
+    expect(
+      screen.getByText("Contractuele opzegtermijn: twee maanden."),
+    ).toBeInTheDocument();
     expect(fetchMock.mock.calls[0][0]).toBe("/api/agent/extract-document");
     const [, requestInit] = fetchMock.mock.calls[1] as unknown as [
       string,
@@ -294,7 +300,7 @@ describe("assistant streaming page", () => {
       fireEvent.change(fileInput, { target: { files: [file] } });
     });
 
-    expect(await screen.findByText("arbeidscontract.pdf")).toBeInTheDocument();
+    expect(await screen.findAllByText("arbeidscontract.pdf")).toHaveLength(2);
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Wat zegt dit contract over de proeftijd?" },
     });

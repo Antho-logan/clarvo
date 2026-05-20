@@ -143,7 +143,7 @@ def test_llm_answer_includes_chat_history_and_uploaded_documents(
 
     class FakeAgent:
         def __init__(self, **kwargs):
-            self.kwargs = kwargs
+            captured["instructions"] = kwargs["instructions"]
 
     class FakeRunner:
         @staticmethod
@@ -182,7 +182,10 @@ def test_llm_answer_includes_chat_history_and_uploaded_documents(
         client_documents=[
             {
                 "name": "huurcontract.txt",
-                "text": "Contractuele opzegtermijn: twee maanden.",
+                "text": (
+                    "Contractuele opzegtermijn: twee maanden.\n"
+                    "Huurder mag geen beroep doen op wettelijke huurbescherming."
+                ),
             }
         ],
     )
@@ -192,4 +195,12 @@ def test_llm_answer_includes_chat_history_and_uploaded_documents(
     assert "Ik heb een contract met een opzegtermijn." in captured["prompt"]
     assert "Client-provided documents:" in captured["prompt"]
     assert "huurcontract.txt" in captured["prompt"]
-    assert "Contractuele opzegtermijn: twee maanden." in captured["prompt"]
+    assert "[Contract D1.P1] Contractuele opzegtermijn: twee maanden." in captured["prompt"]
+    assert (
+        "[Contract D1.P2] Huurder mag geen beroep doen op wettelijke huurbescherming."
+        in captured["prompt"]
+    )
+    assert "Probleem" in captured["instructions"]
+    assert "Contractpassage" in captured["instructions"]
+    assert "Juridische regel" in captured["instructions"]
+    assert "Praktisch advies" in captured["instructions"]

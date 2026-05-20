@@ -348,6 +348,14 @@ function buildConversationHistory(turns: ConversationTurn[]): ChatHistoryMessage
     });
 }
 
+function previewDocumentText(text: string) {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (cleaned.length <= 180) {
+    return cleaned;
+  }
+  return `${cleaned.slice(0, 177)}...`;
+}
+
 function formatFileSize(bytes: number) {
   if (bytes < 1024) {
     return `${bytes} B`;
@@ -930,6 +938,7 @@ export function AssistantStreamingPage({
     [turns],
   );
   const activeCitations = useMemo(() => dedupeCitations(turns), [turns]);
+  const hasResearchContext = activeCitations.length > 0 || clientDocuments.length > 0;
   const hasConversation = turns.length > 0;
 
   return (
@@ -953,7 +962,7 @@ export function AssistantStreamingPage({
 
       <div
         className={
-          activeCitations.length > 0
+          hasResearchContext
             ? "grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]"
             : "flex flex-1"
         }
@@ -1171,8 +1180,8 @@ export function AssistantStreamingPage({
             </div>
           </div>
         </Card>
-        {activeCitations.length > 0 ? (
-          <CitationSidebar citations={activeCitations} />
+        {hasResearchContext ? (
+          <CitationSidebar citations={activeCitations} documents={clientDocuments} />
         ) : null}
       </div>
       <span className="sr-only">{totalToolEvents} tool events inspected.</span>
@@ -1180,79 +1189,133 @@ export function AssistantStreamingPage({
   );
 }
 
-function CitationSidebar({ citations }: { citations: AssistantCitation[] }) {
+function CitationSidebar({
+  citations,
+  documents,
+}: {
+  citations: AssistantCitation[];
+  documents: ClientDocument[];
+}) {
   return (
     <aside className="h-fit rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm lg:sticky lg:top-6">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-base font-serif text-[#1F1D1A]">Cited sources</h2>
+        <h2 className="text-base font-serif text-[#1F1D1A]">Research context</h2>
         <Badge
           variant="outline"
           className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
         >
-          {citations.length}
+          {citations.length + documents.length}
         </Badge>
       </div>
-      <div className="space-y-3">
-        {citations.map((citation, index) => {
-          const citationTarget = citation.source_id || citation.id;
-          const citationMeta = formatCitationMeta(citation);
-          const sourceHref = citationTarget
-            ? `/dashboard/documents/${encodeURIComponent(
-                citationTarget,
-              )}${citation.domain ? `?domain=${encodeURIComponent(citation.domain)}` : ""}`
-            : null;
+      <div className="space-y-5">
+        {citations.length > 0 ? (
+          <section>
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C746B]">
+              Legal sources
+            </h3>
+            <div className="space-y-3">
+              {citations.map((citation, index) => {
+                const citationTarget = citation.source_id || citation.id;
+                const citationMeta = formatCitationMeta(citation);
+                const sourceHref = citationTarget
+                  ? `/dashboard/documents/${encodeURIComponent(
+                      citationTarget,
+                    )}${citation.domain ? `?domain=${encodeURIComponent(citation.domain)}` : ""}`
+                  : null;
 
-          return (
-            <div
-              key={getCitationKey(citation, index)}
-              className="rounded-lg border border-[#D8D2C8] bg-white p-3"
-            >
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
-                >
-                  {citation.source_type === "case_law"
-                    ? "Case law"
-                    : "Legislation"}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="border-[#D8D2C8] bg-[#EEEDE4] text-[#63534B]"
-                >
-                  {getDomainLabel(citation.domain)}
-                </Badge>
-              </div>
-              <p className="text-sm font-medium leading-5 text-[#1F1D1A]">
-                {citation.title || citation.source_id || citation.id}
-              </p>
-              {citationMeta ? (
-                <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-[#7C746B]">
-                  {citationMeta}
-                </p>
-              ) : null}
-              {citation.snippet ? (
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-xs font-medium text-[#DD3300]">
-                    Show snippet
-                  </summary>
-                  <p className="mt-2 text-xs leading-5 text-[#63534B]">
-                    {citation.snippet}
-                  </p>
-                </details>
-              ) : null}
-              {sourceHref ? (
-                <Link
-                  href={sourceHref}
-                  className="mt-3 inline-flex items-center text-xs font-medium text-[#DD3300] hover:text-[#A92700]"
-                >
-                  Open source
-                  <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                </Link>
-              ) : null}
+                return (
+                  <div
+                    key={getCitationKey(citation, index)}
+                    className="rounded-lg border border-[#D8D2C8] bg-white p-3"
+                  >
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+                      >
+                        {citation.source_type === "case_law"
+                          ? "Case law"
+                          : "Legislation"}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="border-[#D8D2C8] bg-[#EEEDE4] text-[#63534B]"
+                      >
+                        {getDomainLabel(citation.domain)}
+                      </Badge>
+                    </div>
+                    <p className="text-sm font-medium leading-5 text-[#1F1D1A]">
+                      {citation.title || citation.source_id || citation.id}
+                    </p>
+                    {citationMeta ? (
+                      <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-[#7C746B]">
+                        {citationMeta}
+                      </p>
+                    ) : null}
+                    {citation.snippet ? (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-xs font-medium text-[#DD3300]">
+                          Show snippet
+                        </summary>
+                        <p className="mt-2 text-xs leading-5 text-[#63534B]">
+                          {citation.snippet}
+                        </p>
+                      </details>
+                    ) : null}
+                    {sourceHref ? (
+                      <Link
+                        href={sourceHref}
+                        className="mt-3 inline-flex items-center text-xs font-medium text-[#DD3300] hover:text-[#A92700]"
+                      >
+                        Open source
+                        <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                      </Link>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </section>
+        ) : null}
+
+        {documents.length > 0 ? (
+          <section>
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C746B]">
+              Contract context
+            </h3>
+            <div className="space-y-3">
+              {documents.map((document, index) => (
+                <div
+                  key={document.id}
+                  className="rounded-lg border border-[#D8D2C8] bg-[#F8F6F1] p-3"
+                >
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <Badge
+                      variant="outline"
+                      className="border-[#D8D2C8] bg-white text-[#63534B]"
+                    >
+                      D{index + 1}
+                    </Badge>
+                    <span className="text-[10px] uppercase tracking-[0.14em] text-[#7C746B]">
+                      Current chat
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium leading-5 text-[#1F1D1A]">
+                    {document.name}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-[#63534B]">
+                    {previewDocumentText(document.text)}
+                  </p>
+                  {document.truncated ? (
+                    <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-[#8A2408]">
+                      Trimmed for review
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     </aside>
   );
