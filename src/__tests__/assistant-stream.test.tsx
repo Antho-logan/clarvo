@@ -116,6 +116,16 @@ describe("assistant streaming page", () => {
     expect(
       screen.getByText(/Voice input is transcribed locally by the browser/i),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Upload a clause or contract excerpt, then ask for a legal review.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        "Contract text is treated as user-provided facts, not legal authority.",
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it("fills the assistant input from a mocked Dutch voice transcript", async () => {
@@ -191,7 +201,8 @@ describe("assistant streaming page", () => {
           return new Response(
             JSON.stringify({
               name: "huurcontract.txt",
-              text: "Contractuele opzegtermijn: twee maanden.",
+              text:
+                "Contractuele opzegtermijn: twee maanden.\nBetaling vindt plaats voor de eerste dag.\nInspectie gebeurt na afspraak.",
               truncated: false,
             }),
             { status: 200, headers: { "Content-Type": "application/json" } },
@@ -220,7 +231,9 @@ describe("assistant streaming page", () => {
       'input[type="file"]',
     ) as HTMLInputElement;
     const file = new File(
-      ["Contractuele opzegtermijn: twee maanden."],
+      [
+        "Contractuele opzegtermijn: twee maanden.\nBetaling vindt plaats voor de eerste dag.\nInspectie gebeurt na afspraak.",
+      ],
       "huurcontract.txt",
       { type: "text/plain" },
     );
@@ -238,10 +251,23 @@ describe("assistant streaming page", () => {
     expect(await screen.findByText("Contractantwoord.")).toBeInTheDocument();
     expect(screen.getByText("Research context")).toBeInTheDocument();
     expect(screen.getByText("Contract context")).toBeInTheDocument();
+    expect(screen.queryByText("Legal source trail")).not.toBeInTheDocument();
     expect(screen.getAllByText("huurcontract.txt").length).toBeGreaterThan(1);
     expect(
-      screen.getByText("Contractuele opzegtermijn: twee maanden."),
+      screen.getByText("Current-chat document · 3 extracted paragraphs"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("Current-chat context only; not permanent storage."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("First contract paragraph")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Contractuele opzegtermijn: twee maanden/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        "Contract text is treated as user-provided facts, not legal authority.",
+      ).length,
+    ).toBeGreaterThan(0);
     expect(fetchMock.mock.calls[0][0]).toBe("/api/agent/extract-document");
     const [, requestInit] = fetchMock.mock.calls[1] as unknown as [
       string,
@@ -251,7 +277,8 @@ describe("assistant streaming page", () => {
     expect(payload.client_documents).toEqual([
       {
         name: "huurcontract.txt",
-        text: "Contractuele opzegtermijn: twee maanden.",
+        text:
+          "Contractuele opzegtermijn: twee maanden.\nBetaling vindt plaats voor de eerste dag.\nInspectie gebeurt na afspraak.",
       },
     ]);
   });

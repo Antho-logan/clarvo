@@ -356,6 +356,23 @@ function previewDocumentText(text: string) {
   return `${cleaned.slice(0, 177)}...`;
 }
 
+function getDocumentParagraphs(text: string) {
+  const paragraphs = text
+    .split(/\n+/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  if (paragraphs.length > 0) {
+    return paragraphs;
+  }
+
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  return cleaned ? [cleaned] : [];
+}
+
+function formatParagraphCount(count: number) {
+  return `${count} extracted paragraph${count === 1 ? "" : "s"}`;
+}
+
 function formatFileSize(bytes: number) {
   if (bytes < 1024) {
     return `${bytes} B`;
@@ -1026,28 +1043,38 @@ export function AssistantStreamingPage({
             <div className="mx-auto max-w-4xl">
               {clientDocuments.length > 0 || attachmentError ? (
                 <div className="mb-3 flex flex-wrap items-center gap-2">
-                  {clientDocuments.map((document) => (
-                    <Badge
-                      key={document.id}
-                      variant="outline"
-                      className="gap-2 border-[#D8D2C8] bg-[#F8F6F1] px-2 py-1 text-[#63534B]"
-                    >
-                      <FileText className="h-3.5 w-3.5 text-[#DD3300]" />
-                      <span>{document.name}</span>
-                      <span className="text-[10px] text-[#7C746B]">
-                        {formatFileSize(document.size)}
-                        {document.truncated ? ", trimmed" : ""}
-                      </span>
-                      <button
-                        type="button"
-                        aria-label={`Remove ${document.name}`}
-                        className="rounded-full p-0.5 text-[#7C746B] transition-colors hover:bg-white hover:text-[#DD3300]"
-                        onClick={() => removeClientDocument(document.id)}
+                  {clientDocuments.map((document) => {
+                    const paragraphCount = getDocumentParagraphs(
+                      document.text,
+                    ).length;
+
+                    return (
+                      <Badge
+                        key={document.id}
+                        variant="outline"
+                        className="gap-2 border-[#D8D2C8] bg-[#F8F6F1] px-2 py-1 text-[#63534B]"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
+                        <FileText className="h-3.5 w-3.5 text-[#DD3300]" />
+                        <span className="font-medium text-[#1F1D1A]">
+                          {document.name}
+                        </span>
+                        <span className="text-[10px] text-[#7C746B]">
+                          Current-chat document ·{" "}
+                          {formatParagraphCount(paragraphCount)} ·{" "}
+                          {formatFileSize(document.size)}
+                          {document.truncated ? " · trimmed" : ""}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${document.name}`}
+                          className="rounded-full p-0.5 text-[#7C746B] transition-colors hover:bg-white hover:text-[#DD3300]"
+                          onClick={() => removeClientDocument(document.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    );
+                  })}
                   {attachmentError ? (
                     <span className="text-xs text-[#8A2408]">
                       {attachmentError}
@@ -1146,6 +1173,16 @@ export function AssistantStreamingPage({
                   <Send className="h-4 w-4" />
                 </Button>
               </form>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-5 text-[#7C746B]">
+                <span>
+                  Upload a clause or contract excerpt, then ask for a legal
+                  review.
+                </span>
+                <span>
+                  Contract text is treated as user-provided facts, not legal
+                  authority.
+                </span>
+              </div>
             </div>
 
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-center">
@@ -1297,35 +1334,50 @@ function CitationSidebar({
               Contract context
             </h3>
             <div className="space-y-3">
-              {documents.map((document, index) => (
-                <div
-                  key={document.id}
-                  className="rounded-lg border border-[#D8D2C8] bg-[#F8F6F1] p-3"
-                >
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <Badge
-                      variant="outline"
-                      className="border-[#D8D2C8] bg-white text-[#63534B]"
-                    >
-                      D{index + 1}
-                    </Badge>
-                    <span className="text-[10px] uppercase tracking-[0.14em] text-[#7C746B]">
-                      Current chat
-                    </span>
-                  </div>
-                  <p className="text-sm font-medium leading-5 text-[#1F1D1A]">
-                    {document.name}
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-[#63534B]">
-                    {previewDocumentText(document.text)}
-                  </p>
-                  {document.truncated ? (
-                    <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-[#8A2408]">
-                      Trimmed for review
+              {documents.map((document, index) => {
+                const paragraphs = getDocumentParagraphs(document.text);
+
+                return (
+                  <div
+                    key={document.id}
+                    className="rounded-lg border border-[#D8D2C8] bg-[#F8F6F1] p-3"
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <Badge
+                        variant="outline"
+                        className="border-[#D8D2C8] bg-white text-[#63534B]"
+                      >
+                        D{index + 1}
+                      </Badge>
+                      <span className="text-[10px] uppercase tracking-[0.14em] text-[#7C746B]">
+                        Current-chat context only; not permanent storage.
+                      </span>
+                    </div>
+                    <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-[#7C746B]">
+                      Current-chat document ·{" "}
+                      {formatParagraphCount(paragraphs.length)}
                     </p>
-                  ) : null}
-                </div>
-              ))}
+                    <p className="text-sm font-medium leading-5 text-[#1F1D1A]">
+                      {document.name}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-[#63534B]">
+                      <span className="font-medium text-[#1F1D1A]">
+                        First contract paragraph
+                      </span>
+                      : {previewDocumentText(paragraphs[0] || document.text)}
+                    </p>
+                    <p className="mt-2 text-[11px] leading-5 text-[#7C746B]">
+                      Contract text is treated as user-provided facts, not legal
+                      authority.
+                    </p>
+                    {document.truncated ? (
+                      <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-[#8A2408]">
+                        Trimmed for review
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </section>
         ) : null}
