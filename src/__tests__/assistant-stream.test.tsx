@@ -367,6 +367,10 @@ describe("assistant streaming page", () => {
 
     expect(await screen.findByText(/Eerste Tweede./)).toBeInTheDocument();
     expect(await screen.findByText("Grounded answer")).toBeInTheDocument();
+    expect(screen.getByText("Needs lawyer review")).toBeInTheDocument();
+    expect(screen.getByText("Source trail preserved")).toBeInTheDocument();
+    expect(screen.getByText("Legal source trail")).toBeInTheDocument();
+    expect(screen.getByText("Show source preview")).toBeInTheDocument();
     expect(await screen.findByText("BW Boek 7")).toBeInTheDocument();
   });
 
@@ -616,6 +620,9 @@ describe("assistant streaming page", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText("Cited sources")).not.toBeInTheDocument();
+    expect(screen.queryByText("Legal source trail")).not.toBeInTheDocument();
+    expect(screen.queryByText("Source trail preserved")).not.toBeInTheDocument();
+    expect(screen.queryByText("Needs lawyer review")).not.toBeInTheDocument();
     expect(
       screen.queryByText("Not enough supporting sources"),
     ).not.toBeInTheDocument();

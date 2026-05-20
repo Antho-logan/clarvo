@@ -1200,18 +1200,28 @@ function CitationSidebar({
     <aside className="h-fit rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm lg:sticky lg:top-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-base font-serif text-[#1F1D1A]">Research context</h2>
-        <Badge
-          variant="outline"
-          className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
-        >
-          {citations.length + documents.length}
-        </Badge>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {citations.length > 0 ? (
+            <Badge
+              variant="outline"
+              className="border-emerald-200 bg-emerald-50 text-emerald-700"
+            >
+              Source trail preserved
+            </Badge>
+          ) : null}
+          <Badge
+            variant="outline"
+            className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+          >
+            {citations.length + documents.length}
+          </Badge>
+        </div>
       </div>
       <div className="space-y-5">
         {citations.length > 0 ? (
           <section>
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C746B]">
-              Legal sources
+              Legal source trail
             </h3>
             <div className="space-y-3">
               {citations.map((citation, index) => {
@@ -1234,8 +1244,8 @@ function CitationSidebar({
                         className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
                       >
                         {citation.source_type === "case_law"
-                          ? "Case law"
-                          : "Legislation"}
+                          ? "Cited case law"
+                          : "Cited legislation"}
                       </Badge>
                       <Badge
                         variant="outline"
@@ -1255,9 +1265,12 @@ function CitationSidebar({
                     {citation.snippet ? (
                       <details className="mt-2">
                         <summary className="cursor-pointer text-xs font-medium text-[#DD3300]">
-                          Show snippet
+                          Show source preview
                         </summary>
                         <p className="mt-2 text-xs leading-5 text-[#63534B]">
+                          <span className="font-medium text-[#1F1D1A]">
+                            Source preview:
+                          </span>{" "}
                           {citation.snippet}
                         </p>
                       </details>
@@ -1441,6 +1454,12 @@ function ConversationTurnView({
                     <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
                     Grounded answer
                   </Badge>
+                  <Badge
+                    variant="outline"
+                    className="border-[#DD3300]/30 bg-[#FFF7F3] text-[#8A2408]"
+                  >
+                    Needs lawyer review
+                  </Badge>
                   <p className="text-xs text-[#7C746B]">
                     Domains surfaced:{" "}
                     {domainsFound.length > 0
@@ -1457,7 +1476,7 @@ function ConversationTurnView({
 	                  <div aria-live="polite" className="text-sm text-[#63534B]">
 	                    {sourceCount > 0 ? (
 	                      <span>
-	                        {sourceCount} cited source
+	                        Source trail preserved: {sourceCount} cited legal source
 	                        {sourceCount === 1 ? "" : "s"} in the side panel.
 	                      </span>
 	                    ) : null}

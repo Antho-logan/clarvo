@@ -134,8 +134,9 @@ describe("matters page", () => {
     expect(
       screen.getAllByText("Lawyer review required before use").length,
     ).toBeGreaterThan(0);
+    expect(screen.getByText("Saved legal sources")).toBeInTheDocument();
     expect(
-      screen.getByText(/Source trail kept for lawyer review/),
+      screen.getByText(/Source trail preserved for lawyer review/),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Tenancy Law").length).toBeGreaterThan(0);
     expect(screen.getByText("Draft research memo")).toBeInTheDocument();
@@ -165,8 +166,9 @@ describe("matters page", () => {
       screen.getByText(/Bij opzegging gelden brononderbouwde waarborgen/),
     ).toBeInTheDocument();
     expect(screen.getAllByText("1 citation").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Preserves source trail/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Source trail preserved/).length).toBeGreaterThan(0);
     expect(screen.getByText(/Copy-ready draft memo/)).toBeInTheDocument();
+    expect(screen.getByText("Memo source trail")).toBeInTheDocument();
   });
 
   it("blocks memo drafting for research notes without citations", async () => {

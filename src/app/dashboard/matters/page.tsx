@@ -576,6 +576,12 @@ function ResearchNoteCard({
             >
               Lawyer review required before use
             </Badge>
+            <Badge
+              variant="outline"
+              className="border-emerald-200 bg-emerald-50 text-emerald-700"
+            >
+              Saved legal sources
+            </Badge>
           </div>
           <h3 className="font-serif text-lg leading-7 text-[#1F1D1A]">
             {note.question}
@@ -600,7 +606,7 @@ function ResearchNoteCard({
         </Badge>
         {sourcePreview.length > 0 ? (
           <span className="text-xs text-[#7C746B]">
-            Source trail kept for lawyer review:{" "}
+            Source trail preserved for lawyer review:{" "}
             {sourcePreview.map((citation) => getCitationLabel(citation)).join(" · ")}
           </span>
         ) : (
@@ -645,7 +651,7 @@ function ResearchMemoCard({ memo }: { memo: MatterResearchMemo }) {
               variant="outline"
               className="border-emerald-200 bg-emerald-50 text-emerald-700"
             >
-              Preserves source trail
+              Source trail preserved
             </Badge>
             <Badge
               variant="outline"
@@ -677,7 +683,10 @@ function ResearchMemoCard({ memo }: { memo: MatterResearchMemo }) {
         </Badge>
         {sourcePreview.length > 0 ? (
           <span className="text-xs text-[#7C746B]">
-            Source trail kept for lawyer review:{" "}
+            <span className="font-medium text-[#1F1D1A]">
+              Memo source trail
+            </span>
+            : Source trail preserved for lawyer review:{" "}
             {sourcePreview.map((citation) => getCitationLabel(citation)).join(" · ")}
           </span>
         ) : (
