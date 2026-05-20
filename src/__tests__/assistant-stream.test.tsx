@@ -185,8 +185,20 @@ describe("assistant streaming page", () => {
 
   it("sends attached text documents with the assistant request", async () => {
     const fetchMock = vi.fn(
-      async () =>
-        new Response(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        void init;
+        if (String(input) === "/api/agent/extract-document") {
+          return new Response(
+            JSON.stringify({
+              name: "huurcontract.txt",
+              text: "Contractuele opzegtermijn: twee maanden.",
+              truncated: false,
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        return new Response(
           createAssistantStream([
             { type: "token", content: "Contractantwoord." },
             {
@@ -197,7 +209,8 @@ describe("assistant streaming page", () => {
             },
           ]),
           { status: 200 },
-        ),
+        );
+      },
     );
     vi.stubGlobal("fetch", fetchMock);
 
@@ -223,7 +236,8 @@ describe("assistant streaming page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send question" }));
 
     expect(await screen.findByText("Contractantwoord.")).toBeInTheDocument();
-    const [, requestInit] = fetchMock.mock.calls[0] as unknown as [
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/agent/extract-document");
+    const [, requestInit] = fetchMock.mock.calls[1] as unknown as [
       string,
       RequestInit,
     ];
@@ -232,6 +246,68 @@ describe("assistant streaming page", () => {
       {
         name: "huurcontract.txt",
         text: "Contractuele opzegtermijn: twee maanden.",
+      },
+    ]);
+  });
+
+  it("extracts PDF uploads before sending them to the assistant", async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        void init;
+        if (String(input) === "/api/agent/extract-document") {
+          return new Response(
+            JSON.stringify({
+              name: "arbeidscontract.pdf",
+              text: "PDF contracttekst over proeftijd.",
+              truncated: false,
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        return new Response(
+          createAssistantStream([
+            { type: "token", content: "PDF antwoord." },
+            {
+              type: "done",
+              status: "grounded",
+              source_ids: [],
+              tool_trace: [],
+            },
+          ]),
+          { status: 200 },
+        );
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AssistantStreamingPage query="" domain={undefined} />);
+
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(["%PDF-1.7 fake"], "arbeidscontract.pdf", {
+      type: "application/pdf",
+    });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    expect(await screen.findByText("arbeidscontract.pdf")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Wat zegt dit contract over de proeftijd?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send question" }));
+
+    expect(await screen.findByText("PDF antwoord.")).toBeInTheDocument();
+    const extractionBody = fetchMock.mock.calls[0][1]?.body as FormData;
+    expect(extractionBody.get("file")).toBe(file);
+    const payload = JSON.parse(String(fetchMock.mock.calls[1][1]?.body));
+    expect(payload.client_documents).toEqual([
+      {
+        name: "arbeidscontract.pdf",
+        text: "PDF contracttekst over proeftijd.",
       },
     ]);
   });

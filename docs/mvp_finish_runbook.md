@@ -19,7 +19,7 @@ Deferred by design:
 - enterprise auth/RBAC
 - full matter workspace
 - full workflow execution UI
-- uploads, OCR, exports, and generated documents
+- permanent uploads, OCR, exports, and generated documents
 - broad corpus expansion beyond the three priority domains
 
 ## Start Locally
@@ -49,10 +49,11 @@ Open:
 5. Confirm the assistant returns either:
    - `grounded` answer with citations, or
    - `insufficient_sources` refusal.
-6. Open cited sources in `/dashboard/documents/[sourceId]`.
-7. Search `/dashboard/knowledge?q=huur%20woonruimte&domain=tenancy_law`.
-8. Inspect `/dashboard/documents`.
-9. Confirm `/dashboard/matters` and `/dashboard/workflows` present limited-preview behavior, not fake full depth.
+6. Attach a PDF, DOCX, or text contract excerpt in `/dashboard/agents` and confirm the follow-up answer uses the extracted current-chat document context without saving a permanent upload.
+7. Open cited sources in `/dashboard/documents/[sourceId]`.
+8. Search `/dashboard/knowledge?q=huur%20woonruimte&domain=tenancy_law`.
+9. Inspect `/dashboard/documents`.
+10. Confirm `/dashboard/matters` and `/dashboard/workflows` present limited-preview behavior, not fake full depth.
 
 ## Real Sign-In Setup
 

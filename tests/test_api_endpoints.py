@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+import base64
 from datetime import date
 
 import jwt
@@ -36,6 +37,39 @@ def test_health_does_not_require_auth(api_client: TestClient) -> None:
     response = api_client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_document_extraction_requires_bearer_token(api_client: TestClient) -> None:
+    response = api_client.post(
+        "/agent/extract-document",
+        json={
+            "filename": "contract.txt",
+            "content_type": "text/plain",
+            "data_base64": base64.b64encode(b"contract").decode(),
+        },
+    )
+
+    assert response.status_code == 401
+
+
+def test_document_extraction_returns_text(
+    api_client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = api_client.post(
+        "/agent/extract-document",
+        headers=auth_headers,
+        json={
+            "filename": "contract.txt",
+            "content_type": "text/plain",
+            "data_base64": base64.b64encode("Opzegtermijn twee maanden.".encode()).decode(),
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["name"] == "contract.txt"
+    assert body["text"] == "Opzegtermijn twee maanden."
+    assert body["truncated"] is False
 
 
 def test_documents_requires_bearer_token(api_client: TestClient) -> None:

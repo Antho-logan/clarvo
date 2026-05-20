@@ -52,7 +52,7 @@ From here the question becomes "does the system give a Dutch lawyer a trustworth
 - No new product surfaces (see `REJECTED_OR_SUPERSEDED_DECISIONS.md`).
 - No reranker. No cross-encoder. No Redis query-embedding cache.
 - No Supabase. No agent-framework swap.
-- No EU law, no SSO, no uploads.
+- No EU law, no SSO, no permanent uploads. Current-chat PDF/DOCX/text extraction is allowed only as ephemeral assistant context.
 - No retrieval-algorithm tuning without an eval signal that motivates it.
 
 The temptation in this phase will be to return to code because code is where the team is most comfortable. Resist it. The remaining risk is content, not code.

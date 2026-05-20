@@ -195,8 +195,15 @@ const OUT_OF_SCOPE_PATTERNS = [
 ] as const;
 
 const MAX_ATTACHED_DOCUMENTS = 3;
-const MAX_ATTACHMENT_CHARS = 20000;
 const MAX_HISTORY_TURNS = 4;
+const SUPPORTED_ATTACHMENT_PATTERN = /\.(pdf|docx|txt|md|markdown|csv)$/i;
+const SUPPORTED_ATTACHMENT_TYPES = new Set([
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+  "text/markdown",
+  "text/csv",
+]);
 
 function buildAssistantHref(query: string, domain?: string) {
   const params = new URLSearchParams({
@@ -341,13 +348,6 @@ function buildConversationHistory(turns: ConversationTurn[]): ChatHistoryMessage
     });
 }
 
-function canReadAsText(file: File) {
-  return (
-    file.type.startsWith("text/") ||
-    /\.(txt|md|markdown|csv)$/i.test(file.name)
-  );
-}
-
 function formatFileSize(bytes: number) {
   if (bytes < 1024) {
     return `${bytes} B`;
@@ -356,6 +356,13 @@ function formatFileSize(bytes: number) {
     return `${Math.round(bytes / 1024)} KB`;
   }
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isSupportedUpload(file: File) {
+  return (
+    SUPPORTED_ATTACHMENT_PATTERN.test(file.name) ||
+    SUPPORTED_ATTACHMENT_TYPES.has(file.type)
+  );
 }
 
 function getCitationKey(citation: AssistantCitation, index: number) {
@@ -407,6 +414,53 @@ async function readSaveError(response: Response) {
   }
 
   return response.statusText || "Save failed.";
+}
+
+async function readDocumentExtractionError(response: Response) {
+  try {
+    const parsed = (await response.json()) as unknown;
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "detail" in parsed &&
+      typeof parsed.detail === "string"
+    ) {
+      return parsed.detail;
+    }
+  } catch {
+    return response.statusText || "Document extraction failed.";
+  }
+  return response.statusText || "Document extraction failed.";
+}
+
+async function extractClientDocument(file: File): Promise<ClientDocument> {
+  const formData = new FormData();
+  formData.set("file", file);
+  const response = await fetch("/api/agent/extract-document", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(await readDocumentExtractionError(response));
+  }
+
+  const body = (await response.json()) as {
+    name?: string;
+    text?: string;
+    truncated?: boolean;
+  };
+  if (!body.text) {
+    throw new Error("No readable text could be extracted from this file.");
+  }
+
+  return {
+    id: makeTurnId(),
+    name: body.name || file.name,
+    size: file.size,
+    text: body.text,
+    truncated: Boolean(body.truncated),
+  };
 }
 
 function getSpeechRecognitionConstructor() {
@@ -817,34 +871,31 @@ export function AssistantStreamingPage({
     }
 
     const readableFiles = files.slice(0, remainingSlots);
-    const rejectedFile = readableFiles.find((file) => !canReadAsText(file));
+    const rejectedFile = readableFiles.find((file) => !isSupportedUpload(file));
     if (rejectedFile) {
       setAttachmentError(
-        "For this MVP pass, attach plain text, Markdown, or CSV contract excerpts. PDF and DOCX parsing comes later.",
+        "Supported uploads are PDF, DOCX, TXT, Markdown, and CSV files.",
       );
       return;
     }
 
-    const documents = await Promise.all(
-      readableFiles.map(async (file) => {
-        const rawText = await file.text();
-        const text = rawText.slice(0, MAX_ATTACHMENT_CHARS);
-        return {
-          id: makeTurnId(),
-          name: file.name,
-          size: file.size,
-          text,
-          truncated: rawText.length > MAX_ATTACHMENT_CHARS,
-        } satisfies ClientDocument;
-      }),
-    );
-
-    setAttachmentError(
-      files.length > remainingSlots
-        ? `Added ${remainingSlots} documents. Attach up to ${MAX_ATTACHED_DOCUMENTS} per chat.`
-        : null,
-    );
-    setClientDocuments((current) => [...current, ...documents]);
+    try {
+      const documents = await Promise.all(
+        readableFiles.map((file) => extractClientDocument(file)),
+      );
+      setAttachmentError(
+        files.length > remainingSlots
+          ? `Added ${remainingSlots} documents. Attach up to ${MAX_ATTACHED_DOCUMENTS} per chat.`
+          : null,
+      );
+      setClientDocuments((current) => [...current, ...documents]);
+    } catch (error) {
+      setAttachmentError(
+        error instanceof Error
+          ? error.message
+          : "This document could not be converted into readable text.",
+      );
+    }
   }
 
   function removeClientDocument(documentId: string) {
@@ -1004,7 +1055,7 @@ export function AssistantStreamingPage({
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept=".txt,.md,.markdown,.csv,text/plain,text/markdown,text/csv"
+                  accept=".pdf,.docx,.txt,.md,.markdown,.csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,text/csv"
                   className="hidden"
                   aria-label="Attach text document"
                   onChange={handleAttachFiles}
@@ -1016,8 +1067,8 @@ export function AssistantStreamingPage({
                   variant="outline"
                   className="h-[46px] w-[46px] shrink-0 rounded-lg border-[#D8D2C8] bg-white text-[#63534B] transition-all hover:border-[#DD3300]/30 hover:bg-[#FFF8F5]"
                   onClick={() => fileInputRef.current?.click()}
-                  aria-label="Attach contract text"
-                  title="Attach a plain text, Markdown, or CSV contract excerpt"
+                  aria-label="Attach contract document"
+                  title="Attach a PDF, DOCX, or text contract"
                 >
                   <Paperclip className="h-4 w-4" />
                 </Button>

@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import date
 from typing import Any, Optional
 
+import base64
+import binascii
 import json
 import time
 
@@ -50,6 +52,11 @@ from repositories.matters import (
     list_matters,
     save_research_note,
     update_matter,
+)
+from services.document_text_extraction import (
+    DocumentExtractionError,
+    UnsupportedDocumentError,
+    extract_document_text,
 )
 from repositories.user_settings import get_or_create_settings, update_settings
 from search import hybrid_search
@@ -105,6 +112,22 @@ class AgentClientDocument(BaseModel):
 
     name: str
     text: str
+
+
+class AgentDocumentExtractionRequest(BaseModel):
+    """Base64-encoded document upload for ephemeral assistant context."""
+
+    filename: str
+    content_type: Optional[str] = None
+    data_base64: str
+
+
+class AgentDocumentExtractionResponse(BaseModel):
+    """Extracted upload text returned to the chat client."""
+
+    name: str
+    text: str
+    truncated: bool
 
 
 class AgentStreamRequest(BaseModel):
@@ -846,6 +869,35 @@ def stream_agent(
         )
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/agent/extract-document", response_model=AgentDocumentExtractionResponse)
+def extract_agent_document(
+    request: AgentDocumentExtractionRequest,
+    _user: AuthenticatedUser = Depends(get_current_user),
+) -> AgentDocumentExtractionResponse:
+    """Extract readable text from a chat upload without storing the file."""
+    try:
+        payload = base64.b64decode(request.data_base64, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid file payload.") from exc
+
+    try:
+        extracted = extract_document_text(
+            request.filename,
+            request.content_type,
+            payload,
+        )
+    except UnsupportedDocumentError as exc:
+        raise HTTPException(status_code=415, detail=str(exc)) from exc
+    except DocumentExtractionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return AgentDocumentExtractionResponse(
+        name=extracted.name,
+        text=extracted.text,
+        truncated=extracted.truncated,
+    )
 
 
 @app.post("/agent/chat")
