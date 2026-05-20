@@ -76,7 +76,7 @@ def test_generated_refusal_is_not_marked_grounded(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(
         agentic_orchestrator,
         "_llm_answer",
-        lambda question, hits: "De verstrekte bronnen bevatten geen informatie over deze vraag.",
+        lambda question, hits, **kwargs: "De verstrekte bronnen bevatten geen informatie over deze vraag.",
     )
 
     result = agentic_orchestrator.generate_answer(
@@ -134,3 +134,62 @@ def test_llm_answer_trims_long_source_text(monkeypatch: pytest.MonkeyPatch) -> N
     assert answer == "Antwoord [BWBR-LONG]"
     assert "start middle" in captured["prompt"]
     assert "END_SHOULD_BE_TRIMMED" not in captured["prompt"]
+
+
+def test_llm_answer_includes_chat_history_and_uploaded_documents(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, str] = {}
+
+    class FakeAgent:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    class FakeRunner:
+        @staticmethod
+        async def run(agent, prompt):
+            captured["prompt"] = prompt
+            return types.SimpleNamespace(final_output="Antwoord [BWBR-LAW]")
+
+    monkeypatch.setitem(
+        sys.modules,
+        "agents",
+        types.SimpleNamespace(Agent=FakeAgent, Runner=FakeRunner),
+    )
+
+    answer = agentic_orchestrator._llm_answer(
+        "Wat betekent dit voor mijn contract?",
+        [
+            {
+                "source_id": "BWBR-LAW",
+                "source_type": "legislation",
+                "domain": "tenancy_law",
+                "title": "Huurrecht bron",
+                "article": "7:271",
+                "text": "Wettelijke opzegregels.",
+            }
+        ],
+        conversation_history=[
+            {
+                "role": "user",
+                "content": "Ik heb een contract met een opzegtermijn.",
+            },
+            {
+                "role": "assistant",
+                "content": "Upload de relevante contracttekst.",
+            },
+        ],
+        client_documents=[
+            {
+                "name": "huurcontract.txt",
+                "text": "Contractuele opzegtermijn: twee maanden.",
+            }
+        ],
+    )
+
+    assert answer == "Antwoord [BWBR-LAW]"
+    assert "Recent conversation:" in captured["prompt"]
+    assert "Ik heb een contract met een opzegtermijn." in captured["prompt"]
+    assert "Client-provided documents:" in captured["prompt"]
+    assert "huurcontract.txt" in captured["prompt"]
+    assert "Contractuele opzegtermijn: twee maanden." in captured["prompt"]

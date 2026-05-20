@@ -18,6 +18,10 @@ MIN_GROUNDED_SOURCES = 1
 MAX_LLM_SOURCES = 6
 MAX_CONTEXT_CHARS_PER_SOURCE = 1400
 MAX_EXTRACTIVE_SNIPPET_CHARS = 520
+MAX_HISTORY_MESSAGES = 8
+MAX_HISTORY_CHARS_PER_MESSAGE = 1200
+MAX_CLIENT_DOCUMENTS = 3
+MAX_CLIENT_DOCUMENT_CHARS = 12000
 UNSUPPORTED_QUESTION_PATTERNS = (
     "belastingaangifte",
     "deutschen arbeitsrecht",
@@ -126,7 +130,44 @@ def _extractive_answer(question: str, hits: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def _llm_answer(question: str, hits: list[dict]) -> str:
+def _format_conversation_history(conversation_history: list[dict] | None) -> str:
+    if not conversation_history:
+        return ""
+
+    lines = ["Recent conversation:"]
+    for message in conversation_history[-MAX_HISTORY_MESSAGES:]:
+        role = str(message.get("role") or "").strip().lower()
+        if role not in {"user", "assistant"}:
+            continue
+        content = compact_text(message.get("content") or "")[:MAX_HISTORY_CHARS_PER_MESSAGE]
+        if not content:
+            continue
+        lines.append(f"- {role.title()}: {content}")
+
+    return "\n".join(lines) if len(lines) > 1 else ""
+
+
+def _format_client_documents(client_documents: list[dict] | None) -> str:
+    if not client_documents:
+        return ""
+
+    blocks = ["Client-provided documents:"]
+    for index, document in enumerate(client_documents[:MAX_CLIENT_DOCUMENTS], start=1):
+        name = compact_text(document.get("name") or f"Document {index}")[:160]
+        text = compact_text(document.get("text") or "")[:MAX_CLIENT_DOCUMENT_CHARS]
+        if not text:
+            continue
+        blocks.append(f"Document {index}: {name}\nText: {text}")
+
+    return "\n\n".join(blocks) if len(blocks) > 1 else ""
+
+
+def _llm_answer(
+    question: str,
+    hits: list[dict],
+    conversation_history: list[dict] | None = None,
+    client_documents: list[dict] | None = None,
+) -> str:
     from agents import Agent, Runner
     import asyncio
 
@@ -152,13 +193,23 @@ def _llm_answer(question: str, hits: list[dict]) -> str:
             )
         )
 
+    history_context = _format_conversation_history(conversation_history)
+    document_context = _format_client_documents(client_documents)
+    optional_context = "\n\n".join(
+        block for block in (history_context, document_context) if block
+    )
+
     instructions = (
-        "You are Veridicta, a Dutch legal research assistant. Answer only from the provided sources. "
-        "Every legal claim must include an inline citation using one of the provided citation labels in square brackets. "
-        "If the provided sources do not support the answer, refuse briefly in Dutch."
+        "You are Veridicta, a Dutch legal research assistant. Answer only from the provided Dutch legal sources "
+        "and any client-provided document text. Treat client documents as user-provided facts or contract text, "
+        "not as legal authority. Every legal claim must include an inline citation using one of the provided "
+        "citation labels in square brackets. Contract observations may reference the document name, but legal "
+        "rules still require a legal-source citation. If the provided sources do not support the answer, refuse "
+        "briefly in Dutch."
     )
     prompt = (
         f"Question:\n{question}\n\n"
+        f"{optional_context}\n\n"
         f"Allowed citation labels: {', '.join(allowed_labels)}\n\n"
         f"Sources:\n\n{chr(10).join(context_blocks)}\n\n"
         "Answer in Dutch, concise and source-grounded."
@@ -168,13 +219,23 @@ def _llm_answer(question: str, hits: list[dict]) -> str:
     return str(result.final_output)
 
 
-def generate_answer(question: str, collected_hits: list[dict]) -> dict:
+def generate_answer(
+    question: str,
+    collected_hits: list[dict],
+    conversation_history: list[dict] | None = None,
+    client_documents: list[dict] | None = None,
+) -> dict:
     """Return a cited answer or a refusal when supporting sources are missing."""
     hits = _deduplicate_hits(collected_hits)
     if len(hits) < MIN_GROUNDED_SOURCES:
         return _refusal(question, hits, [])
     if os.getenv("OPENAI_API_KEY"):
-        answer = _llm_answer(question, hits)
+        answer = _llm_answer(
+            question,
+            hits,
+            conversation_history=conversation_history,
+            client_documents=client_documents,
+        )
     else:
         answer = _extractive_answer(question, hits)
 
@@ -194,7 +255,13 @@ def generate_answer(question: str, collected_hits: list[dict]) -> dict:
     }
 
 
-def chat(question: str, max_iterations: int = 2, domain: str | None = None) -> dict:
+def chat(
+    question: str,
+    max_iterations: int = 2,
+    domain: str | None = None,
+    conversation_history: list[dict] | None = None,
+    client_documents: list[dict] | None = None,
+) -> dict:
     """Run a minimal source-backed assistant lookup."""
     tool_trace: list[dict] = []
 
@@ -217,7 +284,12 @@ def chat(question: str, max_iterations: int = 2, domain: str | None = None) -> d
         tool_trace.append({"tool": "knowledge_lookup", "input": {"query": question, "domain": domain, "limit": limit}})
         hits = result.get("hits", [])
 
-    final = generate_answer(question, hits)
+    final = generate_answer(
+        question,
+        hits,
+        conversation_history=conversation_history,
+        client_documents=client_documents,
+    )
     final["tool_trace"] = tool_trace
     if final["status"] == "insufficient_sources":
         final["tool_trace"] = tool_trace

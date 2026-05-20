@@ -179,6 +179,61 @@ describe("assistant streaming page", () => {
       "Wanneer is ontslag op staande voet geldig?",
     );
     expect(payload.max_iterations).toBe(2);
+    expect(payload.conversation_history).toEqual([]);
+    expect(payload.client_documents).toEqual([]);
+  });
+
+  it("sends attached text documents with the assistant request", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          createAssistantStream([
+            { type: "token", content: "Contractantwoord." },
+            {
+              type: "done",
+              status: "grounded",
+              source_ids: [],
+              tool_trace: [],
+            },
+          ]),
+          { status: 200 },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AssistantStreamingPage query="" domain={undefined} />);
+
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(
+      ["Contractuele opzegtermijn: twee maanden."],
+      "huurcontract.txt",
+      { type: "text/plain" },
+    );
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    expect(await screen.findByText("huurcontract.txt")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Wat betekent dit voor mijn contract?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send question" }));
+
+    expect(await screen.findByText("Contractantwoord.")).toBeInTheDocument();
+    const [, requestInit] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    const payload = JSON.parse(String(requestInit.body));
+    expect(payload.client_documents).toEqual([
+      {
+        name: "huurcontract.txt",
+        text: "Contractuele opzegtermijn: twee maanden.",
+      },
+    ]);
   });
 
   it("renders streamed tokens before the final done event", async () => {
@@ -286,6 +341,15 @@ describe("assistant streaming page", () => {
     expect(screen.getAllByText("ontslag op staande voet").length).toBeGreaterThan(
       0,
     );
+    const [, secondRequestInit] = fetchMock.mock.calls[1] as unknown as [
+      string,
+      RequestInit,
+    ];
+    const secondPayload = JSON.parse(String(secondRequestInit.body));
+    expect(secondPayload.conversation_history).toEqual([
+      { role: "user", content: "huur opzegging" },
+      { role: "assistant", content: "Antwoord huur." },
+    ]);
   });
 
   it("saves grounded answers to a matter with citation payload", async () => {

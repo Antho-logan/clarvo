@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  type ChangeEvent,
   type FormEvent,
   useCallback,
   useEffect,
@@ -18,10 +19,12 @@ import {
   Loader2,
   Mic,
   MicOff,
+  Paperclip,
   Scale,
   Send,
   Sparkles,
   UserCircle,
+  X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +75,19 @@ type ConversationTurn = {
   error?: string;
   saveState?: "saving" | "saved" | "error";
   saveMessage?: string;
+};
+
+type ChatHistoryMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+type ClientDocument = {
+  id: string;
+  name: string;
+  size: number;
+  text: string;
+  truncated: boolean;
 };
 
 type AssistantStreamEvent =
@@ -177,6 +193,10 @@ const OUT_OF_SCOPE_PATTERNS = [
   /advocaat vervangen/i,
   /vervangen.*advocaat/i,
 ] as const;
+
+const MAX_ATTACHED_DOCUMENTS = 3;
+const MAX_ATTACHMENT_CHARS = 20000;
+const MAX_HISTORY_TURNS = 4;
 
 function buildAssistantHref(query: string, domain?: string) {
   const params = new URLSearchParams({
@@ -303,6 +323,69 @@ function getTurnDomains(turn: ConversationTurn) {
   );
 }
 
+function buildConversationHistory(turns: ConversationTurn[]): ChatHistoryMessage[] {
+  return turns
+    .slice(-MAX_HISTORY_TURNS)
+    .flatMap((turn) => {
+      const messages: ChatHistoryMessage[] = [
+        { role: "user", content: turn.query },
+      ];
+      const answer = turn.answerText.trim();
+      if (answer) {
+        messages.push({
+          role: "assistant",
+          content: answer.slice(0, 2400),
+        });
+      }
+      return messages;
+    });
+}
+
+function canReadAsText(file: File) {
+  return (
+    file.type.startsWith("text/") ||
+    /\.(txt|md|markdown|csv)$/i.test(file.name)
+  );
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${Math.round(bytes / 1024)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getCitationKey(citation: AssistantCitation, index: number) {
+  return [
+    citation.id,
+    citation.source_id,
+    citation.article,
+    citation.snippet,
+    index,
+  ]
+    .filter(Boolean)
+    .join("-");
+}
+
+function dedupeCitations(turns: ConversationTurn[]) {
+  const seen = new Set<string>();
+  const citations: AssistantCitation[] = [];
+  for (const citation of turns.flatMap((turn) => turn.citations)) {
+    const key =
+      citation.id ||
+      `${citation.source_id || ""}:${citation.article || ""}:${citation.snippet || ""}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    citations.push(citation);
+  }
+  return citations;
+}
+
 async function readSaveError(response: Response) {
   const body = await response.text();
   if (!body) {
@@ -349,7 +432,12 @@ export function AssistantStreamingPage({
   const [speechSupported, setSpeechSupported] = useState(false);
   const [speechStatus, setSpeechStatus] = useState<SpeechStatus>("idle");
   const [speechMessage, setSpeechMessage] = useState<string | null>(null);
+  const [clientDocuments, setClientDocuments] = useState<ClientDocument[]>([]);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const startedUrlQueryRef = useRef("");
+  const turnsRef = useRef<ConversationTurn[]>([]);
+  const clientDocumentsRef = useRef<ClientDocument[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const abortControllersRef = useRef<Set<AbortController>>(new Set());
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
@@ -364,6 +452,14 @@ export function AssistantStreamingPage({
     },
     [],
   );
+
+  useEffect(() => {
+    turnsRef.current = turns;
+  }, [turns]);
+
+  useEffect(() => {
+    clientDocumentsRef.current = clientDocuments;
+  }, [clientDocuments]);
 
   const startResearch = useCallback(
     async (question: string, requestedDomain?: string) => {
@@ -400,6 +496,11 @@ export function AssistantStreamingPage({
             question: trimmedQuestion,
             domain: requestedDomain,
             max_iterations: 2,
+            conversation_history: buildConversationHistory(turnsRef.current),
+            client_documents: clientDocumentsRef.current.map((document) => ({
+              name: document.name,
+              text: document.text,
+            })),
           }),
           signal: abortController.signal,
         });
@@ -702,6 +803,57 @@ export function AssistantStreamingPage({
     }
   }
 
+  async function handleAttachFiles(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (files.length === 0) {
+      return;
+    }
+
+    const remainingSlots = MAX_ATTACHED_DOCUMENTS - clientDocumentsRef.current.length;
+    if (remainingSlots <= 0) {
+      setAttachmentError(`Attach up to ${MAX_ATTACHED_DOCUMENTS} text documents per chat.`);
+      return;
+    }
+
+    const readableFiles = files.slice(0, remainingSlots);
+    const rejectedFile = readableFiles.find((file) => !canReadAsText(file));
+    if (rejectedFile) {
+      setAttachmentError(
+        "For this MVP pass, attach plain text, Markdown, or CSV contract excerpts. PDF and DOCX parsing comes later.",
+      );
+      return;
+    }
+
+    const documents = await Promise.all(
+      readableFiles.map(async (file) => {
+        const rawText = await file.text();
+        const text = rawText.slice(0, MAX_ATTACHMENT_CHARS);
+        return {
+          id: makeTurnId(),
+          name: file.name,
+          size: file.size,
+          text,
+          truncated: rawText.length > MAX_ATTACHMENT_CHARS,
+        } satisfies ClientDocument;
+      }),
+    );
+
+    setAttachmentError(
+      files.length > remainingSlots
+        ? `Added ${remainingSlots} documents. Attach up to ${MAX_ATTACHED_DOCUMENTS} per chat.`
+        : null,
+    );
+    setClientDocuments((current) => [...current, ...documents]);
+  }
+
+  function removeClientDocument(documentId: string) {
+    setClientDocuments((current) =>
+      current.filter((document) => document.id !== documentId),
+    );
+    setAttachmentError(null);
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmedQuestion = draftQuery.trim();
@@ -726,10 +878,11 @@ export function AssistantStreamingPage({
     () => turns.reduce((count, turn) => count + turn.toolTrace.length, 0),
     [turns],
   );
+  const activeCitations = useMemo(() => dedupeCitations(turns), [turns]);
   const hasConversation = turns.length > 0;
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-6xl flex-col pb-8">
+    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-7xl flex-col pb-8">
       <div className="mb-6 flex shrink-0 flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
@@ -747,9 +900,16 @@ export function AssistantStreamingPage({
         </div>
       </div>
 
-      <Card className="flex min-h-[640px] flex-1 flex-col overflow-hidden border-[#D8D2C8] bg-white shadow-sm">
-        <CardContent className="flex-1 overflow-y-auto bg-[#F8F6F1] p-0">
-          <div className="mx-auto flex min-h-full max-w-5xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+      <div
+        className={
+          activeCitations.length > 0
+            ? "grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]"
+            : "flex flex-1"
+        }
+      >
+        <Card className="flex min-h-[640px] flex-1 flex-col overflow-hidden border-[#D8D2C8] bg-white shadow-sm">
+          <CardContent className="flex-1 overflow-y-auto bg-[#F8F6F1] p-0">
+            <div className="mx-auto flex min-h-full max-w-5xl flex-col px-4 py-6 sm:px-6 lg:px-8">
             {!hasConversation ? (
               <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
                 <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#D8D2C8] bg-white shadow-sm">
@@ -799,86 +959,151 @@ export function AssistantStreamingPage({
                 ))}
               </div>
             )}
-          </div>
-        </CardContent>
+            </div>
+          </CardContent>
 
-        <div className="shrink-0 border-t border-[#D8D2C8] bg-white p-4">
-          <form
-            onSubmit={handleSubmit}
-            className="mx-auto flex max-w-4xl items-end rounded-xl border border-[#D8D2C8] bg-white p-2 shadow-sm transition-all focus-within:border-[#DD3300] focus-within:ring-2 focus-within:ring-[#DD3300]/10"
-          >
-            <textarea
-              name="q"
-              className="min-h-[46px] flex-1 resize-none bg-transparent px-3 py-3 text-sm text-[#1F1D1A] placeholder:text-[#BDA989] focus:outline-none"
-              placeholder="Ask one Dutch legal question, for example: huurcontract opzegtermijn"
-              value={draftQuery}
-              onChange={(event) => setDraftQuery(event.target.value)}
-              rows={1}
-            />
+          <div className="shrink-0 border-t border-[#D8D2C8] bg-white p-4">
+            <div className="mx-auto max-w-4xl">
+              {clientDocuments.length > 0 || attachmentError ? (
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  {clientDocuments.map((document) => (
+                    <Badge
+                      key={document.id}
+                      variant="outline"
+                      className="gap-2 border-[#D8D2C8] bg-[#F8F6F1] px-2 py-1 text-[#63534B]"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-[#DD3300]" />
+                      <span>{document.name}</span>
+                      <span className="text-[10px] text-[#7C746B]">
+                        {formatFileSize(document.size)}
+                        {document.truncated ? ", trimmed" : ""}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${document.name}`}
+                        className="rounded-full p-0.5 text-[#7C746B] transition-colors hover:bg-white hover:text-[#DD3300]"
+                        onClick={() => removeClientDocument(document.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {attachmentError ? (
+                    <span className="text-xs text-[#8A2408]">
+                      {attachmentError}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
 
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              className={`ml-2 h-[46px] w-[46px] shrink-0 rounded-lg border-[#D8D2C8] bg-white transition-all hover:border-[#DD3300]/30 hover:bg-[#FFF8F5] ${
-                speechStatus === "listening"
-                  ? "border-[#DD3300]/40 bg-[#FFF8F5] text-[#DD3300]"
-                  : "text-[#63534B]"
-              }`}
-              disabled={!speechSupported && speechStatus !== "error"}
-              onClick={handleVoiceInput}
-              title={
-                speechSupported
-                  ? "Speak a Dutch legal question"
-                  : "Voice input is not supported in this browser yet. Type your question instead."
-              }
-              aria-label={
-                speechSupported
-                  ? speechStatus === "listening"
-                    ? "Stop voice input"
-                    : "Start voice input"
-                  : "Voice input not supported"
-              }
-            >
-              {speechSupported ? (
-                <Mic className="h-4 w-4" />
-              ) : (
-                <MicOff className="h-4 w-4" />
-              )}
-            </Button>
+              <form
+                onSubmit={handleSubmit}
+                className="flex items-end rounded-xl border border-[#D8D2C8] bg-white p-2 shadow-sm transition-all focus-within:border-[#DD3300] focus-within:ring-2 focus-within:ring-[#DD3300]/10"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".txt,.md,.markdown,.csv,text/plain,text/markdown,text/csv"
+                  className="hidden"
+                  aria-label="Attach text document"
+                  onChange={handleAttachFiles}
+                />
 
-            <select
-              name="domain"
-              value={selectedDomain}
-              onChange={(event) => setSelectedDomain(event.target.value)}
-              className="mr-2 hidden h-[46px] rounded-lg border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-xs text-[#1F1D1A] transition-colors focus:border-[#DD3300]/50 focus:outline-none sm:block"
-            >
-              <option value="">All domains</option>
-              {DOMAIN_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="h-[46px] w-[46px] shrink-0 rounded-lg border-[#D8D2C8] bg-white text-[#63534B] transition-all hover:border-[#DD3300]/30 hover:bg-[#FFF8F5]"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label="Attach contract text"
+                  title="Attach a plain text, Markdown, or CSV contract excerpt"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
 
-            <Button
-              type="submit"
-              size="icon"
-              className="ml-2 h-[46px] w-[46px] shrink-0 rounded-lg bg-[#DD3300] text-white shadow-sm transition-all hover:bg-[#C22D00] hover:shadow-md disabled:opacity-50"
-              disabled={!draftQuery.trim()}
-              aria-label="Send question"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
+                <textarea
+                  name="q"
+                  className="min-h-[46px] flex-1 resize-none bg-transparent px-3 py-3 text-sm text-[#1F1D1A] placeholder:text-[#BDA989] focus:outline-none"
+                  placeholder="Ask one Dutch legal question, for example: huurcontract opzegtermijn"
+                  value={draftQuery}
+                  onChange={(event) => setDraftQuery(event.target.value)}
+                  rows={1}
+                />
 
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-center">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className={`ml-2 h-[46px] w-[46px] shrink-0 rounded-lg border-[#D8D2C8] bg-white transition-all hover:border-[#DD3300]/30 hover:bg-[#FFF8F5] ${
+                    speechStatus === "listening"
+                      ? "border-[#DD3300]/40 bg-[#FFF8F5] text-[#DD3300]"
+                      : "text-[#63534B]"
+                  }`}
+                  disabled={!speechSupported && speechStatus !== "error"}
+                  onClick={handleVoiceInput}
+                  title={
+                    speechSupported
+                      ? "Speak a Dutch legal question"
+                      : "Voice input is not supported in this browser yet. Type your question instead."
+                  }
+                  aria-label={
+                    speechSupported
+                      ? speechStatus === "listening"
+                        ? "Stop voice input"
+                        : "Start voice input"
+                      : "Voice input not supported"
+                  }
+                >
+                  {speechSupported ? (
+                    <Mic className="h-4 w-4" />
+                  ) : (
+                    <MicOff className="h-4 w-4" />
+                  )}
+                </Button>
+
+                <select
+                  name="domain"
+                  value={selectedDomain}
+                  onChange={(event) => setSelectedDomain(event.target.value)}
+                  className="mr-2 hidden h-[46px] rounded-lg border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-xs text-[#1F1D1A] transition-colors focus:border-[#DD3300]/50 focus:outline-none sm:block"
+                >
+                  <option value="">All domains</option>
+                  {DOMAIN_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="ml-2 h-[46px] w-[46px] shrink-0 rounded-lg bg-[#DD3300] text-white shadow-sm transition-all hover:bg-[#C22D00] hover:shadow-md disabled:opacity-50"
+                  disabled={!draftQuery.trim()}
+                  aria-label="Send question"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-center">
             <Badge
               variant="outline"
               className="border-[#D8D2C8] text-[10px] font-semibold uppercase text-[#BDA989]"
             >
               Context: Stored sources
             </Badge>
+            {clientDocuments.length > 0 ? (
+              <Badge
+                variant="outline"
+                className="border-[#D8D2C8] bg-[#F8F6F1] text-[10px] font-semibold uppercase text-[#63534B]"
+              >
+                {clientDocuments.length} chat attachment
+                {clientDocuments.length === 1 ? "" : "s"}
+              </Badge>
+            ) : null}
             {speechMessage ? (
               <Badge
                 variant="outline"
@@ -892,11 +1117,93 @@ export function AssistantStreamingPage({
               is transcribed locally by the browser when supported. Review
               before sending.
             </span>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+        {activeCitations.length > 0 ? (
+          <CitationSidebar citations={activeCitations} />
+        ) : null}
+      </div>
       <span className="sr-only">{totalToolEvents} tool events inspected.</span>
     </div>
+  );
+}
+
+function CitationSidebar({ citations }: { citations: AssistantCitation[] }) {
+  return (
+    <aside className="h-fit rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm lg:sticky lg:top-6">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-base font-serif text-[#1F1D1A]">Cited sources</h2>
+        <Badge
+          variant="outline"
+          className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+        >
+          {citations.length}
+        </Badge>
+      </div>
+      <div className="space-y-3">
+        {citations.map((citation, index) => {
+          const citationTarget = citation.source_id || citation.id;
+          const citationMeta = formatCitationMeta(citation);
+          const sourceHref = citationTarget
+            ? `/dashboard/documents/${encodeURIComponent(
+                citationTarget,
+              )}${citation.domain ? `?domain=${encodeURIComponent(citation.domain)}` : ""}`
+            : null;
+
+          return (
+            <div
+              key={getCitationKey(citation, index)}
+              className="rounded-lg border border-[#D8D2C8] bg-white p-3"
+            >
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
+                >
+                  {citation.source_type === "case_law"
+                    ? "Case law"
+                    : "Legislation"}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="border-[#D8D2C8] bg-[#EEEDE4] text-[#63534B]"
+                >
+                  {getDomainLabel(citation.domain)}
+                </Badge>
+              </div>
+              <p className="text-sm font-medium leading-5 text-[#1F1D1A]">
+                {citation.title || citation.source_id || citation.id}
+              </p>
+              {citationMeta ? (
+                <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-[#7C746B]">
+                  {citationMeta}
+                </p>
+              ) : null}
+              {citation.snippet ? (
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs font-medium text-[#DD3300]">
+                    Show snippet
+                  </summary>
+                  <p className="mt-2 text-xs leading-5 text-[#63534B]">
+                    {citation.snippet}
+                  </p>
+                </details>
+              ) : null}
+              {sourceHref ? (
+                <Link
+                  href={sourceHref}
+                  className="mt-3 inline-flex items-center text-xs font-medium text-[#DD3300] hover:text-[#A92700]"
+                >
+                  Open source
+                  <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                </Link>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </aside>
   );
 }
 
@@ -910,7 +1217,6 @@ function ConversationTurnView({
   const refusalDisplay = getRefusalDisplay(turn.query);
   const domainsFound = getTurnDomains(turn);
   const sourceCount = turn.sourceIds.length || turn.citations.length;
-  const showSources = turn.state === "grounded" && turn.citations.length > 0;
   const loadingLabel = turn.answerText
     ? "Checking citations..."
     : "Researching sources...";
@@ -1033,18 +1339,24 @@ function ConversationTurnView({
                 <p className="whitespace-pre-wrap text-sm leading-7 text-[#1F1D1A]">
                   {turn.answerText}
                 </p>
-                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#EEEDE4] pt-4">
-                  <div aria-live="polite" className="text-sm text-[#63534B]">
-                    {turn.saveState === "saved" ? (
-                      <span className="text-emerald-700">
-                        {turn.saveMessage}
-                      </span>
-                    ) : null}
-                    {turn.saveState === "error" ? (
-                      <span className="text-[#8A2408]">
-                        {turn.saveMessage}
-                      </span>
-                    ) : null}
+	                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#EEEDE4] pt-4">
+	                  <div aria-live="polite" className="text-sm text-[#63534B]">
+	                    {sourceCount > 0 ? (
+	                      <span>
+	                        {sourceCount} cited source
+	                        {sourceCount === 1 ? "" : "s"} in the side panel.
+	                      </span>
+	                    ) : null}
+	                    {turn.saveState === "saved" ? (
+	                      <span className="block text-emerald-700">
+	                        {turn.saveMessage}
+	                      </span>
+	                    ) : null}
+	                    {turn.saveState === "error" ? (
+	                      <span className="block text-[#8A2408]">
+	                        {turn.saveMessage}
+	                      </span>
+	                    ) : null}
                   </div>
                   <Button
                     type="button"
@@ -1062,90 +1374,8 @@ function ConversationTurnView({
                   </Button>
                 </div>
               </div>
-
-              {showSources ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-base font-serif text-[#1F1D1A]">
-                      Cited sources
-                    </h3>
-                    <Badge
-                      variant="outline"
-                      className="border-[#D8D2C8] bg-white text-[#63534B]"
-                    >
-                      {sourceCount} citations
-                    </Badge>
-                  </div>
-
-                  <div className="grid gap-3">
-                    {turn.citations.map((citation, index) => {
-                      const citationTarget = citation.source_id || citation.id;
-                      const citationMeta = formatCitationMeta(citation);
-                      const citationBody = (
-                        <>
-                          <div className="mb-3 flex flex-wrap items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
-                            >
-                              {citation.source_type === "case_law"
-                                ? "Case law"
-                                : "Legislation"}
-                            </Badge>
-                            <Badge
-                              variant="outline"
-                              className="border-[#D8D2C8] bg-[#EEEDE4] text-[#63534B]"
-                            >
-                              {getDomainLabel(citation.domain)}
-                            </Badge>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="font-medium leading-6 text-[#1F1D1A]">
-                                {citation.title ||
-                                  citation.source_id ||
-                                  citation.id}
-                              </p>
-                              {citationMeta ? (
-                                <p className="mt-2 text-xs uppercase tracking-[0.14em] text-[#7C746B]">
-                                  {citationMeta}
-                                </p>
-                              ) : null}
-                            </div>
-                            {citationTarget ? (
-                              <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-[#BDA989] transition-colors group-hover:text-[#DD3300]" />
-                            ) : null}
-                          </div>
-                          <p className="mt-3 line-clamp-3 text-sm leading-6 text-[#63534B]">
-                            {citation.snippet}
-                          </p>
-                        </>
-                      );
-
-                      return citationTarget ? (
-                        <Link
-                          key={`${turn.id}-${citation.id || citation.source_id || index}`}
-                          href={`/dashboard/documents/${encodeURIComponent(
-                            citationTarget,
-                          )}${citation.domain ? `?domain=${encodeURIComponent(citation.domain)}` : ""}`}
-                          className="group block rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#DD3300]/30 hover:shadow-md motion-reduce:hover:translate-y-0"
-                        >
-                          {citationBody}
-                        </Link>
-                      ) : (
-                        <div
-                          key={`${turn.id}-${citation.snippet || index}`}
-                          className="rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm"
-                        >
-                          {citationBody}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+	            </div>
+	          ) : null}
         </div>
       </div>
     </article>

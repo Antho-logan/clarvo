@@ -10,7 +10,7 @@ import time
 
 from celery.exceptions import CeleryError
 from fastapi import Depends, FastAPI, HTTPException, Query, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import text
 from starlette.responses import StreamingResponse
 
@@ -93,12 +93,28 @@ class WorkflowRunRequest(BaseModel):
     question: Optional[str] = None
 
 
+class AgentConversationMessage(BaseModel):
+    """Prior chat message supplied by the client for ephemeral chat context."""
+
+    role: str
+    content: str
+
+
+class AgentClientDocument(BaseModel):
+    """Client-provided document text supplied only for the current chat."""
+
+    name: str
+    text: str
+
+
 class AgentStreamRequest(BaseModel):
     """Request body for source-backed agent streaming."""
 
     question: str
     max_iterations: int = 4
     domain: Optional[str] = None
+    conversation_history: list[AgentConversationMessage] = Field(default_factory=list)
+    client_documents: list[AgentClientDocument] = Field(default_factory=list)
 
 
 class MatterRequest(BaseModel):
@@ -790,6 +806,12 @@ def stream_agent(
             request.question,
             max_iterations=request.max_iterations,
             domain=request.domain,
+            conversation_history=[
+                message.model_dump() for message in request.conversation_history
+            ],
+            client_documents=[
+                document.model_dump() for document in request.client_documents
+            ],
         )
         if result.get("status") == "insufficient_sources":
             yield _sse_payload({"type": "insufficient_sources", **result})
@@ -833,5 +855,13 @@ def chat_agent(
 ) -> dict:
     """Run the grounded assistant and return one JSON response."""
     return chat(
-        request.question, max_iterations=request.max_iterations, domain=request.domain
+        request.question,
+        max_iterations=request.max_iterations,
+        domain=request.domain,
+        conversation_history=[
+            message.model_dump() for message in request.conversation_history
+        ],
+        client_documents=[
+            document.model_dump() for document in request.client_documents
+        ],
     )
