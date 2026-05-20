@@ -200,7 +200,12 @@ def test_llm_answer_includes_chat_history_and_uploaded_documents(
         "[Contract D1.P2] Huurder mag geen beroep doen op wettelijke huurbescherming."
         in captured["prompt"]
     )
-    assert "Probleem" in captured["instructions"]
+    assert "Korte conclusie" in captured["instructions"]
     assert "Contractpassage" in captured["instructions"]
     assert "Juridische regel" in captured["instructions"]
-    assert "Praktisch advies" in captured["instructions"]
+    assert "Risico" in captured["instructions"]
+    assert "Aanbeveling" in captured["instructions"]
+    assert "Bronnen/citaties" in captured["instructions"]
+    assert "Juristencontrole vereist" in captured["instructions"]
+    assert "Korte conclusie" in captured["prompt"]
+    assert "Juristencontrole vereist" in captured["prompt"]

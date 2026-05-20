@@ -1,6 +1,6 @@
 # MVP Launch Todo
 
-Last updated: 2026-05-19
+Last updated: 2026-05-20
 
 This file tracks small MVP blockers and follow-ups that should not interrupt the current build flow.
 
@@ -67,7 +67,7 @@ P0 tasks to finish before calling the MVP demo-ready:
 P1 tasks that can wait until after the core demo works:
 - Improve assistant streaming animation so answer chunks feel smoother.
 - Polish the login screen design.
-- Make lead email delivery work with a verified Resend sender.
+- Replace the Resend sandbox sender with a verified company-domain sender.
 - Define a repeatable manual user-provisioning command/script.
 
 P2 tasks intentionally deferred beyond MVP:
@@ -102,19 +102,30 @@ Next action:
 
 ### Demo request email delivery
 
-Status: blocked until sender setup is finalized.
+Status: locally verified with Resend sandbox sender on 2026-05-20.
 
 Current state:
 - The landing page demo form posts to `/api/beta-access`.
 - `RESEND_API_KEY`, `BETA_LEAD_TO`, and `BETA_LEAD_FROM` are read from `.env.local`.
 - A personal inbox is acceptable for `BETA_LEAD_TO` during testing.
-- `BETA_LEAD_FROM` must be a sender that Resend allows. A normal Gmail address is expected to fail as the sender.
+- `BETA_LEAD_FROM` must be a sender that Resend allows. A normal Gmail address fails as the sender.
+- Local smoke with `Veridicta <onboarding@resend.dev>` returned `200 {"ok":true}` through `/api/beta-access`.
 
 Next action:
-- For a quick sandbox test, use a Resend-approved sender such as `Veridicta <onboarding@resend.dev>` if the Resend account permits it.
 - Before launch, verify the company domain in Resend and set `BETA_LEAD_FROM` to the real Veridicta sender.
-- Restart the local Next.js server after changing `.env.local`.
+- Required hosted env vars: `RESEND_API_KEY`, `BETA_LEAD_TO`, `BETA_LEAD_FROM`.
+- Restart/redeploy after changing env vars.
 - Submit the landing form and confirm the lead email arrives at `BETA_LEAD_TO`.
+
+### 2026-05-20 P0 launch blocker pass
+
+Status: verified locally.
+
+Results:
+- Auth safety: `.env.example` now defaults `AUTH_DEV_BYPASS=false` and `AUTH_ALLOW_CREDENTIAL_SIGNUP=false`; local `.env.local` was also set to credential signup disabled.
+- DB integration: `TEST_DATABASE_URL=postgresql+psycopg://antho@localhost:5432/veridicta_test python3 -m pytest tests/test_matters_repo.py tests/test_api_endpoints.py -q` returned `40 passed`; full `python3 -m pytest -q` with the same test DB returned `132 passed`.
+- Lead capture: personal sender failed with `502`; Resend sandbox sender succeeded through the local route with `200 {"ok":true}`.
+- Live Legal Review Mode: one uploaded-clause review returned `grounded`, 8 citations, `[Contract D1.P1]`, and the required legal-review headings.
 
 ## Done
 

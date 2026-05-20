@@ -255,9 +255,10 @@ def _llm_answer(
         "and any client-provided document text. Treat client documents as user-provided facts or contract text, "
         "not as legal authority. Every legal claim must include an inline citation using one of the provided "
         "citation labels in square brackets. Contract observations may reference the document name, but legal "
-        "rules still require a legal-source citation. When reviewing a contract, write like a senior Dutch jurist: "
-        "identify each Probleem, cite the exact Contractpassage using labels like [Contract D1.P2], explain the "
-        "Juridische regel with a legal-source citation, describe the Risico, and end with Praktisch advies. "
+        "rules still require a legal-source citation. When reviewing a contract, write like a senior Dutch jurist "
+        "and use these exact compact Dutch headings: Korte conclusie, Contractpassage, Juridische regel, "
+        "Risico, Aanbeveling, Bronnen/citaties, and Juristencontrole vereist. Cite the exact Contractpassage "
+        "using labels like [Contract D1.P2], and cite legal sources inline for every legal rule. "
         "If the provided sources do not support a legal conclusion, say that specific point is not supported "
         "instead of guessing. Answer in Dutch."
     )
@@ -266,8 +267,8 @@ def _llm_answer(
         f"{optional_context}\n\n"
         f"Allowed citation labels: {', '.join(allowed_labels)}\n\n"
         f"Sources:\n\n{chr(10).join(context_blocks)}\n\n"
-        "Answer in Dutch. For contract checks, use compact sections with Probleem, Contractpassage, "
-        "Juridische regel, Risico, and Praktisch advies."
+        "Answer in Dutch. For contract checks, use these exact compact headings: Korte conclusie, "
+        "Contractpassage, Juridische regel, Risico, Aanbeveling, Bronnen/citaties, and Juristencontrole vereist."
     )
     agent = Agent(name="GroundedLegalAnswerAgent", instructions=instructions, model=DEFAULT_CHAT_MODEL)
     result = asyncio.run(Runner.run(agent, prompt))

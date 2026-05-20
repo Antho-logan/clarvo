@@ -1,7 +1,7 @@
 # Veridicta Current State Of Truth
 
-**Last verified:** 2026-05-19, local workspace `/Users/antho/Desktop/VERIDICTA-full`, branch `main`.
-**Verification status:** embeddings complete, DB integration tests passed, frontend verification passed, demo-request route tested. Retrieval eval values below are historical from the 2026-05-06 pass unless rerun.
+**Last verified:** 2026-05-20, local workspace `/Users/antho/Desktop/VERIDICTA-full`, branch `main`.
+**Verification status:** embeddings complete, DB integration tests passed, frontend verification passed, demo-request route tested with Resend sandbox sender, and live Legal Review Mode tested with OpenAI. Retrieval eval values below are historical from the 2026-05-06 pass unless rerun.
 
 This file is the current operational source of truth. Older reports in `docs/` are historical unless their claims are reproduced here.
 
@@ -29,7 +29,7 @@ Not safe to claim:
 | Item | Current value |
 | --- | --- |
 | Branch | `main` |
-| Latest pushed project checkpoint | `fd632aa64e9005358bb3789cb07a5d8b34599aa1` |
+| Latest pushed Legal Review Mode checkpoint | `fbd134b57e2720d6e12af926b10755dad519d95e` |
 | Runtime DB used for verification | `veridicta_m1` |
 | Test DB used for DB integration tests | `veridicta_test` |
 | Frontend local port | `3001` |
@@ -66,12 +66,13 @@ This is a retrieval-quality gate, not a legal correctness guarantee.
 
 | Check | Result |
 | --- | --- |
-| DB pytest with `TEST_DATABASE_URL=postgresql+psycopg://antho@localhost:5432/veridicta_test` | 124 passed |
-| `python3 evals/run_eval.py` | Historical pass from 2026-05-06; not rerun on 2026-05-19 |
+| DB/API pytest slice with `TEST_DATABASE_URL=postgresql+psycopg://antho@localhost:5432/veridicta_test` | 40 passed |
+| Full Python pytest with `TEST_DATABASE_URL=postgresql+psycopg://antho@localhost:5432/veridicta_test` | 132 passed |
+| `python3 evals/run_eval.py` | Historical pass from 2026-05-06; not rerun on 2026-05-20 |
 | `python3 scripts/embedding_coverage_report.py` | 14,346 completed, 0 pending, 0 failed |
 | `npm run lint` | Passed |
 | `npm run typecheck` | Passed |
-| `npm test -- --run` | 11 files passed, 36 tests passed |
+| `npm test -- --run` | 12 files passed, 42 tests passed |
 | `npm run build` | Passed |
 
 ## Lead Capture State
@@ -79,7 +80,7 @@ This is a retrieval-quality gate, not a legal correctness guarantee.
 The public landing page uses one demo CTA: `Vraag een demo aan` / `Request a demo`.
 The form posts to `/api/beta-access`, which validates the payload and sends the lead through Resend.
 
-Local UI submission was tested on 2026-05-19 and the modal returned the user-facing failure state. The likely blocker is Resend sender/domain authorization: `BETA_LEAD_TO` can be a personal inbox for testing, but `BETA_LEAD_FROM` must be a Resend-allowed sender such as `onboarding@resend.dev` for sandbox testing or a verified company-domain sender before launch.
+Local route submission was tested on 2026-05-20. A personal sender failed with `502 Email delivery failed`; the Resend sandbox sender `Veridicta <onboarding@resend.dev>` succeeded through `/api/beta-access` with `200 {"ok":true}`. `BETA_LEAD_TO` can be a personal inbox for testing, but production `BETA_LEAD_FROM` must be a Resend-verified company-domain sender before launch.
 
 Follow-up before launch:
 
@@ -88,6 +89,16 @@ Follow-up before launch:
 3. Set deployment env vars: `RESEND_API_KEY`, `BETA_LEAD_TO`, and `BETA_LEAD_FROM`.
 4. Restart/redeploy the app.
 5. Submit one real `Vraag een demo aan` request and confirm the email arrives.
+
+## Legal Review Mode State
+
+Live Legal Review Mode was tested on 2026-05-20 with a short Dutch huurovereenkomst clause and OpenAI enabled.
+
+Result:
+- Status: `grounded`.
+- Citations: 8 legal citations returned.
+- Contract reference: answer included `[Contract D1.P1]`.
+- Required headings present: `Korte conclusie`, `Contractpassage`, `Juridische regel`, `Risico`, `Aanbeveling`, `Bronnen/citaties`, and `Juristencontrole vereist`.
 
 Build warnings observed are non-blocking:
 
