@@ -1,7 +1,7 @@
 # Veridicta Current State Of Truth
 
-**Last verified:** 2026-05-20, local workspace `/Users/antho/Desktop/VERIDICTA-full`, branch `main`.
-**Verification status:** embeddings complete, DB integration tests passed, frontend verification passed, demo-request route tested with Resend sandbox sender, and live Legal Review Mode tested with OpenAI. Retrieval eval values below are historical from the 2026-05-06 pass unless rerun.
+**Last verified:** 2026-05-21, local workspace `/Users/antho/Desktop/VERIDICTA-full`, branch `main`.
+**Verification status:** embeddings complete, DB integration tests passed, frontend verification passed, demo-request route tested with configured Resend env, Legal Review Mode tested previously with OpenAI, and the 2026-05-21 local MVP QA pass found no P0 product blockers. Retrieval eval values below are historical from the 2026-05-06 pass unless rerun.
 
 This file is the current operational source of truth. Older reports in `docs/` are historical unless their claims are reproduced here.
 
@@ -16,6 +16,8 @@ Safe current claims:
 - Retrieval eval passes the current curated gate.
 - The grounded assistant can answer selected source-backed demo questions.
 - Out-of-scope refusals now return zero citations.
+- Legal Review Mode is implemented for current-chat uploaded documents with `[Contract D1.P1]` style references.
+- Citation trust polish and uploaded-document review UX polish are complete.
 
 Not safe to claim:
 
@@ -29,7 +31,7 @@ Not safe to claim:
 | Item | Current value |
 | --- | --- |
 | Branch | `main` |
-| Latest pushed Legal Review Mode checkpoint | `fbd134b57e2720d6e12af926b10755dad519d95e` |
+| Latest pushed MVP checkpoint | `5705eb3cffb58061e227596cf476fa59b770b967` |
 | Runtime DB used for verification | `veridicta_m1` |
 | Test DB used for DB integration tests | `veridicta_test` |
 | Frontend local port | `3001` |
@@ -67,13 +69,34 @@ This is a retrieval-quality gate, not a legal correctness guarantee.
 | Check | Result |
 | --- | --- |
 | DB/API pytest slice with `TEST_DATABASE_URL=postgresql+psycopg://antho@localhost:5432/veridicta_test` | 40 passed |
-| Full Python pytest with `TEST_DATABASE_URL=postgresql+psycopg://antho@localhost:5432/veridicta_test` | 132 passed |
+| Full Python pytest with `TEST_DATABASE_URL=postgresql+psycopg://antho@localhost:5432/veridicta_test` | 134 passed |
+| `python3 -m pytest tests/test_assistant_grounding.py -q` | 9 passed |
+| `python3 -m pytest tests/test_document_text_extraction.py -q` | 4 passed |
 | `python3 evals/run_eval.py` | Historical pass from 2026-05-06; not rerun on 2026-05-20 |
 | `python3 scripts/embedding_coverage_report.py` | 14,346 completed, 0 pending, 0 failed |
 | `npm run lint` | Passed |
 | `npm run typecheck` | Passed |
-| `npm test -- --run` | 12 files passed, 42 tests passed |
+| `npm test -- --run` | 13 files passed, 44 tests passed |
 | `npm run build` | Passed |
+
+## 2026-05-21 Local MVP QA Result
+
+Result: no P0 product blockers found after Legal Review Mode, citation trust polish, and document review UX polish.
+
+Verified locally:
+
+- Landing loads Dutch-first; mobile language toggle works.
+- Demo CTA opens the lead form.
+- `/api/beta-access` returned `200 {"ok":true}` with a fake local QA payload and configured Resend env.
+- `/dashboard` redirects to `/login` with `AUTH_DEV_BYPASS=false`.
+- `/login` loads and public signup is not visible.
+- Dashboard, Assistant, Matters, Knowledge, Documents/Vault, Workflows, Settings, and Onboarding load with dev bypass.
+- UI Sandbox is not visible in normal navigation.
+- Workflows remains roadmap/preview-only.
+- Knowledge search and document browsing/detail routes load.
+- Matters shows lawyer-review and source-trail language.
+
+No fresh live OpenAI call was run during the 2026-05-21 QA pass to avoid unnecessary API use. The previous live Legal Review Mode smoke remains the latest live LLM proof; run one controlled live clause review immediately before the demo.
 
 ## Lead Capture State
 
@@ -89,6 +112,8 @@ Follow-up before launch:
 3. Set deployment env vars: `RESEND_API_KEY`, `BETA_LEAD_TO`, and `BETA_LEAD_FROM`.
 4. Restart/redeploy the app.
 5. Submit one real `Vraag een demo aan` request and confirm the email arrives.
+
+Remaining launch risk is operational rather than product-code P0: Resend needs a verified company sender/domain for production, Vercel env vars must be set, and the full public app requires hosted FastAPI plus a populated hosted PostgreSQL/pgvector database.
 
 ## Legal Review Mode State
 

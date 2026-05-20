@@ -1,12 +1,12 @@
 # MVP Launch Todo
 
-Last updated: 2026-05-20
+Last updated: 2026-05-21
 
 This file tracks small MVP blockers and follow-ups that should not interrupt the current build flow.
 
 ## Open
 
-### MVP finish board
+### Remaining operational launch tasks
 
 Status: active.
 
@@ -15,59 +15,29 @@ MVP definition:
 - Not public self-serve production.
 - Core promise: login works, assistant answers supported Dutch legal questions, citations are inspectable, and useful answers can be saved into matter work.
 
-P0 tasks to finish before calling the MVP demo-ready:
+2026-05-21 QA result:
+- No P0 product blockers remain after the local MVP QA pass.
+- Product smoke items are tracked in the completed QA section below.
 
-1. Dashboard smoke pass
-   - Verify login lands on `/dashboard`.
-   - Verify the dashboard shows `Backend live` when both local servers are running.
-   - Verify source count, practice-area links, and latest source links load without error.
-   - If the dashboard says `Backend offline` while `/health` is OK, fix that status logic.
+Open operational tasks before Vercel / 28 May:
 
-2. Assistant answer and refusal pass
-   - Run the three safe demo questions:
-     - `Wat geldt bij opzegging van huur van woonruimte?`
-     - `Wanneer is ontslag op staande voet geldig?`
-     - `Wat geldt bij loondoorbetaling tijdens ziekte?`
-   - Run refusal checks:
-     - German labor law question.
-     - Tax return question.
-     - Criminal pretrial detention question.
-   - Required result: supported questions return grounded answers with citations; unsupported questions return insufficient-source/refusal behavior with zero fake citations.
-   - 2026-05-19 update: German employment-law prompt now refuses even when the employment domain is selected:
-     `Welche Kündigungsfristen gelten im deutschen Arbeitsrecht für einen Arbeitnehmer mit fünf Jahren Betriebszugehörigkeit?`
-
-3. Citation click-through pass
-   - From an assistant answer, open at least one BWB citation.
-   - Open at least one ECLI/Rechtspraak citation when present.
-   - Required result: citation links land on the correct Vault/document detail page and show usable source text.
-
-4. Knowledge search pass
-   - Search the Knowledge page for `opzegging huur`, `ontslag op staande voet`, and `loondoorbetaling ziekte`.
-   - Test domain filters for tenancy and employment.
-   - Required result: results load, counts make sense, and top hits can be opened.
-
-5. Vault/document pass
-   - Open `/dashboard/documents`.
-   - Filter or browse stored documents.
-   - Open a document detail page.
-   - Required result: document metadata and text preview are visible.
-
-6. Matters and memo pass
-   - Create a test matter.
-   - Save a grounded assistant answer to a matter.
-   - Open `/dashboard/matters` and confirm the saved research note appears with citations.
-   - If the memo button is available for that note, draft a research memo and confirm it persists.
-   - Required result: no broken save, reload, or citation display path.
-
-7. Settings/onboarding pass
-   - Open `/dashboard/settings`.
-   - Save a harmless setting such as display name or firm name.
-   - Confirm there is no onboarding redirect loop.
+1. Verify the company sender/domain in Resend.
+2. Set hosted Vercel env vars:
+   - `AUTH_SECRET`
+   - `AUTH_DEV_BYPASS=false`
+   - `AUTH_ALLOW_CREDENTIAL_SIGNUP=false`
+   - `NEXT_PUBLIC_API_BASE_URL`
+   - `RESEND_API_KEY`
+   - `BETA_LEAD_TO`
+   - `BETA_LEAD_FROM`
+3. Deploy the landing/app shell to Vercel.
+4. Submit one real landing lead form and confirm the email arrives at `BETA_LEAD_TO`.
+5. Run one controlled live Legal Review Mode smoke before the demo.
+6. For the full app, provision hosted FastAPI plus a populated hosted PostgreSQL/pgvector database. Landing-only deployment does not prove the full RAG app is production-hosted.
 
 P1 tasks that can wait until after the core demo works:
 - Improve assistant streaming animation so answer chunks feel smoother.
 - Polish the login screen design.
-- Replace the Resend sandbox sender with a verified company-domain sender.
 - Define a repeatable manual user-provisioning command/script.
 
 P2 tasks intentionally deferred beyond MVP:
@@ -128,6 +98,39 @@ Results:
 - Live Legal Review Mode: one uploaded-clause review returned `grounded`, 8 citations, `[Contract D1.P1]`, and the required legal-review headings.
 
 ## Done
+
+### 2026-05-21 full local MVP QA after document review UX polish
+
+Status: completed locally. No P0 product blockers found.
+
+Automated verification:
+- `npm run lint` passed.
+- `npm run typecheck` passed.
+- `npm test -- --run` passed with 44 tests.
+- `npm run build` passed.
+- `python3 -m pytest tests/test_assistant_grounding.py -q` passed with 9 tests.
+- `python3 -m pytest tests/test_document_text_extraction.py -q` passed with 4 tests.
+- `TEST_DATABASE_URL=postgresql+psycopg://antho@localhost:5432/veridicta_test python3 -m pytest -q` passed with 134 tests.
+
+Manual QA covered:
+- Landing loads Dutch-first.
+- Mobile language toggle works.
+- Demo CTA opens the lead form.
+- Lead route returned `200 {"ok":true}` with a fake local QA payload and configured Resend env.
+- `AUTH_DEV_BYPASS=false` redirects `/dashboard` to `/login`.
+- `/login` loads and public signup is not visible.
+- Dashboard, Assistant, Matters, Knowledge, Documents/Vault, Workflows, Settings, and Onboarding load in dev/demo mode.
+- Backend health is live on `127.0.0.1:8000`.
+- UI Sandbox is not visible in normal navigation.
+- Workflows says roadmap/preview only.
+- Knowledge search and Documents/Vault browsing/detail routes load.
+- Matters shows source-trail and lawyer-review language.
+
+Skipped during this QA pass:
+- A fresh live OpenAI Legal Review Mode call was skipped to avoid unnecessary API use. Run one controlled live clause review immediately before the demo.
+
+Operational caveat:
+- Full public app launch still requires hosted FastAPI plus a populated hosted PostgreSQL/pgvector database. A Vercel landing/app-shell deploy alone is not a full hosted RAG deployment.
 
 ### Login CTA should open the login screen
 
