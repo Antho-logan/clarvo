@@ -6,6 +6,8 @@ Use these flows for the 28 May MVP demo. Keep the positioning narrow: Dutch law,
 
 The Assistant includes subtle demo shortcuts for these prompts. Selecting a shortcut only fills the input; it does not submit or call the live assistant until Send is pressed.
 
+For the final rehearsal script, use `docs/FINAL_DEMO_SCRIPT.md`.
+
 ## A. Huurrecht Research Demo
 
 Question:
