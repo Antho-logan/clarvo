@@ -20,7 +20,7 @@ export function Footer() {
               href="/"
               className="block font-serif text-2xl font-semibold tracking-[0.04em] text-ink"
             >
-              Veridicta
+              Clarvo
             </Link>
             <p className="max-w-lg text-sm leading-7 text-[#63534B]">
               {footer.description}
@@ -34,7 +34,7 @@ export function Footer() {
 
         <div className="flex flex-col items-center justify-between space-y-4 border-t border-[#D8D2C8] pt-8 md:flex-row md:space-y-0">
           <div className="text-sm text-[#63534B]">
-            Copyright {new Date().getFullYear()} Veridicta. {footer.rightsReserved}
+            Copyright {new Date().getFullYear()} Clarvo. {footer.rightsReserved}
           </div>
           <div className="flex space-x-6">
             {footer.legalLinks.map((link, idx) =>

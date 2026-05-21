@@ -458,7 +458,7 @@ function MatterWorkspace({
               Draft research memos
             </h2>
             <p className="text-sm text-[#63534B]">
-              Native Veridicta memo drafts generated from saved, cited research
+              Native Clarvo memo drafts generated from saved, cited research
               notes. Every draft remains marked for lawyer review.
             </p>
           </div>

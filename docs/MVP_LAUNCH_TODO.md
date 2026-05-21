@@ -79,10 +79,10 @@ Current state:
 - `RESEND_API_KEY`, `BETA_LEAD_TO`, and `BETA_LEAD_FROM` are read from `.env.local`.
 - A personal inbox is acceptable for `BETA_LEAD_TO` during testing.
 - `BETA_LEAD_FROM` must be a sender that Resend allows. A normal Gmail address fails as the sender.
-- Local smoke with `Veridicta <onboarding@resend.dev>` returned `200 {"ok":true}` through `/api/beta-access`.
+- Local smoke with `Clarvo <onboarding@resend.dev>` returned `200 {"ok":true}` through `/api/beta-access`.
 
 Next action:
-- Before launch, verify the company domain in Resend and set `BETA_LEAD_FROM` to the real Veridicta sender.
+- Before launch, verify the company domain in Resend and set `BETA_LEAD_FROM` to the real Clarvo sender, ideally `Clarvo <hello@clarvo.nl>`.
 - Required hosted env vars: `RESEND_API_KEY`, `BETA_LEAD_TO`, `BETA_LEAD_FROM`.
 - Restart/redeploy after changing env vars.
 - Submit the landing form and confirm the lead email arrives at `BETA_LEAD_TO`.

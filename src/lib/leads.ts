@@ -20,11 +20,11 @@ function escapeHtml(value: string) {
 
 export async function sendDemoLeadEmail(lead: DemoLead) {
   const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.BETA_LEAD_TO || "hello@veridicta.nl";
+  const to = process.env.BETA_LEAD_TO || "hello@clarvo.nl";
   const from =
     process.env.BETA_LEAD_FROM ||
     process.env.AUTH_EMAIL_FROM ||
-    "Veridicta <onboarding@resend.dev>";
+    "Clarvo <hello@clarvo.nl>";
 
   if (!apiKey) {
     return { ok: false, reason: "not_configured" as const };
@@ -32,7 +32,7 @@ export async function sendDemoLeadEmail(lead: DemoLead) {
 
   const resend = new Resend(apiKey);
   const html = `
-    <h2>New Veridicta demo request</h2>
+    <h2>New Clarvo demo request</h2>
     <p><strong>Name:</strong> ${escapeHtml(lead.name)}</p>
     <p><strong>Email:</strong> ${escapeHtml(lead.email)}</p>
     <p><strong>Company:</strong> ${escapeHtml(lead.company)}</p>
@@ -46,7 +46,7 @@ export async function sendDemoLeadEmail(lead: DemoLead) {
     from,
     to,
     replyTo: lead.email,
-    subject: `Veridicta demo request - ${lead.name}`,
+    subject: `Clarvo demo request - ${lead.name}`,
     html,
   });
 

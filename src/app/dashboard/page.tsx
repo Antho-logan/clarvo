@@ -168,14 +168,14 @@ export default async function DashboardHome() {
             {greeting(now)}, {displayName}.
           </h1>
           <p className="mt-1 text-[#63534B]">
-            Here&rsquo;s what&rsquo;s live in your Veridicta workspace.
+            Here&rsquo;s what&rsquo;s live in your Clarvo workspace.
           </p>
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline" className="border-[#D8D2C8] bg-white text-[#1F1D1A] hover:bg-[#F5F5F4]">
             <Link href="/dashboard/agents">
               <Sparkles className="w-4 h-4 mr-2 text-[#DD3300]" />
-              Ask Veridicta
+              Ask Clarvo
             </Link>
           </Button>
           <Button asChild className="bg-[#1F1D1A] text-white hover:bg-[#1F1D1A]/90">

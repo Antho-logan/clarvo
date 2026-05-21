@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for the Veridicta test suite."""
+"""Shared pytest fixtures for the Clarvo test suite."""
 
 from __future__ import annotations
 

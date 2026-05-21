@@ -93,8 +93,8 @@ def test_matters_crud_and_settings_persist(monkeypatch: pytest.MonkeyPatch) -> N
     settings = client.patch(
         "/settings",
         headers=_auth_headers(),
-        json={"firm_name": "Veridicta Test", "rechtspraak_enabled": False},
+        json={"firm_name": "Clarvo Test", "rechtspraak_enabled": False},
     )
     assert settings.status_code == 200
-    assert settings.json()["settings"]["firm_name"] == "Veridicta Test"
+    assert settings.json()["settings"]["firm_name"] == "Clarvo Test"
     assert settings.json()["settings"]["rechtspraak_enabled"] is False

@@ -16,7 +16,7 @@ type NavCopy = {
   request: string;
 };
 
-const emailHref = "mailto:hello@veridicta.nl";
+const emailHref = "mailto:hello@clarvo.nl";
 
 type LeadStatus = "idle" | "submitting" | "success" | "error";
 
@@ -34,9 +34,9 @@ const copy = {
       beta: "Private beta · Invitation only",
       title: "Dutch legal research, grounded in sources.",
       subtitle:
-        "Veridicta is a research assistant for Dutch legal professionals. Ask a question, get an answer backed by Dutch legislation and case law, and inspect every citation before you rely on it.",
+        "Clarvo is a research assistant for Dutch legal professionals. Ask a question, get an answer backed by Dutch legislation and case law, and inspect every citation before you rely on it.",
       disclaimer:
-        "Built for lawyers. Currently focused on employment and tenancy law, with administrative law expanding in beta. Veridicta supports research; it does not replace legal judgment.",
+        "Built for lawyers. Currently focused on employment and tenancy law, with administrative law expanding in beta. Clarvo supports research; it does not replace legal judgment.",
       query: "Wat geldt bij opzegging van huur van woonruimte?",
       badge: "Lawyer review required",
       answer:
@@ -54,7 +54,7 @@ const copy = {
       lede:
         "Statutes live in one system, case law in another, internal memos in a third. Confirming a single citation can cost an associate an afternoon of tab-switching, and the partner signing off on the draft has no way to verify the work without redoing it. General-purpose AI tools speed up the writing but rarely show their sources — and an answer without an inspectable source is a liability, not a shortcut.",
       strong:
-        "Veridicta is built around the opposite assumption: the citation is the answer. The prose is just how you get there.",
+        "Clarvo is built around the opposite assumption: the citation is the answer. The prose is just how you get there.",
       cards: [
         [
           "Fragmented sources",
@@ -71,7 +71,7 @@ const copy = {
       ],
     },
     product: {
-      eyebrow: "What Veridicta does",
+      eyebrow: "What Clarvo does",
       title: "A research workflow built around verifiable sources.",
       lede: "Core capabilities available in the current private beta.",
       chipA: "Source inspection",
@@ -90,7 +90,7 @@ const copy = {
         ],
         [
           "Ask source-backed questions",
-          "Pose a legal question in natural language. Veridicta returns an answer with citations to the materials it relied on. When the corpus does not support a confident answer, it says so instead of guessing.",
+          "Pose a legal question in natural language. Clarvo returns an answer with citations to the materials it relied on. When the corpus does not support a confident answer, it says so instead of guessing.",
         ],
         [
           "Inspect every citation",
@@ -110,7 +110,7 @@ const copy = {
       eyebrow: "Current focus",
       title: "Deep before broad.",
       lede:
-        "Veridicta is built one practice area at a time. We would rather be genuinely useful in two domains than shallow across ten.",
+        "Clarvo is built one practice area at a time. We would rather be genuinely useful in two domains than shallow across ten.",
       areas: [
         [
           "Available",
@@ -132,7 +132,7 @@ const copy = {
         ],
       ],
       footer:
-        "Other practice areas are not yet supported. If yours is not on this list, Veridicta is not ready for it — and we would rather tell you now.",
+        "Other practice areas are not yet supported. If yours is not on this list, Clarvo is not ready for it — and we would rather tell you now.",
     },
     how: {
       eyebrow: "How it works",
@@ -144,7 +144,7 @@ const copy = {
         [
           "02",
           "Receive cited sources",
-          "Veridicta retrieves relevant statutes and rulings, then links substantive claims to sources.",
+          "Clarvo retrieves relevant statutes and rulings, then links substantive claims to sources.",
         ],
         [
           "03",
@@ -157,7 +157,7 @@ const copy = {
       eyebrow: "How we think about trust",
       title: "Principles, not promises.",
       lede:
-        "Veridicta is in private beta. We do not claim enterprise certifications or public production readiness. What we can commit to today is how the product behaves.",
+        "Clarvo is in private beta. We do not claim enterprise certifications or public production readiness. What we can commit to today is how the product behaves.",
       items: [
         [
           "Source-first answers",
@@ -169,11 +169,11 @@ const copy = {
         ],
         [
           "Refusal over fabrication",
-          "When the corpus does not support a confident answer, Veridicta says so. We would rather return less than return something wrong.",
+          "When the corpus does not support a confident answer, Clarvo says so. We would rather return less than return something wrong.",
         ],
         [
           "Lawyer review is required",
-          "Veridicta is a research assistant. Output is a starting point for a qualified professional, never a substitute for one.",
+          "Clarvo is a research assistant. Output is a starting point for a qualified professional, never a substitute for one.",
         ],
         [
           "Beta safeguards in progress",
@@ -182,15 +182,15 @@ const copy = {
       ],
     },
     clarity: {
-      title: "What Veridicta is — and is not.",
-      isTitle: "What Veridicta is today:",
+      title: "What Clarvo is — and is not.",
+      isTitle: "What Clarvo is today:",
       is: [
         "A research assistant for Dutch employment and tenancy law",
         "Administrative law coverage expanding in beta",
         "Source-backed answers and inspectable citations",
         "Saved research notes and draft memos for lawyer review",
       ],
-      isNotTitle: "What Veridicta is not:",
+      isNotTitle: "What Clarvo is not:",
       isNot: [
         "A broad cross-border law platform",
         "A complete case management system",
@@ -202,7 +202,7 @@ const copy = {
       eyebrow: "Private beta",
       title: "We are working with a small group of Dutch legal teams.",
       paragraphs: [
-        "Veridicta is in invitation-only private beta. A small group of Dutch legal professionals are using it on real research questions, on the understanding that the product is still being refined.",
+        "Clarvo is in invitation-only private beta. A small group of Dutch legal professionals are using it on real research questions, on the understanding that the product is still being refined.",
         "The corpus today contains 14,346 indexed Dutch legal documents — BWB legislation and Rechtspraak case law — focused on employment law, tenancy law, and selected administrative law questions.",
       ],
       whoTitle: "Who we are looking for:",
@@ -215,15 +215,15 @@ const copy = {
     final: {
       title: "See it on your own questions.",
       lede:
-        "Bring a real Dutch legal question — the harder, the better. In a thirty-minute call we put it through Veridicta together: a live answer, inspectable citations, and a clear refusal when the corpus cannot back the claim up. By the end you know whether private beta access is for you.",
+        "Bring a real Dutch legal question — the harder, the better. In a thirty-minute call we put it through Clarvo together: a live answer, inspectable citations, and a clear refusal when the corpus cannot back the claim up. By the end you know whether private beta access is for you.",
       direct: "Or email directly:",
     },
     footer: {
       tagline: "Dutch legal research, grounded in sources.",
       beta:
-        "Beta disclaimer: Veridicta is in private beta. Features, coverage, and performance are evolving. Coverage is currently limited to selected Dutch practice areas.",
+        "Beta disclaimer: Clarvo is in private beta. Features, coverage, and performance are evolving. Coverage is currently limited to selected Dutch practice areas.",
       disclaimer:
-        "Veridicta supports legal research. It does not provide legal advice and does not replace professional legal judgment. Output must be reviewed by a qualified legal professional before being relied upon.",
+        "Clarvo supports legal research. It does not provide legal advice and does not replace professional legal judgment. Output must be reviewed by a qualified legal professional before being relied upon.",
     },
   },
   nl: {
@@ -239,9 +239,9 @@ const copy = {
       beta: "Besloten bèta · Alleen op uitnodiging",
       title: "Nederlands juridisch onderzoek, onderbouwd met bronnen.",
       subtitle:
-        "Veridicta helpt Nederlandse juridische professionals sneller zoeken, antwoorden opstellen en elke bron controleren voordat zij erop vertrouwen.",
+        "Clarvo helpt Nederlandse juridische professionals sneller zoeken, antwoorden opstellen en elke bron controleren voordat zij erop vertrouwen.",
       disclaimer:
-        "Gebouwd voor advocaten en juristen. Momenteel gericht op arbeidsrecht en huurrecht, met bestuursrecht in uitbreiding. Veridicta ondersteunt onderzoek; het vervangt geen juridisch oordeel.",
+        "Gebouwd voor advocaten en juristen. Momenteel gericht op arbeidsrecht en huurrecht, met bestuursrecht in uitbreiding. Clarvo ondersteunt onderzoek; het vervangt geen juridisch oordeel.",
       query: "Wat geldt bij opzegging van huur van woonruimte?",
       badge: "Controle door jurist vereist",
       answer:
@@ -259,7 +259,7 @@ const copy = {
       lede:
         "Wetgeving staat in één systeem, rechtspraak in een ander, interne memo's in een derde. Het controleren van één juridisch antwoord kost vaak meer tijd dan het schrijven ervan. Generieke AI-tools versnellen het schrijven maar tonen zelden hun bronnen — en een antwoord zonder inspecteerbare bron is een risico, geen kortere weg.",
       strong:
-        "Veridicta is gebouwd op de tegenovergestelde aanname: de bronvermelding is het antwoord. De tekst is slechts de weg ernaartoe.",
+        "Clarvo is gebouwd op de tegenovergestelde aanname: de bronvermelding is het antwoord. De tekst is slechts de weg ernaartoe.",
       cards: [
         [
           "Versnipperde bronnen",
@@ -276,7 +276,7 @@ const copy = {
       ],
     },
     product: {
-      eyebrow: "Wat Veridicta doet",
+      eyebrow: "Wat Clarvo doet",
       title: "Een onderzoeksworkflow gebouwd rond verifieerbare bronnen.",
       lede: "Kernmogelijkheden die beschikbaar zijn in de huidige besloten bèta.",
       chipA: "Broninspectie",
@@ -295,7 +295,7 @@ const copy = {
         ],
         [
           "Stel vragen, onderbouwd door bronnen",
-          "Stel een juridische vraag in natuurlijke taal. Veridicta geeft een antwoord met bronvermeldingen naar de materialen waarop het zich baseerde. Als het corpus geen zeker antwoord kan geven, wordt dat direct aangegeven.",
+          "Stel een juridische vraag in natuurlijke taal. Clarvo geeft een antwoord met bronvermeldingen naar de materialen waarop het zich baseerde. Als het corpus geen zeker antwoord kan geven, wordt dat direct aangegeven.",
         ],
         [
           "Inspecteer elke bronvermelding",
@@ -315,7 +315,7 @@ const copy = {
       eyebrow: "Huidige focus",
       title: "Diepte boven breedte.",
       lede:
-        "Veridicta wordt rechtsgebied per rechtsgebied opgebouwd. We zijn liever echt nuttig in twee domeinen dan oppervlakkig in tien.",
+        "Clarvo wordt rechtsgebied per rechtsgebied opgebouwd. We zijn liever echt nuttig in twee domeinen dan oppervlakkig in tien.",
       areas: [
         [
           "Beschikbaar",
@@ -337,7 +337,7 @@ const copy = {
         ],
       ],
       footer:
-        "Andere rechtsgebieden worden nog niet ondersteund. Staat uw gebied niet op deze lijst, dan is Veridicta er nog niet klaar voor — en dat vertellen we u liever direct.",
+        "Andere rechtsgebieden worden nog niet ondersteund. Staat uw gebied niet op deze lijst, dan is Clarvo er nog niet klaar voor — en dat vertellen we u liever direct.",
     },
     how: {
       eyebrow: "Hoe het werkt",
@@ -349,7 +349,7 @@ const copy = {
         [
           "02",
           "Ontvang geciteerde bronnen",
-          "Veridicta haalt relevante wetten en uitspraken op en koppelt inhoudelijke beweringen aan bronnen.",
+          "Clarvo haalt relevante wetten en uitspraken op en koppelt inhoudelijke beweringen aan bronnen.",
         ],
         [
           "03",
@@ -362,7 +362,7 @@ const copy = {
       eyebrow: "Hoe we over vertrouwen denken",
       title: "Gebouwd voor controle, niet voor blind vertrouwen.",
       lede:
-        "Veridicta is in besloten bèta. We claimen geen enterprise-certificeringen of publieke productierijpheid. Wat we vandaag kunnen toezeggen, is hoe het product zich gedraagt.",
+        "Clarvo is in besloten bèta. We claimen geen enterprise-certificeringen of publieke productierijpheid. Wat we vandaag kunnen toezeggen, is hoe het product zich gedraagt.",
       items: [
         [
           "Bronnen eerst",
@@ -374,11 +374,11 @@ const copy = {
         ],
         [
           "Weigeren boven verzinnen",
-          "Wanneer het corpus geen zeker antwoord ondersteunt, zegt Veridicta dat. We geven liever minder terug dan iets verkeerds.",
+          "Wanneer het corpus geen zeker antwoord ondersteunt, zegt Clarvo dat. We geven liever minder terug dan iets verkeerds.",
         ],
         [
           "Juristencontrole is vereist",
-          "Veridicta is een onderzoeksassistent. Output is een vertrekpunt voor een gekwalificeerde professional, nooit een vervanging daarvan.",
+          "Clarvo is een onderzoeksassistent. Output is een vertrekpunt voor een gekwalificeerde professional, nooit een vervanging daarvan.",
         ],
         [
           "Bèta-waarborgen in ontwikkeling",
@@ -387,15 +387,15 @@ const copy = {
       ],
     },
     clarity: {
-      title: "Wat Veridicta is — en niet is.",
-      isTitle: "Wat Veridicta vandaag is:",
+      title: "Wat Clarvo is — en niet is.",
+      isTitle: "Wat Clarvo vandaag is:",
       is: [
         "Een onderzoeksassistent voor Nederlands arbeidsrecht en huurrecht",
         "Bestuursrechtelijke dekking in uitbreiding tijdens de bèta",
         "Antwoorden met bronnen en inspecteerbare citaties",
         "Opgeslagen onderzoeksnotities en conceptmemo's voor controle door een jurist",
       ],
-      isNotTitle: "Wat Veridicta niet is:",
+      isNotTitle: "Wat Clarvo niet is:",
       isNot: [
         "Een breed grensoverschrijdend rechtsplatform",
         "Een compleet zaakbeheersysteem",
@@ -407,7 +407,7 @@ const copy = {
       eyebrow: "Besloten bèta",
       title: "We werken met een kleine groep Nederlandse juridische teams.",
       paragraphs: [
-        "Veridicta is een besloten bèta op uitnodiging. Een kleine groep Nederlandse juridische professionals gebruikt het op echte onderzoeksvragen, met het besef dat het product nog volop wordt verfijnd.",
+        "Clarvo is een besloten bèta op uitnodiging. Een kleine groep Nederlandse juridische professionals gebruikt het op echte onderzoeksvragen, met het besef dat het product nog volop wordt verfijnd.",
         "Het corpus bevat momenteel 14.346 geïndexeerde Nederlandse juridische documenten — BWB-wetgeving en Rechtspraak-uitspraken — gericht op arbeidsrecht, huurrecht en geselecteerde bestuursrechtelijke vragen.",
       ],
       whoTitle: "Wie we zoeken:",
@@ -420,15 +420,15 @@ const copy = {
     final: {
       title: "Bekijk het met uw eigen vragen.",
       lede:
-        "Neem een echte, lastige Nederlandse juridische vraag mee. In een gesprek van dertig minuten zetten we hem samen door Veridicta: een live antwoord, inspecteerbare bronvermeldingen, en een duidelijke weigering wanneer het corpus de bewering niet kan onderbouwen. Aan het einde weet u of bèta-toegang iets voor u is.",
+        "Neem een echte, lastige Nederlandse juridische vraag mee. In een gesprek van dertig minuten zetten we hem samen door Clarvo: een live antwoord, inspecteerbare bronvermeldingen, en een duidelijke weigering wanneer het corpus de bewering niet kan onderbouwen. Aan het einde weet u of bèta-toegang iets voor u is.",
       direct: "Of mail direct:",
     },
     footer: {
       tagline: "Nederlands juridisch onderzoek, onderbouwd met bronnen.",
       beta:
-        "Bèta-disclaimer: Veridicta is in besloten bèta. Functies, dekking en prestaties ontwikkelen zich. Dekking is momenteel beperkt tot geselecteerde Nederlandse rechtsgebieden.",
+        "Bèta-disclaimer: Clarvo is in besloten bèta. Functies, dekking en prestaties ontwikkelen zich. Dekking is momenteel beperkt tot geselecteerde Nederlandse rechtsgebieden.",
       disclaimer:
-        "Veridicta ondersteunt juridisch onderzoek. Het geeft geen juridisch advies en vervangt geen professioneel juridisch oordeel. Output moet door een gekwalificeerde juridische professional worden gecontroleerd voordat erop wordt vertrouwd.",
+        "Clarvo ondersteunt juridisch onderzoek. Het geeft geen juridisch advies en vervangt geen professioneel juridisch oordeel. Output moet door een gekwalificeerde juridische professional worden gecontroleerd voordat erop wordt vertrouwd.",
     },
   },
 } as const;
@@ -501,7 +501,7 @@ export function ApprovedStaticLanding() {
         email: "E-mailadres",
         company: "Organisatie",
         role: "Rol of rechtsgebied",
-        message: "Waar wilt u Veridicta voor gebruiken?",
+        message: "Waar wilt u Clarvo voor gebruiken?",
         submit: "Demo aanvragen",
         submitting: "Aanvraag verzenden...",
         close: "Sluiten",
@@ -509,7 +509,7 @@ export function ApprovedStaticLanding() {
         success:
           "We hebben uw aanvraag ontvangen en nemen zo spoedig mogelijk contact met u op.",
         error:
-          "De aanvraag kon niet worden verzonden. Probeer het opnieuw of mail hello@veridicta.nl.",
+          "De aanvraag kon niet worden verzonden. Probeer het opnieuw of mail hello@clarvo.nl.",
       }
     : {
         title: "Request a demo",
@@ -519,7 +519,7 @@ export function ApprovedStaticLanding() {
         email: "Email address",
         company: "Company",
         role: "Role or practice area",
-        message: "What would you like to use Veridicta for?",
+        message: "What would you like to use Clarvo for?",
         submit: "Request demo",
         submitting: "Sending request...",
         close: "Close",
@@ -527,7 +527,7 @@ export function ApprovedStaticLanding() {
         success:
           "We received your request and will get back to you soon.",
         error:
-          "The request could not be sent. Please try again or email hello@veridicta.nl.",
+          "The request could not be sent. Please try again or email hello@clarvo.nl.",
       };
 
   function openLeadModal() {
@@ -641,13 +641,13 @@ export function ApprovedStaticLanding() {
           <button
             type="button"
             className="logo logo-button"
-            aria-label="Veridicta home"
+            aria-label="Clarvo home"
             onClick={() => {
               setMenuOpen(false);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           >
-            Veridicta
+            Clarvo
           </button>
           <nav className="desktop-nav" aria-label="Primary">
             <NavLinks labels={t.nav} />
@@ -949,7 +949,7 @@ export function ApprovedStaticLanding() {
                 {renderLeadButton(t.nav.request, "btn-primary btn-large")}
               </div>
               <div className="tertiary-cta">
-                {t.final.direct} <a href={emailHref}>hello@veridicta.nl</a>
+                {t.final.direct} <a href={emailHref}>hello@clarvo.nl</a>
               </div>
             </div>
           </section>
@@ -960,7 +960,7 @@ export function ApprovedStaticLanding() {
         <div className="container">
           <div className="footer-top">
             <div className="footer-brand">
-              <div className="logo">Veridicta</div>
+              <div className="logo">Clarvo</div>
               <p>{t.footer.tagline}</p>
             </div>
             <div className="footer-links">
@@ -972,7 +972,7 @@ export function ApprovedStaticLanding() {
               <div className="footer-col">
                 <a href="#beta">{t.nav.beta}</a>
                 <Link href="/login">{t.nav.signIn}</Link>
-                <a href={emailHref}>hello@veridicta.nl</a>
+                <a href={emailHref}>hello@clarvo.nl</a>
               </div>
             </div>
           </div>

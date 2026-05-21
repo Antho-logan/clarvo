@@ -42,7 +42,7 @@ export default async function WorkflowsPage() {
             Workflows
           </h1>
           <p className="max-w-3xl text-sm leading-6 text-[#63534B]">
-            Veridicta currently focuses on source-backed research, saved matter
+            Clarvo currently focuses on source-backed research, saved matter
             notes, Knowledge search, Vault browsing, and document review inside
             Assistant. Workflow automation is being designed carefully and is
             not generally available in this MVP.

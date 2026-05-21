@@ -110,7 +110,7 @@ export default async function KnowledgePage({
             Knowledge Base
           </h1>
           <p className="text-[#63534B] max-w-3xl">
-            Search the live Veridicta retrieval layer across curated Dutch
+            Search the live Clarvo retrieval layer across curated Dutch
             legislation and case law already stored in the backend.
           </p>
         </div>

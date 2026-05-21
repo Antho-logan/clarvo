@@ -643,7 +643,7 @@ describe("assistant streaming page", () => {
     ).toHaveLength(2);
     expect(
       screen.getByText(
-        "This prompt contains multiple separate legal questions. Veridicta retrieves sources per legal issue. Ask one question at a time so the assistant can attach the right citations.",
+        "This prompt contains multiple separate legal questions. Clarvo retrieves sources per legal issue. Ask one question at a time so the assistant can attach the right citations.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -680,7 +680,7 @@ describe("assistant streaming page", () => {
     );
     expect(
       screen.getByText(
-        "Veridicta currently supports selected Dutch legal research workflows. This question is outside the current corpus or requires professional advice beyond the product scope.",
+        "Clarvo currently supports selected Dutch legal research workflows. This question is outside the current corpus or requires professional advice beyond the product scope.",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText("Cited sources")).not.toBeInTheDocument();

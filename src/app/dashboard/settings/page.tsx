@@ -162,7 +162,7 @@ export default async function SettingsPage() {
                   Legal disclaimer
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-[#63534B]">
-                  Veridicta supports Dutch legal research. It does not provide
+                  Clarvo supports Dutch legal research. It does not provide
                   legal advice, does not replace a lawyer, and outputs should be
                   reviewed by a qualified professional before use.
                 </p>

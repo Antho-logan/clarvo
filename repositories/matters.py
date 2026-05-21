@@ -178,7 +178,7 @@ def save_research_note(
                 matter = Matter(
                     user_id=user_id,
                     title=DEFAULT_RESEARCH_MATTER_TITLE,
-                    client="Veridicta demo",
+                    client="Clarvo demo",
                     status="active",
                     opened_at=utcnow().date(),
                     rechtsgebied=values.domains[0] if values.domains else None,

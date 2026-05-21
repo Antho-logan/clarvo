@@ -18,7 +18,7 @@ export default function CheckEmailPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm leading-7 text-[#63534B]">
             <p>
-              If that address has access to Veridicta, a sign-in link is on its
+              If that address has access to Clarvo, a sign-in link is on its
               way. The link opens the dashboard directly after verification.
             </p>
             <Link

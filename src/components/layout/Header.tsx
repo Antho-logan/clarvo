@@ -41,7 +41,7 @@ export function Header() {
           href="/"
           className="font-serif text-2xl font-semibold tracking-[0.04em] text-ink"
         >
-          Veridicta
+          Clarvo
         </Link>
 
         <nav className="hidden md:flex items-center space-x-8">

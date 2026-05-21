@@ -2,11 +2,11 @@
 
 Last updated: 2026-05-21.
 
-Use this for the 28 May Veridicta rehearsal and private beta demo. Keep the story narrow: Dutch legal research, huurrecht, arbeidsrecht, citations, matters, memos, and uploaded-document legal review.
+Use this for the 28 May Clarvo rehearsal and private beta demo. Keep the story narrow: Dutch legal research, huurrecht, arbeidsrecht, citations, matters, memos, and uploaded-document legal review.
 
 ## 30-second pitch in Dutch
 
-Veridicta is een Nederlandse juridische onderzoeksworkspace voor teams die sneller en controleerbaar willen werken. De assistent beantwoordt alleen binnen de beschikbare Nederlandse bronnen, toont citaties, bewaart de bronlijn bij matters en markeert werk altijd als juristencontrole vereist. Voor deze beta richten we ons op huurrecht en arbeidsrecht, plus het beoordelen van geuploade contractbepalingen als huidige chatcontext.
+Clarvo is een Nederlandse juridische onderzoeksworkspace voor teams die sneller en controleerbaar willen werken. De assistent beantwoordt alleen binnen de beschikbare Nederlandse bronnen, toont citaties, bewaart de bronlijn bij matters en markeert werk altijd als juristencontrole vereist. Voor deze beta richten we ons op huurrecht en arbeidsrecht, plus het beoordelen van geuploade contractbepalingen als huidige chatcontext.
 
 ## 2-minute demo script
 
@@ -19,12 +19,12 @@ Veridicta is een Nederlandse juridische onderzoeksworkspace voor teams die snell
 7. Sla het antwoord op naar Matter.
 8. Open Matters, laat de research note, bronlijn en memo flow zien.
 9. Wijs op `Lawyer review required`.
-10. Sluit af met de refusal demo: `Kun je mijn volledige belastingaangifte doen?` en toon dat Veridicta geen nep-citaties verzint.
+10. Sluit af met de refusal demo: `Kun je mijn volledige belastingaangifte doen?` en toon dat Clarvo geen nep-citaties verzint.
 
 ## 5-minute demo script
 
 1. Landing
-   Open de landing. Benoem dat Veridicta geen algemene chatbot claimt te zijn, maar een gecontroleerde juridische research workspace.
+   Open de landing. Benoem dat Clarvo geen algemene chatbot claimt te zijn, maar een gecontroleerde juridische research workspace.
 
 2. Login
    Klik Inloggen. Benoem dat private beta toegang nog gecontroleerd is.
@@ -59,7 +59,7 @@ Veridicta is een Nederlandse juridische onderzoeksworkspace voor teams die snell
    Open Matters en toon de research note, source trail en memo draft. Benoem dat de memo copy-ready is, maar niet zelfstandig juridisch advies vervangt.
 
 10. Lawyer review
-    Wijs op `Lawyer review required`. Zeg: "Dit is bewust ingebouwd. Veridicta helpt voorbereiden, maar vervangt de jurist niet."
+    Wijs op `Lawyer review required`. Zeg: "Dit is bewust ingebouwd. Clarvo helpt voorbereiden, maar vervangt de jurist niet."
 
 11. Refusal
     Gebruik:
@@ -118,7 +118,7 @@ Werkgever kan de arbeidsovereenkomst per direct beëindigen indien werknemer naa
 
 ## What not to claim
 
-- Do not claim Veridicta replaces a lawyer.
+- Do not claim Clarvo replaces a lawyer.
 - Do not claim full Dutch legal coverage.
 - Do not claim it is enterprise-ready.
 - Do not claim public self-serve signup is live.
@@ -129,7 +129,7 @@ Werkgever kan de arbeidsovereenkomst per direct beëindigen indien werknemer naa
 ## Fallback lines if something fails
 
 - If the live assistant is slow: "Voor de demo gebruiken we nu de eerder gevalideerde flow. Het product is ontworpen om alleen te antwoorden wanneer bronnen sterk genoeg zijn."
-- If citations do not appear fast enough: "De kern is dat Veridicta geen antwoord als bruikbaar markeert zonder bronlijn. We gebruiken daarom alleen grounded antwoorden voor matters."
+- If citations do not appear fast enough: "De kern is dat Clarvo geen antwoord als bruikbaar markeert zonder bronlijn. We gebruiken daarom alleen grounded antwoorden voor matters."
 - If upload extraction fails: "Document review is current-chat context. Voor deze beta ondersteunen we tekst uit PDF, DOCX en tekstbestanden, maar OCR en permanente opslag zitten bewust niet in deze versie."
 - If lead email fails: "De lead route is lokaal getest. Voor productie moet de geverifieerde Resend bedrijfsafzender nog actief staan."
 - If login/session acts up: "De private beta gebruikt gecontroleerde toegang. Publieke self-serve signup is bewust nog niet de claim."

@@ -43,7 +43,7 @@ export default async function OnboardingPage() {
             Choose your primary practice area.
           </h1>
           <p className="mt-3 leading-7 text-[#63534B]">
-            Veridicta will open with a real grounded assistant query in that corpus slice.
+            Clarvo will open with a real grounded assistant query in that corpus slice.
           </p>
         </div>
 

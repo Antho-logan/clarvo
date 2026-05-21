@@ -1,4 +1,4 @@
-"""Grounded assistant flow for Veridicta.
+"""Grounded assistant flow for Clarvo.
 
 The assistant is intentionally retrieval-first: it looks up stored legal
 sources, answers from those sources when evidence is available, and refuses
@@ -111,7 +111,7 @@ def _refusal(question: str, hits: list[dict], tool_trace: list[dict]) -> dict:
 
 def _extractive_answer(question: str, hits: list[dict]) -> str:
     lines = [
-        "Op basis van de beschikbare Veridicta-bronnen:",
+        "Op basis van de beschikbare Clarvo-bronnen:",
         "",
     ]
     for index, hit in enumerate(hits[:4], start=1):
@@ -251,7 +251,7 @@ def _llm_answer(
     )
 
     instructions = (
-        "You are Veridicta, a Dutch legal research assistant. Answer only from the provided Dutch legal sources "
+        "You are Clarvo, a Dutch legal research assistant. Answer only from the provided Dutch legal sources "
         "and any client-provided document text. Treat client documents as user-provided facts or contract text, "
         "not as legal authority. Every legal claim must include an inline citation using one of the provided "
         "citation labels in square brackets. Contract observations may reference the document name, but legal "

@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Veridicta Legal Backend",
+    "title": "Clarvo Legal Backend",
     "version": "milestone2"
   },
   "paths": {

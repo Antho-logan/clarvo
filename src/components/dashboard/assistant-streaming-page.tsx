@@ -157,10 +157,10 @@ type SpeechRecognitionWindow = Window &
   };
 
 const ADMINISTRATIVE_LAW_INSUFFICIENT_MESSAGE =
-  "Veridicta does not yet have enough administrative-law sources to answer this reliably.";
+  "Clarvo does not yet have enough administrative-law sources to answer this reliably.";
 
 const GENERIC_INSUFFICIENT_MESSAGE =
-  "Veridicta does not have enough grounded sources to answer this reliably.";
+  "Clarvo does not have enough grounded sources to answer this reliably.";
 
 const MULTI_QUESTION_SUGGESTED_PROMPTS = [
   "Wat geldt bij opzegging van huur van woonruimte?",
@@ -283,7 +283,7 @@ function getRefusalDisplay(query: string) {
       statusLabel: "Ask one legal question at a time",
       title: "Ask one legal question at a time",
       body:
-        "This prompt contains multiple separate legal questions. Veridicta retrieves sources per legal issue. Ask one question at a time so the assistant can attach the right citations.",
+        "This prompt contains multiple separate legal questions. Clarvo retrieves sources per legal issue. Ask one question at a time so the assistant can attach the right citations.",
       suggestions: MULTI_QUESTION_SUGGESTED_PROMPTS,
     } as const;
   }
@@ -294,7 +294,7 @@ function getRefusalDisplay(query: string) {
       statusLabel: "Outside current coverage",
       title: "Outside current coverage",
       body:
-        "Veridicta currently supports selected Dutch legal research workflows. This question is outside the current corpus or requires professional advice beyond the product scope.",
+        "Clarvo currently supports selected Dutch legal research workflows. This question is outside the current corpus or requires professional advice beyond the product scope.",
       suggestions: [],
     } as const;
   }
@@ -1027,7 +1027,7 @@ export function AssistantStreamingPage({
                   Start with one legal issue
                 </h2>
                 <p className="mx-auto mb-8 max-w-xl text-sm leading-7 text-[#63534B]">
-                  Veridicta retrieves sources per legal issue. Focus the prompt
+                  Clarvo retrieves sources per legal issue. Focus the prompt
                   so the answer can attach the right citations.
                 </p>
 

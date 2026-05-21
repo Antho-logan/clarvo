@@ -27,8 +27,8 @@ describe("approved static landing", () => {
     ).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /inloggen/i })[0])
       .toHaveAttribute("href", "/login");
-    expect(screen.getAllByRole("link", { name: "hello@veridicta.nl" })[0])
-      .toHaveAttribute("href", "mailto:hello@veridicta.nl");
+    expect(screen.getAllByRole("link", { name: "hello@clarvo.nl" })[0])
+      .toHaveAttribute("href", "mailto:hello@clarvo.nl");
     expect(screen.getByText(/geeft geen juridisch advies/i)).toBeInTheDocument();
     expect(
       screen.getByText(/Generieke\s+AI-tools versnellen het schrijven/i),
@@ -70,7 +70,7 @@ describe("approved static landing", () => {
       target: { value: "test@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Organisatie"), {
-      target: { value: "Veridicta Test" },
+      target: { value: "Clarvo Test" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Demo aanvragen" }));
 
@@ -93,7 +93,7 @@ describe("approved static landing", () => {
     });
     render(<ApprovedStaticLanding />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Veridicta home" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clarvo home" }));
 
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
   });

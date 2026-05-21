@@ -22,7 +22,7 @@ function makeMatter(overrides: Partial<Matter> = {}): Matter {
     id: "matter-1",
     user_id: "test-user",
     title: "Demo Matter",
-    client: "Veridicta demo",
+    client: "Clarvo demo",
     status: "active",
     opened_at: "2026-05-01",
     closed_at: null,

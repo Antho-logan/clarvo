@@ -1,13 +1,13 @@
-# Veridicta Current State Of Truth
+# Clarvo Current State Of Truth
 
-**Last verified:** 2026-05-21, local workspace `/Users/antho/Desktop/VERIDICTA-full`, branch `main`.
+**Last verified:** 2026-05-21, local workspace `/Users/antho/Desktop/CLARVO-full`, branch `main`.
 **Verification status:** embeddings complete, DB integration tests passed, frontend verification passed, demo-request route tested with configured Resend env, Legal Review Mode tested previously with OpenAI, and the 2026-05-21 local MVP QA pass found no P0 product blockers. Retrieval eval values below are historical from the 2026-05-06 pass unless rerun.
 
 This file is the current operational source of truth. Older reports in `docs/` are historical unless their claims are reproduced here.
 
 ## Current Product Status
 
-Veridicta is a **private-demo / beta-candidate** system with caveats. It is not public self-serve production-ready.
+Clarvo is a **private-demo / beta-candidate** system with caveats. It is not public self-serve production-ready.
 
 Safe current claims:
 
@@ -103,7 +103,7 @@ No fresh live OpenAI call was run during the 2026-05-21 QA pass to avoid unneces
 The public landing page uses one demo CTA: `Vraag een demo aan` / `Request a demo`.
 The form posts to `/api/beta-access`, which validates the payload and sends the lead through Resend.
 
-Local route submission was tested on 2026-05-20. A personal sender failed with `502 Email delivery failed`; the Resend sandbox sender `Veridicta <onboarding@resend.dev>` succeeded through `/api/beta-access` with `200 {"ok":true}`. `BETA_LEAD_TO` can be a personal inbox for testing, but production `BETA_LEAD_FROM` must be a Resend-verified company-domain sender before launch.
+Local route submission was tested on 2026-05-20. A personal sender failed with `502 Email delivery failed`; the Resend sandbox sender `Clarvo <onboarding@resend.dev>` succeeded through `/api/beta-access` with `200 {"ok":true}`. `BETA_LEAD_TO` can be a personal inbox for testing, but production `BETA_LEAD_FROM` must be a Resend-verified company-domain sender before launch.
 
 Follow-up before launch:
 
@@ -145,7 +145,7 @@ Behavior now verified through the local backend:
 | Full tax return request | `insufficient_sources`, 0 citations |
 | German labor law request | `insufficient_sources`, 0 citations |
 | Criminal pretrial detention request | `insufficient_sources`, 0 citations |
-| "Can Veridicta replace my lawyer?" | `insufficient_sources`, 0 citations |
+| "Can Clarvo replace my lawyer?" | `insufficient_sources`, 0 citations |
 
 ## Safe Demo Questions
 
@@ -155,7 +155,7 @@ Behavior now verified through the local backend:
 
 For demos, ask one legal question at a time. Mixed multi-question prompts are intentionally guided back to a single-question workflow.
 
-Use all demos with explicit caveats: Veridicta is a research assistant, citations must be inspected, and lawyer review remains required.
+Use all demos with explicit caveats: Clarvo is a research assistant, citations must be inspected, and lawyer review remains required.
 
 ## Next Backend/Agent Phase
 

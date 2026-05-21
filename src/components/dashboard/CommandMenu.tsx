@@ -118,7 +118,7 @@ export function CommandMenu() {
 
           {trimmedQuery.length >= 2 ? (
             <>
-              <CommandGroup heading="Ask Veridicta">
+              <CommandGroup heading="Ask Clarvo">
                 <CommandItem
                   value={`assistant ${trimmedQuery}`}
                   onSelect={() =>

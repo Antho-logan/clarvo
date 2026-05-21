@@ -25,19 +25,19 @@ Required for production-like full app deploy:
 - `NEXT_PUBLIC_API_BASE_URL` points to the hosted backend URL.
 - `RESEND_API_KEY` set.
 - `BETA_LEAD_TO` set to the receiving inbox.
-- `BETA_LEAD_FROM` set to a verified sender.
+- `BETA_LEAD_FROM` set to a verified sender, ideally `Clarvo <hello@clarvo.nl>`.
 
 Landing-only deploy:
 
 - `RESEND_API_KEY` if the lead form should send email.
 - `BETA_LEAD_TO` if the lead form should send email.
-- `BETA_LEAD_FROM` if the lead form should send email.
+- `BETA_LEAD_FROM`, ideally `Clarvo <hello@clarvo.nl>`, if the lead form should send email.
 - Auth/backend/database env can be absent only if the demo does not enter the full app.
 
 ## Resend checklist
 
 - Verify the company sending domain or company sender.
-- Set `BETA_LEAD_FROM` to that verified sender.
+- Set `BETA_LEAD_FROM` to that verified sender, ideally `Clarvo <hello@clarvo.nl>`.
 - Send one real beta lead form submission after deploy.
 - Confirm the email arrives at `BETA_LEAD_TO`.
 - Keep sandbox sender only for local testing, not the final company-facing launch.
