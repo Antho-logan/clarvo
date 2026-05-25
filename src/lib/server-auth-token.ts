@@ -16,7 +16,7 @@ export async function getBackendAuthToken() {
   const secret = getJwtSecret();
   if (process.env.AUTH_DEV_BYPASS === "true" && secret) {
     return new SignJWT({
-      email: "demo@veridicta.local",
+      email: "demo@clarvo.local",
       name: "Demo User",
     })
       .setProtectedHeader({ alg: "HS256" })

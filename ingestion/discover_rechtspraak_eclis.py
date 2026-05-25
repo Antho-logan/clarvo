@@ -23,7 +23,7 @@ YAML_OUTPUT_PATH = PROJECT_ROOT / "config" / "seeds" / "curated_judgments.yaml"
 
 @dataclass(frozen=True)
 class DomainSeedQuery:
-    """Search configuration for one Veridicta legal domain."""
+    """Search configuration for one Clarvo legal domain."""
 
     target: int
     subjects: tuple[str, ...]
@@ -100,7 +100,7 @@ def discover_domain_eclis(
 
 
 def discover_seed_map(*, page_size: int, max_pages: int) -> dict[str, list[str]]:
-    """Discover all configured Veridicta domain seed lists."""
+    """Discover all configured Clarvo domain seed lists."""
     global_seen: set[str] = set()
     seed_map: dict[str, list[str]] = {}
     for domain, query in DOMAIN_QUERIES.items():
@@ -118,7 +118,7 @@ def write_seed_files(seed_map: dict[str, list[str]]) -> None:
     """Persist JSON ingestion config and a reviewable YAML mirror."""
     JSON_OUTPUT_PATH.write_text(json.dumps(seed_map, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     YAML_OUTPUT_PATH.write_text(
-        "# Curated ECLI seeds grouped by Veridicta domain.\n"
+        "# Curated ECLI seeds grouped by Clarvo domain.\n"
         "# Generated from the official Rechtspraak Open Data search feed.\n"
         + yaml.safe_dump(seed_map, sort_keys=False, allow_unicode=False),
         encoding="utf-8",

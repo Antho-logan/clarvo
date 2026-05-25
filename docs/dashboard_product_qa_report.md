@@ -4,7 +4,7 @@
 
 **GO WITH CAVEATS** ✅
 
-The Veridicta frontend is demo-ready after Codex's landing page rewrite. The landing page went from fabricating testimonials, stats, and certifications to an honest, well-written private beta positioning. The core product flow — search the corpus, ask the assistant, inspect citations — works reliably across all routes. The dashboard loads live data from the backend. Two minor issues remain: empty ingestion stats on the Knowledge page, and the administrative-law assistant prompt doesn't always produce a visible answer (no corpus data). Neither is a demo blocker.
+The Clarvo frontend is demo-ready after Codex's landing page rewrite. The landing page went from fabricating testimonials, stats, and certifications to an honest, well-written private beta positioning. The core product flow — search the corpus, ask the assistant, inspect citations — works reliably across all routes. The dashboard loads live data from the backend. Two minor issues remain: empty ingestion stats on the Knowledge page, and the administrative-law assistant prompt doesn't always produce a visible answer (no corpus data). Neither is a demo blocker.
 
 ---
 
@@ -24,16 +24,16 @@ The Veridicta frontend is demo-ready after Codex's landing page rewrite. The lan
 - ✅ No broad EU/cross-border/M&A claims
 - ✅ No "zero hallucinations" claim
 - ✅ No "6 languages" claim
-- ✅ Clear "What Veridicta is not" section
+- ✅ Clear "What Clarvo is not" section
 - ✅ Disclaimer in footer: "does not provide legal advice", "private beta", "features evolving"
 - ✅ "Lawyer review is required" stated prominently
 - ✅ "Security foundations in progress" — honest about roadmap vs reality
 
 ### CTA status
-- "Request beta access" → `mailto:hello@veridicta.nl` ✅
-- "Book a walkthrough" → `mailto:hello@veridicta.nl` ✅
+- "Request beta access" → `mailto:hello@clarvo.nl` ✅
+- "Book a walkthrough" → `mailto:hello@clarvo.nl` ✅
 - "Sign in" → `/login` ✅
-- Footer "Contact" → `mailto:hello@veridicta.nl` ✅
+- Footer "Contact" → `mailto:hello@clarvo.nl` ✅
 
 ### Language toggle
 - EN → NL toggle works ✅
@@ -162,7 +162,7 @@ The Veridicta frontend is demo-ready after Codex's landing page rewrite. The lan
 
 ### Dev bypass
 - ✅ `AUTH_DEV_BYPASS=true` working correctly
-- ⚠️ Dev bypass email shown in top bar ("demo@veridicta.local") — acceptable for dev, must be removed for production
+- ⚠️ Dev bypass email shown in top bar ("demo@clarvo.local") — acceptable for dev, must be removed for production
 
 ---
 
@@ -203,7 +203,7 @@ The Veridicta frontend is demo-ready after Codex's landing page rewrite. The lan
 
 1. **Knowledge page ingestion stats** — The "Success/Failures/Progress/Started" section shows empty values repeated 4 times. This looks broken. Either populate with real data or hide the section.
 2. **Administrative-law assistant refusal** — When no corpus data exists, the assistant should show a clear "No sources found for this domain" message instead of silently failing.
-3. **Browser tab title inconsistency** — Dashboard pages show "Veridicta — Dutch legal research, grounded in sources" but the old meta description still says "AI Agents for Europe's Legal Teams" in some contexts.
+3. **Browser tab title inconsistency** — Dashboard pages show "Clarvo — Dutch legal research, grounded in sources" but the old meta description still says "AI Agents for Europe's Legal Teams" in some contexts.
 
 ---
 

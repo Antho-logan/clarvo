@@ -1,4 +1,4 @@
-# Veridicta MVP Readiness Report
+# Clarvo MVP Readiness Report
 
 **Date:** 2026-05-06
 **Status:** Private-demo / beta-candidate ready with caveats.
@@ -8,7 +8,7 @@ This report supersedes older readiness notes that referenced 9,649 embedded docu
 
 ## Executive Summary
 
-Veridicta is ready for controlled private demos and beta-candidate review. It is not ready for public self-serve production use.
+Clarvo is ready for controlled private demos and beta-candidate review. It is not ready for public self-serve production use.
 
 Current verified strengths:
 
@@ -24,7 +24,7 @@ Current verified strengths:
 
 Primary caveats:
 
-- Veridicta remains a research assistant, not a lawyer replacement.
+- Clarvo remains a research assistant, not a lawyer replacement.
 - Citation quality still needs lawyer review before broader beta.
 - Domain coverage is intentionally limited.
 - Administrative-law statutory retrieval needs additional targeted hardening.
@@ -106,7 +106,7 @@ Safe demo questions:
 - `Wat geldt bij loondoorbetaling tijdens ziekte?`
 - `Wat geldt bij opzegging van huur van woonruimte, ontslag op staande voet en loondoorbetaling tijdens ziekte?`
 
-Avoid public demos that imply Veridicta can replace a lawyer, provide tax filing services, answer foreign law, or cover unsupported criminal-law workflows.
+Avoid public demos that imply Clarvo can replace a lawyer, provide tax filing services, answer foreign law, or cover unsupported criminal-law workflows.
 
 ## Next Recommended Work
 

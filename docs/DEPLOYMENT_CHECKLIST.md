@@ -1,4 +1,4 @@
-# Veridicta Deployment Checklist
+# Clarvo Deployment Checklist
 
 Last updated: 2026-05-08.
 
@@ -57,7 +57,7 @@ AUTH_SECRET=<long random secret>
 NEXT_PUBLIC_API_BASE_URL=<deployed backend URL or private backend URL>
 AUTH_DEV_BYPASS=false
 AUTH_ALLOW_CREDENTIAL_SIGNUP=false
-AUTH_EMAIL_FROM=Veridicta <auth@your-domain>
+AUTH_EMAIL_FROM=Clarvo <auth@your-domain>
 RESEND_API_KEY=<only if magic-link login should work>
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 OPENAI_CHAT_MODEL=gpt-4.1

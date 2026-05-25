@@ -63,7 +63,7 @@ from search import hybrid_search
 from workflow_engine import build_registry
 
 LOGGER = get_logger("api.main")
-app = FastAPI(title="Veridicta Legal Backend", version="milestone2")
+app = FastAPI(title="Clarvo Legal Backend", version="milestone2")
 
 
 class IngestRequest(BaseModel):

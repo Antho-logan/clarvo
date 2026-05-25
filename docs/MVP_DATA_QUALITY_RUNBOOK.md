@@ -137,7 +137,7 @@ Required env vars:
 ```bash
 RESEND_API_KEY="re_..."
 BETA_LEAD_TO="recipient@example.com"
-BETA_LEAD_FROM="Veridicta <onboarding@resend.dev>"
+BETA_LEAD_FROM="Clarvo <onboarding@resend.dev>"
 ```
 
 For local testing, `BETA_LEAD_TO` may be a personal inbox. `BETA_LEAD_FROM` must be a sender Resend allows. A normal Gmail address as `BETA_LEAD_FROM` is expected to fail unless Resend has explicitly authorized it.
@@ -146,7 +146,7 @@ Before launch:
 
 1. Choose the final company sender address.
 2. Verify the company domain/sender in Resend.
-3. Set `BETA_LEAD_FROM` to the verified sender, for example `Veridicta <hello@veridicta.nl>`.
+3. Set `BETA_LEAD_FROM` to the verified sender, for example `Clarvo <hello@clarvo.nl>`.
 4. Set `BETA_LEAD_TO` to the inbox where demo requests should land.
 5. Submit a real landing-page test and confirm the email arrives.
 

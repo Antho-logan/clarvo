@@ -1,4 +1,4 @@
-# Embedding / Storage Strategy — Veridicta
+# Embedding / Storage Strategy — Clarvo
 
 **Question:** Stay on current Postgres/pgvector path, extend to Supabase + pgvector, or hybrid?
 
@@ -79,7 +79,7 @@ Supabase does NOT add a separate vector database. It is still Postgres + pgvecto
 | Scalability | Very high — dedicated vector DB handles millions of vectors |
 | When to consider | Only when Postgres vector search latency exceeds requirements at >5M chunks |
 
-**Verdict for Veridicta at this stage:** NOT YET. This is a post-MVP concern, likely at 1M+ chunks. Defer.
+**Verdict for Clarvo at this stage:** NOT YET. This is a post-MVP concern, likely at 1M+ chunks. Defer.
 
 ---
 
@@ -107,7 +107,7 @@ Then update `create_embeddings.py` or add a separate `create_vector_index.py` sc
 1. Zero operational overhead for backups, failover, connection pooling
 2. The codebase is SQLAlchemy — no vendor lock-in, no ORM changes needed
 3. Supabase's free tier is sufficient for MVP demos and early users
-4. When Veridicta outgrows Supabase, migrate to a dedicated Postgres (Neon, Railway) by changing the connection string
+4. When Clarvo outgrows Supabase, migrate to a dedicated Postgres (Neon, Railway) by changing the connection string
 5. Supabase adds auth helpers (RLS — Row Level Security) that could be useful for multi-tenant matter scoping later
 
 **Migration path from current state:**

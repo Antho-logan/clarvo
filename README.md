@@ -1,4 +1,4 @@
-# Veridicta
+# Clarvo
 
 [![CI](https://github.com/Antho-logan/veridicta/actions/workflows/ci.yml/badge.svg)](https://github.com/Antho-logan/veridicta/actions/workflows/ci.yml)
 [![Nightly eval](https://github.com/Antho-logan/veridicta/actions/workflows/eval.yml/badge.svg)](https://github.com/Antho-logan/veridicta/actions/workflows/eval.yml)
@@ -104,11 +104,11 @@ Queue curated ingestion:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/ingest/laws \
-  -H "Authorization: Bearer $VERIDICTA_API_TOKEN" \
+  -H "Authorization: Bearer $CLARVO_API_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"domain":"employment_law","limit":5}'
 curl http://127.0.0.1:8000/ingestion/jobs/1 \
-  -H "Authorization: Bearer $VERIDICTA_API_TOKEN"
+  -H "Authorization: Bearer $CLARVO_API_TOKEN"
 ```
 
 Start web:

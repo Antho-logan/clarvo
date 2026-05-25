@@ -1,10 +1,10 @@
-# Veridicta Project Map
+# Clarvo Project Map
 
 This file explains where things live. Keep it current when adding a new top-level module, route family, data workflow, or operational document.
 
 ## Product Shape
 
-Veridicta is a Dutch legal research assistant. The MVP is source-backed search, cited assistant answers, curated ingestion, and a dashboard for working with legal sources. It is not yet a full practice-management suite.
+Clarvo is a Dutch legal research assistant. The MVP is source-backed search, cited assistant answers, curated ingestion, and a dashboard for working with legal sources. It is not yet a full practice-management suite.
 
 ## Runtime Areas
 

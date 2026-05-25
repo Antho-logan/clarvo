@@ -15,8 +15,8 @@ import {
   type Locale,
 } from "@/lib/landing-copy";
 
-const STORAGE_KEY = "veridicta-landing-locale";
-const LANGUAGE_CHANGE_EVENT = "veridicta-language-change";
+const STORAGE_KEY = "clarvo-landing-locale";
+const LANGUAGE_CHANGE_EVENT = "clarvo-language-change";
 
 type LanguageContextValue = {
   locale: Locale;

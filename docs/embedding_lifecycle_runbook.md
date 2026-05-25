@@ -56,7 +56,7 @@ API equivalent:
 
 ```bash
 curl "http://127.0.0.1:8000/embeddings/coverage?refresh=true" \
-  -H "Authorization: Bearer $VERIDICTA_API_TOKEN"
+  -H "Authorization: Bearer $CLARVO_API_TOKEN"
 ```
 
 ## Backfill Missing Embeddings
@@ -74,7 +74,7 @@ Background job path:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/embeddings/backfill \
-  -H "Authorization: Bearer $VERIDICTA_API_TOKEN" \
+  -H "Authorization: Bearer $CLARVO_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"mode":"missing","limit":500,"page_size":100}'
 ```
@@ -83,7 +83,7 @@ Then inspect:
 
 ```bash
 curl http://127.0.0.1:8000/ingestion/jobs/$JOB_ID \
-  -H "Authorization: Bearer $VERIDICTA_API_TOKEN"
+  -H "Authorization: Bearer $CLARVO_API_TOKEN"
 ```
 
 ## Re-Embed Stale Rows
@@ -101,7 +101,7 @@ Background job:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/embeddings/reembed-stale \
-  -H "Authorization: Bearer $VERIDICTA_API_TOKEN" \
+  -H "Authorization: Bearer $CLARVO_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"limit":500,"page_size":100}'
 ```
@@ -122,7 +122,7 @@ or:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/embeddings/backfill \
-  -H "Authorization: Bearer $VERIDICTA_API_TOKEN" \
+  -H "Authorization: Bearer $CLARVO_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"mode":"failed","retry_failed":true,"limit":100,"page_size":50}'
 ```

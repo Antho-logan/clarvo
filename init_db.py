@@ -1,4 +1,4 @@
-"""Initialize or migrate the Veridicta PostgreSQL schema via Alembic.
+"""Initialize or migrate the Clarvo PostgreSQL schema via Alembic.
 
 `init_db.py` is retained as a compatibility wrapper for existing runbooks. New
 schema changes must be added as Alembic revisions under `migrations/`.

@@ -1,4 +1,4 @@
-# Veridicta Docs
+# Clarvo Docs
 
 Use this folder as the project memory and operating manual. Keep active docs short and current; move stale research or rejected paths into `docs/archive/`.
 

@@ -1,4 +1,4 @@
-"""Typed tool package for Veridicta agent workflows."""
+"""Typed tool package for Clarvo agent workflows."""
 
 from tools.base import BaseTool
 from tools.retrieval import (

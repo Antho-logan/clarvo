@@ -1,4 +1,4 @@
-# Corpus Expansion Plan — Veridicta
+# Corpus Expansion Plan — Clarvo
 
 **Phase:** Post-MVP corpus build-out
 **Stack:** BWB (wetten.nl XML) + Rechtspraak Open Data (uitspraken)

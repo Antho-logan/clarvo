@@ -18,7 +18,7 @@ from repositories.embeddings import (  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Report Veridicta embedding coverage.")
+    parser = argparse.ArgumentParser(description="Report Clarvo embedding coverage.")
     parser.add_argument(
         "--refresh",
         action="store_true",

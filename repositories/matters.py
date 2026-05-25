@@ -324,7 +324,7 @@ def create_research_memo(
             "audit": {
                 "generated_from": "saved_research_note",
                 "source_note_id": values.source_note_id,
-                "generator": "veridicta_native_mvp",
+                "generator": "clarvo_native_mvp",
             },
         }
         research_memos = list(tags.get("research_memos") or [])

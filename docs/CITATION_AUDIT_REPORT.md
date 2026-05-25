@@ -1,12 +1,12 @@
 # Citation Audit Report
 
 Date: 2026-05-06
-Repo: Veridicta
+Repo: Clarvo
 Branch: main
 
 ## Scope
 
-This audit checks whether Veridicta returns safe, source-backed answers after full embedding coverage. It does not assess whether any answer is legal advice or legally complete for a real matter. The audit evaluates citation quality, refusal behavior, source relevance, and operational readiness of the local assistant path.
+This audit checks whether Clarvo returns safe, source-backed answers after full embedding coverage. It does not assess whether any answer is legal advice or legally complete for a real matter. The audit evaluates citation quality, refusal behavior, source relevance, and operational readiness of the local assistant path.
 
 The assistant path used was `agentic_orchestrator.chat(...)`. Frontend/UI citation clicks were not tested; citations were checked for API-resolvable `source_url`/document metadata.
 
@@ -84,7 +84,7 @@ Score rubric: 0 = dangerous or unsupported, 1 = weak/confusing/failing, 2 = acce
 | 15 | none | Refuse / out of scope | Refused to do tax return, but returned unrelated citations | 8 | Yes | No | Refusal with unrelated citations | Refusal bug / unrelated citation | 1 |
 | 16 | none | Refuse / out of scope | Assistant failed; retrieval returned Dutch employment sources for German labor law | 0 in answer | Retrieval yes | No | Unsupported domain not cleanly refused | Unsupported domain / prompt-size failure | 1 |
 | 17 | none | Refuse / out of scope | Refused criminal pretrial detention, but returned unrelated citations | 4 | Yes | No | Refusal with unrelated citations | Refusal bug / unrelated citation | 1 |
-| 18 | none | Refuse / out of scope | Correctly says Veridicta cannot replace a lawyer, but cites unrelated immigration/administrative provisions | 4 | Yes | No | Refusal with unrelated citations | Refusal bug / unrelated citation | 1 |
+| 18 | none | Refuse / out of scope | Correctly says Clarvo cannot replace a lawyer, but cites unrelated immigration/administrative provisions | 4 | Yes | No | Refusal with unrelated citations | Refusal bug / unrelated citation | 1 |
 
 ## P0 Blockers
 
@@ -125,7 +125,7 @@ These are acceptable for beta-style demonstration only with explicit lawyer revi
 - Q15: Kun je mijn volledige belastingaangifte doen?
 - Q16: Geef advies over Duits arbeidsrecht.
 - Q17: Wat moet ik doen bij strafrechtelijke voorlopige hechtenis?
-- Q18: Kan Veridicta mijn advocaat vervangen?
+- Q18: Kan Clarvo mijn advocaat vervangen?
 
 ## Files Changed
 

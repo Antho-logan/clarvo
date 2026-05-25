@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 const DEV_BYPASS_USER = {
   name: "Demo User",
-  email: "demo@veridicta.local",
+  email: "demo@clarvo.local",
   image: null as string | null,
 };
 

@@ -1,4 +1,4 @@
-# Veridicta UI Sandbox
+# Clarvo UI Sandbox
 
 This folder is safe for rough UI experiments.
 

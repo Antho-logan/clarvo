@@ -70,10 +70,10 @@ export function DashboardShell({ children, user, signOutAction }: DashboardShell
         <div className="h-16 flex items-center px-6 border-b border-[#D8D2C8]">
           <Link
             href="/dashboard"
-            aria-label="Veridicta dashboard home"
+            aria-label="Clarvo dashboard home"
             className="font-[Georgia,'Times_New_Roman',ui-serif,serif] text-[1.6rem] font-bold uppercase tracking-[0.02em] text-[#1F1D1A]"
           >
-            VERIDICTA
+            CLARVO
           </Link>
         </div>
 

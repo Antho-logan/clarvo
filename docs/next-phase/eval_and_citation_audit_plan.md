@@ -1,6 +1,6 @@
-# Eval and Citation Quality Audit Plan — Veridicta
+# Eval and Citation Quality Audit Plan — Clarvo
 
-**Purpose:** Design a serious, ongoing evaluation and citation quality audit system for Veridicta's post-MVP phase.
+**Purpose:** Design a serious, ongoing evaluation and citation quality audit system for Clarvo's post-MVP phase.
 
 ---
 

@@ -26,7 +26,7 @@ describe("dashboard navigation", () => {
   it("keeps development-only UI sandbox out of normal navigation", () => {
     render(
       <DashboardShell
-        user={{ name: "Demo User", email: "demo@veridicta.local" }}
+        user={{ name: "Demo User", email: "demo@clarvo.local" }}
         signOutAction={async () => {}}
       >
         <p>Dashboard content</p>
@@ -41,7 +41,7 @@ describe("dashboard navigation", () => {
   it("keeps development-only UI sandbox out of command navigation", () => {
     render(
       <DashboardShell
-        user={{ name: "Demo User", email: "demo@veridicta.local" }}
+        user={{ name: "Demo User", email: "demo@clarvo.local" }}
         signOutAction={async () => {}}
       >
         <p>Dashboard content</p>

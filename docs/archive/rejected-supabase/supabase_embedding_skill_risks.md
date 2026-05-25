@@ -30,9 +30,9 @@
 Supabase is a managed service. Once the database is on Supabase, every operational change — schema migration, index rebuild, connection troubleshooting — goes through Supabase's tooling or requires their support.
 
 **Specific failure modes:**
-- Supabase changes pricing tiers → Veridicta must pay more or migrate
+- Supabase changes pricing tiers → Clarvo must pay more or migrate
 - Supabase deprecates a feature (e.g., PgBouncer configuration) → Breaking change with no local recourse
-- Supabase has a prolonged outage → Veridicta is down with no ability to intervene
+- Supabase has a prolonged outage → Clarvo is down with no ability to intervene
 - Team wants to migrate away later → Full database migration required (non-trivial)
 
 **Mitigation:** Stay on self-hosted Postgres. The current stack handles the workload fine. Vendor lock-in is only acceptable when the vendor provides something irreplaceable (e.g., Auth, Storage, Realtime as a bundle). For vector storage, pgvector on self-hosted Postgres is not replaceable by Supabase — it's the same thing with extra steps.
@@ -44,7 +44,7 @@ Supabase is a managed service. Once the database is on Supabase, every operation
 **Severity:** Medium
 **Likelihood:** High
 
-Veridicta's Postgres currently runs locally (docker-compose, same machine or same LAN). Vector search latency is currently ~20-80ms.
+Clarvo's Postgres currently runs locally (docker-compose, same machine or same LAN). Vector search latency is currently ~20-80ms.
 
 Supabase-hosted Postgres adds network round-trip time to Supabase's cloud region. Even if the app is deployed to the same cloud region (e.g., EU West), the added latency for each vector search query will be measurable.
 
@@ -62,7 +62,7 @@ Supabase-hosted Postgres adds network round-trip time to Supabase's cloud region
 **Severity:** High
 **Likelihood:** Medium
 
-Supabase enables Row Level Security (RLS) by default on all tables. Veridicta's current schema has **no RLS policies** — all data is effectively public within the database.
+Supabase enables Row Level Security (RLS) by default on all tables. Clarvo's current schema has **no RLS policies** — all data is effectively public within the database.
 
 **Specific failure modes:**
 - After migrating to Supabase, all queries return zero rows (RLS blocks everything) if RLS is not disabled
@@ -115,7 +115,7 @@ The Supabase service role key bypasses all RLS policies. If this key is ever exp
 **Severity:** Medium
 **Likelihood:** Low
 
-Veridicta currently uses `pgvector/pgvector:pg17` in docker-compose. Supabase uses a managed version of pgvector that may be at a different minor version.
+Clarvo currently uses `pgvector/pgvector:pg17` in docker-compose. Supabase uses a managed version of pgvector that may be at a different minor version.
 
 **Specific failure modes:**
 - `vector_cosine_ops` HNSW index creation fails if Supabase's pgvector version doesn't support it (unlikely but possible on very old versions)
@@ -151,7 +151,7 @@ Supabase uses PgBouncer as a connection pooler in front of Postgres. The connect
 **Severity:** Medium
 **Likelihood:** Medium
 
-Veridicta's document corpus will grow. At current trajectory:
+Clarvo's document corpus will grow. At current trajectory:
 
 | Documents | Embedding Storage (1536 dims, float32) | Supabase Tier Needed |
 |-----------|----------------------------------------|----------------------|
@@ -229,4 +229,4 @@ Do not conflate these into one "embedding skill." The complexity is not in the e
 
 ---
 
-*Risks were evaluated based on current Veridicta architecture (docker-compose Postgres, no RLS, single-tenant legal document storage). These assessments may change if the product evolves (multi-tenant, public SaaS, strict compliance requirements).*
+*Risks were evaluated based on current Clarvo architecture (docker-compose Postgres, no RLS, single-tenant legal document storage). These assessments may change if the product evolves (multi-tenant, public SaaS, strict compliance requirements).*

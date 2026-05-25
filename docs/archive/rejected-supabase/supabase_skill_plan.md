@@ -1,13 +1,13 @@
 # Supabase Embedding Skill — Plan
 
-**Purpose:** Define exactly what a "Supabase embedding skill" should do, own, and not own for Veridicta's agents.
+**Purpose:** Define exactly what a "Supabase embedding skill" should do, own, and not own for Clarvo's agents.
 
 ---
 
 ## What the Skill Is
 
 A **build-and-ops skill** (not a pure dev skill) that automates the Supabase setup, migration, and ongoing embedding pipeline so that agents can:
-1. Set up a new Supabase project for Veridicta
+1. Set up a new Supabase project for Clarvo
 2. Configure the database schema (pgvector, tables, indexes)
 3. Run the embedding backfill pipeline
 4. Monitor and validate the vector search quality
@@ -223,7 +223,7 @@ cat .embedding_checkpoint.json
    DATABASE_URL="postgresql+psycopg://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres"
    ```
 
-4. **Row Level Security (RLS)** is available in Supabase but is NOT currently configured in the Veridicta models. Supabase enables RLS on new tables by default. If the migration creates new tables, they may need `ALTER TABLE ... DISABLE ROW LEVEL SECURITY;` to avoid breaking the current app. (Currently not an issue since existing tables are not migrated.)
+4. **Row Level Security (RLS)** is available in Supabase but is NOT currently configured in the Clarvo models. Supabase enables RLS on new tables by default. If the migration creates new tables, they may need `ALTER TABLE ... DISABLE ROW LEVEL SECURITY;` to avoid breaking the current app. (Currently not an issue since existing tables are not migrated.)
 
 5. **Supabase free tier limits:** 500MB database, 2GB bandwidth, 50 concurrent connections via pooler. For MVP this is fine. At ~200k documents × 1536 floats × 4 bytes ≈ 1.2GB just for embeddings. May need to upgrade to paid tier as corpus grows.
 

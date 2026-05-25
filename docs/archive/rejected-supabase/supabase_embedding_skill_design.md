@@ -7,7 +7,7 @@
 
 ## 1. What Problem This Skill Solves
 
-The stated goal is to give agents a clean operational interface to Supabase as a vector/storage layer for the next phase of Veridicta.
+The stated goal is to give agents a clean operational interface to Supabase as a vector/storage layer for the next phase of Clarvo.
 
 The implied underlying problems are real:
 
@@ -27,7 +27,7 @@ These are legitimate needs. Supabase is not the answer to them.
 The current architecture:
 
 ```
-Veridicta App
+Clarvo App
   ├── PostgreSQL (self-hosted pgvector/pg17 in docker-compose)
   │     ├── documents table (with Vector(1536) embedding column)
   │     ├── HNSW index on embedding (idx_documents_embedding_hnsw)
@@ -43,7 +43,7 @@ Supabase provides:
 - Auth, Storage, Realtime, Edge Functions
 - Admin UI and management tools
 
-**Veridicta already runs its own PostgreSQL with pgvector.** Migrating to Supabase-hosted Postgres means moving the database off self-hosted infrastructure to a vendor. This is a significant decision with lock-in implications. It has nothing to do with embeddings specifically — it's a full database migration.
+**Clarvo already runs its own PostgreSQL with pgvector.** Migrating to Supabase-hosted Postgres means moving the database off self-hosted infrastructure to a vendor. This is a significant decision with lock-in implications. It has nothing to do with embeddings specifically — it's a full database migration.
 
 If the team wants Supabase, they should migrate the whole database intentionally, not bolt it on as an "embedding layer."
 
@@ -338,7 +338,7 @@ def reembed_if_stale(document_id: UUID) -> bool:
 | Hybrid (both) | ~40-130ms | ~70-300ms | ~40-130ms |
 | Embedding generation | ~100-500ms/doc (OpenAI API) | Same (API call is the bottleneck) | Same |
 
-**Verdict:** Supabase hosted Postgres will be slower for vector search due to network latency to Supabase's cloud. If Veridicta's Postgres is on the same machine or same LAN, the current setup is faster.
+**Verdict:** Supabase hosted Postgres will be slower for vector search due to network latency to Supabase's cloud. If Clarvo's Postgres is on the same machine or same LAN, the current setup is faster.
 
 ### Ops Complexity
 
@@ -352,12 +352,12 @@ def reembed_if_stale(document_id: UUID) -> bool:
 | Secrets | .env.local | Supabase Vault or .env | No change |
 | Monitoring | Your own logs/metrics | Supabase dashboard | Your own |
 
-**Supabase adds a UI and reduces some DBA burden, but adds vendor management.** For a product at Veridicta's stage, this is not clearly better — it's trading one kind of complexity for another.
+**Supabase adds a UI and reduces some DBA burden, but adds vendor management.** For a product at Clarvo's stage, this is not clearly better — it's trading one kind of complexity for another.
 
 ### Maintainability
 
 - **Current:** Low complexity. One PostgreSQL instance. The `create_embeddings.py` script is simple and well-understood.
-- **Supabase:** Adds vendor lock-in surface. If Supabase changes pricing, deprecates features, or has an outage, Veridicta is affected. The embedding code itself doesn't get simpler — it just runs against a different host.
+- **Supabase:** Adds vendor lock-in surface. If Supabase changes pricing, deprecates features, or has an outage, Clarvo is affected. The embedding code itself doesn't get simpler — it just runs against a different host.
 - **Self-hosted improvements:** Adds schema complexity and Celery task complexity, but keeps the stack coherent and avoids vendor lock-in.
 
 ---
@@ -368,11 +368,11 @@ def reembed_if_stale(document_id: UUID) -> bool:
 
 ###理由 (Reasoning)
 
-1. **Supabase does not solve any current problem.** Veridicta already has pgvector with HNSW indexing. The only thing Supabase adds is hosted infrastructure and a UI — at the cost of vendor lock-in and added latency.
+1. **Supabase does not solve any current problem.** Clarvo already has pgvector with HNSW indexing. The only thing Supabase adds is hosted infrastructure and a UI — at the cost of vendor lock-in and added latency.
 
 2. **The real need is embedding lifecycle management, not a new database.** The actual gap is that `create_embeddings.py` is a batch script, not a lifecycle system. Build that within the existing Postgres stack.
 
-3. **Supabase is not free at scale.** The free tier has limits (500MB database, 1GB transfer/month for Edge Functions, etc.). Veridicta's document corpus will grow. Supabase Pro is $25/month for 8GB database. At scale, self-hosted Postgres on a $10-20/month VPS is cheaper and more flexible.
+3. **Supabase is not free at scale.** The free tier has limits (500MB database, 1GB transfer/month for Edge Functions, etc.). Clarvo's document corpus will grow. Supabase Pro is $25/month for 8GB database. At scale, self-hosted Postgres on a $10-20/month VPS is cheaper and more flexible.
 
 4. **Migrating the database is a separate decision.** If the team wants Supabase, it should be a deliberate infrastructure decision with a full migration plan — not packaged as an "embedding skill."
 
@@ -390,7 +390,7 @@ def reembed_if_stale(document_id: UUID) -> bool:
 
 4. **Multi-model abstraction** — if switching embedding models is a roadmap item, abstract the embedding generation behind a `EmbeddingService` class with provider pluggability (OpenAI, Cohere, Google). Do this before considering any vendor change.
 
-5. **Re-evaluate Supabase** if/when Veridicta needs hosted auth, hosted storage (for document uploads), or Realtime features — not for vector storage.
+5. **Re-evaluate Supabase** if/when Clarvo needs hosted auth, hosted storage (for document uploads), or Realtime features — not for vector storage.
 
 ---
 

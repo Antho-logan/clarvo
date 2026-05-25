@@ -13,17 +13,17 @@ describe("credential identity resolution", () => {
 
   it("maps the configured MVP login name to the internal auth email", () => {
     process.env.AUTH_DEMO_LOGIN_NAME = "Anthony Logan";
-    process.env.AUTH_DEMO_LOGIN_EMAIL = "anthony.logan@veridicta.local";
+    process.env.AUTH_DEMO_LOGIN_EMAIL = "anthony.logan@clarvo.local";
 
     expect(resolveCredentialIdentity(" Anthony Logan ")).toEqual({
-      email: "anthony.logan@veridicta.local",
+      email: "anthony.logan@clarvo.local",
       name: "Anthony Logan",
     });
   });
 
   it("keeps normal email logins unchanged", () => {
     process.env.AUTH_DEMO_LOGIN_NAME = "Anthony Logan";
-    process.env.AUTH_DEMO_LOGIN_EMAIL = "anthony.logan@veridicta.local";
+    process.env.AUTH_DEMO_LOGIN_EMAIL = "anthony.logan@clarvo.local";
 
     expect(resolveCredentialIdentity("Beta@Example.com")).toEqual({
       email: "beta@example.com",
@@ -33,7 +33,7 @@ describe("credential identity resolution", () => {
 
   it("rejects non-email identifiers that are not the configured MVP login name", () => {
     process.env.AUTH_DEMO_LOGIN_NAME = "Anthony Logan";
-    process.env.AUTH_DEMO_LOGIN_EMAIL = "anthony.logan@veridicta.local";
+    process.env.AUTH_DEMO_LOGIN_EMAIL = "anthony.logan@clarvo.local";
 
     expect(resolveCredentialIdentity("Someone Else")).toEqual({
       email: "",

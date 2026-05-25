@@ -32,7 +32,7 @@
 
 ### Q3: BWB version pinning?
 
-**Blocker:** BWB IDs can have multiple versions (e.g., BWBR0002645 has amendments). Should Veridicta pin a specific `data_sid` (publication date), always fetch latest, or track versions in the `documents` table?
+**Blocker:** BWB IDs can have multiple versions (e.g., BWBR0002645 has amendments). Should Clarvo pin a specific `data_sid` (publication date), always fetch latest, or track versions in the `documents` table?
 
 **Current state:** No versioning in the model. Re-ingesting the same BWB ID may create duplicates.
 
@@ -197,7 +197,7 @@
 
 ### Q16: Multi-tenancy — when?
 
-**Blocker:** Currently, Veridicta is single-tenant at the API level (user auth via Auth.js). But the `matter` system is per-user. Should multi-tenancy (firms with multiple users sharing a corpus) be a near-term concern?
+**Blocker:** Currently, Clarvo is single-tenant at the API level (user auth via Auth.js). But the `matter` system is per-user. Should multi-tenancy (firms with multiple users sharing a corpus) be a near-term concern?
 
 **Implication:** Supabase Row Level Security (RLS) would need to be configured. The current Postgres setup has no RLS.
 

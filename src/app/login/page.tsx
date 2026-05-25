@@ -39,7 +39,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="grid w-full gap-8 lg:grid-cols-[1fr_460px] lg:items-center">
           <section>
             <Link href="/" className="font-serif text-2xl font-bold tracking-tight">
-              VERIDICTA
+              CLARVO
             </Link>
             <div className="mt-12 max-w-2xl">
               <div className="mb-6 inline-flex items-center rounded-full border border-[#D8D2C8] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#63534B]">

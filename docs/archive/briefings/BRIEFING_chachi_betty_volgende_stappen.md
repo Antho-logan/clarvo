@@ -1,4 +1,4 @@
-# Veridicta — Volgende Stappen Briefing
+# Clarvo — Volgende Stappen Briefing
 **Voor:** Chachi Batty
 **Van:** Antho + Hermes Agent
 **Datum:** 21 april 2026
@@ -8,7 +8,7 @@
 
 ## Waar staan we nu
 
-Veridicta heeft een werkend MVP met:
+Clarvo heeft een werkend MVP met:
 - Ingestie van echte Nederlandse wetgeving (BWB/wetten.nl)
 - Ingestie van echte rechtspraak (Rechtspraak Open Data)
 - Async jobs met tracking
