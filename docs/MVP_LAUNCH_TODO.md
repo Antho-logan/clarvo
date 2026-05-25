@@ -26,6 +26,7 @@ Open operational tasks before Vercel / 28 May:
    - `AUTH_SECRET`
    - `AUTH_DEV_BYPASS=false`
    - `AUTH_ALLOW_CREDENTIAL_SIGNUP=false`
+   - `AUTH_EMAIL_FROM="Clarvo <hello@clarvo.nl>"`
    - `NEXT_PUBLIC_API_BASE_URL`
    - `RESEND_API_KEY`
    - `BETA_LEAD_TO`

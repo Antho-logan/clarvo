@@ -22,6 +22,7 @@ Required for production-like full app deploy:
 - `AUTH_SECRET` set.
 - `AUTH_DEV_BYPASS=false`.
 - `AUTH_ALLOW_CREDENTIAL_SIGNUP=false`.
+- `AUTH_EMAIL_FROM="Clarvo <hello@clarvo.nl>"`.
 - `NEXT_PUBLIC_API_BASE_URL` points to the hosted backend URL.
 - `RESEND_API_KEY` set.
 - `BETA_LEAD_TO` set to the receiving inbox.

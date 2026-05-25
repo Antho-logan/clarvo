@@ -63,7 +63,7 @@ Open:
 AUTH_SECRET=replace-with-a-long-random-local-secret
 DATABASE_URL=postgresql+psycopg://...
 RESEND_API_KEY=re_...
-AUTH_EMAIL_FROM="Clarvo <auth@your-domain.example>"
+AUTH_EMAIL_FROM="Clarvo <hello@clarvo.nl>"
 ```
 
 Run `python3 -m alembic upgrade head` before testing auth so the Auth.js user and verification-token tables exist. Submitting the magic-link form on `/login` should route to `/login/check-email`; opening the emailed link should land the user on `/dashboard`.

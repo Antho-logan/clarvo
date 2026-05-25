@@ -87,7 +87,7 @@ if (process.env.RESEND_API_KEY) {
   providers.push(
     Resend({
       apiKey: process.env.RESEND_API_KEY,
-      from: process.env.AUTH_EMAIL_FROM || "Clarvo <auth@clarvo.nl>",
+      from: process.env.AUTH_EMAIL_FROM || "Clarvo <hello@clarvo.nl>",
     }),
   );
 }
