@@ -9,6 +9,14 @@ export type DemoLead = {
   message: string;
 };
 
+type ResendError = {
+  name?: unknown;
+  message?: unknown;
+  statusCode?: unknown;
+  status?: unknown;
+  code?: unknown;
+};
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -36,16 +44,49 @@ function confirmationCopy(locale: string) {
   };
 }
 
+function sanitizeResendError(error: unknown) {
+  const value = (error || {}) as ResendError;
+  return {
+    name: typeof value.name === "string" ? value.name : undefined,
+    message: typeof value.message === "string" ? value.message : undefined,
+    status:
+      typeof value.status === "number" || typeof value.status === "string"
+        ? value.status
+        : typeof value.statusCode === "number" ||
+            typeof value.statusCode === "string"
+          ? value.statusCode
+          : undefined,
+    code:
+      typeof value.code === "number" || typeof value.code === "string"
+        ? value.code
+        : undefined,
+  };
+}
+
 export async function sendDemoLeadEmail(lead: DemoLead) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.BETA_LEAD_TO || "hello@clarvo.nl";
+  const betaLeadFrom = process.env.BETA_LEAD_FROM;
+  const authEmailFrom = process.env.AUTH_EMAIL_FROM;
   const from =
-    process.env.BETA_LEAD_FROM ||
-    process.env.AUTH_EMAIL_FROM ||
-    "Clarvo <hello@clarvo.nl>";
+    betaLeadFrom || authEmailFrom || "Clarvo <hello@clarvo.nl>";
+  const senderSource = betaLeadFrom
+    ? "BETA_LEAD_FROM"
+    : authEmailFrom
+      ? "AUTH_EMAIL_FROM"
+      : "default";
+
+  console.info("Clarvo lead email config", {
+    resendApiKeyPresent: Boolean(apiKey),
+    betaLeadTo: to,
+    betaLeadFrom: betaLeadFrom || null,
+    authEmailFrom: senderSource === "AUTH_EMAIL_FROM" ? authEmailFrom : null,
+    sender: from,
+    senderSource,
+  });
 
   if (!apiKey) {
-    return { ok: false, reason: "not_configured" as const };
+    return { ok: false, reason: "missing_resend_api_key" as const };
   }
 
   const resend = new Resend(apiKey);
@@ -69,7 +110,11 @@ export async function sendDemoLeadEmail(lead: DemoLead) {
   });
 
   if (error) {
-    return { ok: false, reason: "delivery_failed" as const };
+    console.error(
+      "Clarvo lead internal notification failed",
+      sanitizeResendError(error),
+    );
+    return { ok: false, reason: "internal_notification_failed" as const };
   }
 
   const confirmation = confirmationCopy(lead.locale);
@@ -85,8 +130,12 @@ export async function sendDemoLeadEmail(lead: DemoLead) {
   });
 
   if (confirmationResult.error) {
-    console.warn("Clarvo lead confirmation email failed");
+    console.warn(
+      "Clarvo lead confirmation email failed",
+      sanitizeResendError(confirmationResult.error),
+    );
+    return { ok: true as const, confirmationEmail: "failed" as const };
   }
 
-  return { ok: true as const };
+  return { ok: true as const, confirmationEmail: "sent" as const };
 }

@@ -59,6 +59,8 @@ AUTH_DEV_BYPASS=false
 AUTH_ALLOW_CREDENTIAL_SIGNUP=false
 AUTH_EMAIL_FROM=Clarvo <hello@clarvo.nl>
 RESEND_API_KEY=<only if magic-link login should work>
+BETA_LEAD_TO=hello@clarvo.nl
+BETA_LEAD_FROM=Clarvo <hello@clarvo.nl>
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 OPENAI_CHAT_MODEL=gpt-4.1
 ```
@@ -69,6 +71,10 @@ Notes:
 - Set `AUTH_DEV_BYPASS=false` in every hosted environment.
 - Never treat dashboard routes as public pages. With `AUTH_DEV_BYPASS=false`, unauthenticated `/dashboard` requests must redirect to `/login`; with `AUTH_DEV_BYPASS=true`, local browsers can enter the dashboard with a demo identity and sign-out only returns to the landing page.
 - Do not expose `OPENAI_API_KEY` to browser-side variables. It must never be prefixed with `NEXT_PUBLIC_`.
+- Receiving mail at Hostnet proves `hello@clarvo.nl` can receive mail, but Resend still must verify the domain/sender before it can send from `hello@clarvo.nl`.
+- For temporary testing before Resend domain verification, use `BETA_LEAD_FROM="Clarvo <onboarding@resend.dev>"` and `AUTH_EMAIL_FROM="Clarvo <onboarding@resend.dev>"`.
+- For final production after Resend verifies `clarvo.nl`, use `BETA_LEAD_FROM="Clarvo <hello@clarvo.nl>"` and `AUTH_EMAIL_FROM="Clarvo <hello@clarvo.nl>"`.
+- Run `npm run smoke:resend -- user@example.com` locally to test both the internal notification and submitter confirmation paths without using the landing UI.
 
 ## Backend
 

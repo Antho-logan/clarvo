@@ -32,7 +32,7 @@ Open operational tasks before Vercel / 28 May:
    - `BETA_LEAD_TO`
    - `BETA_LEAD_FROM`
 3. Deploy the landing/app shell to Vercel.
-4. Submit one real landing lead form and confirm the email arrives at `BETA_LEAD_TO`.
+4. Submit one real landing lead form and confirm the internal email arrives at `BETA_LEAD_TO` and the submitter receives the confirmation email.
 5. Run one controlled live Legal Review Mode smoke before the demo.
 6. For the full app, provision hosted FastAPI plus a populated hosted PostgreSQL/pgvector database. Landing-only deployment does not prove the full RAG app is production-hosted.
 
@@ -80,13 +80,23 @@ Current state:
 - `RESEND_API_KEY`, `BETA_LEAD_TO`, and `BETA_LEAD_FROM` are read from `.env.local`.
 - A personal inbox is acceptable for `BETA_LEAD_TO` during testing.
 - `BETA_LEAD_FROM` must be a sender that Resend allows. A normal Gmail address fails as the sender.
+- Receiving mail at Hostnet proves `hello@clarvo.nl` can receive mail, but Resend still must verify the domain/sender before it can send from `hello@clarvo.nl`.
 - Local smoke with `Clarvo <onboarding@resend.dev>` returned `200 {"ok":true}` through `/api/beta-access`.
 
 Next action:
+- Temporary testing before Resend domain verification:
+  - `BETA_LEAD_TO=hello@clarvo.nl`
+  - `BETA_LEAD_FROM="Clarvo <onboarding@resend.dev>"`
+  - `AUTH_EMAIL_FROM="Clarvo <onboarding@resend.dev>"`
 - Before launch, verify the company domain in Resend and set `BETA_LEAD_FROM` to the real Clarvo sender, ideally `Clarvo <hello@clarvo.nl>`.
-- Required hosted env vars: `RESEND_API_KEY`, `BETA_LEAD_TO`, `BETA_LEAD_FROM`.
+- Final production after Resend verifies `clarvo.nl`:
+  - `BETA_LEAD_TO=hello@clarvo.nl`
+  - `BETA_LEAD_FROM="Clarvo <hello@clarvo.nl>"`
+  - `AUTH_EMAIL_FROM="Clarvo <hello@clarvo.nl>"`
+- Required hosted env vars: `RESEND_API_KEY`, `BETA_LEAD_TO`, `BETA_LEAD_FROM`, `AUTH_EMAIL_FROM`.
 - Restart/redeploy after changing env vars.
-- Submit the landing form and confirm the lead email arrives at `BETA_LEAD_TO`.
+- Submit the landing form and confirm the lead email arrives at `BETA_LEAD_TO` and the submitter receives the confirmation email.
+- Local direct smoke command: `npm run smoke:resend -- user@example.com`.
 
 ### 2026-05-20 P0 launch blocker pass
 

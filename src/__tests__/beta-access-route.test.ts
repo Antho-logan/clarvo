@@ -73,7 +73,44 @@ describe("/api/beta-access", () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({
       error: "Demo request email delivery is not configured",
+      reason: "missing_resend_api_key",
     });
+  });
+
+  it("returns a non-sensitive reason when the internal notification fails", async () => {
+    process.env.RESEND_API_KEY = "test-resend-key";
+    process.env.BETA_LEAD_TO = "hello@clarvo.nl";
+    process.env.BETA_LEAD_FROM = "Clarvo <hello@clarvo.nl>";
+    resendMocks.send.mockResolvedValueOnce({
+      error: {
+        name: "validation_error",
+        message: "Domain is not verified",
+        statusCode: 403,
+        code: "validation_error",
+      },
+    });
+    resendMocks.Resend.mockImplementation(function ResendMock(
+      this: { emails: { send: typeof resendMocks.send } },
+    ) {
+      this.emails = { send: resendMocks.send };
+    });
+    const { POST } = await import("@/app/api/beta-access/route");
+
+    const response = await POST(
+      jsonRequest({
+        locale: "nl",
+        name: "Ada Lovelace",
+        email: "ada@example.com",
+        company: "Clarvo",
+      }),
+    );
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({
+      error: "Email delivery failed",
+      reason: "internal_notification_failed",
+    });
+    expect(resendMocks.send).toHaveBeenCalledTimes(1);
   });
 
   it("sends demo requests through Resend and confirms receipt to the lead", async () => {
@@ -155,7 +192,10 @@ describe("/api/beta-access", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true });
+    expect(await response.json()).toEqual({
+      ok: true,
+      confirmationEmail: "failed",
+    });
     expect(resendMocks.send).toHaveBeenCalledTimes(2);
     expect(resendMocks.send).toHaveBeenNthCalledWith(
       2,

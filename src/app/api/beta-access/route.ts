@@ -43,15 +43,28 @@ export async function POST(request: Request) {
     message,
   });
 
-  if (!result.ok && result.reason === "not_configured") {
+  if (!result.ok && result.reason === "missing_resend_api_key") {
     return Response.json(
-      { error: "Demo request email delivery is not configured" },
+      {
+        error: "Demo request email delivery is not configured",
+        reason: "missing_resend_api_key",
+      },
       { status: 503 },
     );
   }
 
   if (!result.ok) {
-    return Response.json({ error: "Email delivery failed" }, { status: 502 });
+    return Response.json(
+      {
+        error: "Email delivery failed",
+        reason: "internal_notification_failed",
+      },
+      { status: 502 },
+    );
+  }
+
+  if (result.confirmationEmail === "failed") {
+    return Response.json({ ok: true, confirmationEmail: "failed" });
   }
 
   return Response.json({ ok: true });

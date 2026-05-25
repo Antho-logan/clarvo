@@ -37,10 +37,19 @@ Landing-only deploy:
 
 ## Resend checklist
 
+- Receiving mail at Hostnet proves the mailbox works, but Resend still must verify the domain/sender before it can send from `hello@clarvo.nl`.
+- Temporary testing before Resend domain verification:
+  - `BETA_LEAD_TO=hello@clarvo.nl`
+  - `BETA_LEAD_FROM="Clarvo <onboarding@resend.dev>"`
+  - `AUTH_EMAIL_FROM="Clarvo <onboarding@resend.dev>"`
+- Final production after Resend verifies `clarvo.nl`:
+  - `BETA_LEAD_TO=hello@clarvo.nl`
+  - `BETA_LEAD_FROM="Clarvo <hello@clarvo.nl>"`
+  - `AUTH_EMAIL_FROM="Clarvo <hello@clarvo.nl>"`
 - Verify the company sending domain or company sender.
 - Set `BETA_LEAD_FROM` to that verified sender, ideally `Clarvo <hello@clarvo.nl>`.
 - Send one real beta lead form submission after deploy.
-- Confirm the email arrives at `BETA_LEAD_TO`.
+- Confirm the internal notification arrives at `BETA_LEAD_TO` and the submitter receives the confirmation email.
 - Keep sandbox sender only for local testing, not the final company-facing launch.
 
 ## Live smoke checklist

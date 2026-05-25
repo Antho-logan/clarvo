@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "smoke:resend": "node scripts/smoke-resend-lead.mjs",
     "gen:api": "openapi-typescript api/openapi.json -o src/lib/api/schema.d.ts"
   },
   "dependencies": {

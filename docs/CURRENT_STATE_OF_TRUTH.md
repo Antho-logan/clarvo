@@ -103,15 +103,16 @@ No fresh live OpenAI call was run during the 2026-05-21 QA pass to avoid unneces
 The public landing page uses one demo CTA: `Vraag een demo aan` / `Request a demo`.
 The form posts to `/api/beta-access`, which validates the payload and sends the lead through Resend.
 
-Local route submission was tested on 2026-05-20. A personal sender failed with `502 Email delivery failed`; the Resend sandbox sender `Clarvo <onboarding@resend.dev>` succeeded through `/api/beta-access` with `200 {"ok":true}`. `BETA_LEAD_TO` can be a personal inbox for testing, but production `BETA_LEAD_FROM` must be a Resend-verified company-domain sender before launch.
+Local route submission was tested on 2026-05-20. A personal sender failed with `502 Email delivery failed`; the Resend sandbox sender `Clarvo <onboarding@resend.dev>` succeeded through `/api/beta-access` with `200 {"ok":true}`. `BETA_LEAD_TO` can be a personal inbox for testing, but production `BETA_LEAD_FROM` must be a Resend-verified company-domain sender before launch. Receiving mail at Hostnet proves `hello@clarvo.nl` can receive mail, but Resend still must verify the domain/sender before it can send from `hello@clarvo.nl`.
 
 Follow-up before launch:
 
 1. Decide the final company sender/domain.
 2. Verify that sender/domain in Resend.
-3. Set deployment env vars: `RESEND_API_KEY`, `BETA_LEAD_TO`, and `BETA_LEAD_FROM`.
+3. Set deployment env vars: `RESEND_API_KEY`, `BETA_LEAD_TO`, `BETA_LEAD_FROM`, and `AUTH_EMAIL_FROM`.
 4. Restart/redeploy the app.
-5. Submit one real `Vraag een demo aan` request and confirm the email arrives.
+5. Run `npm run smoke:resend -- user@example.com` locally before deploy if local `.env.local` has the same sender configuration.
+6. Submit one real `Vraag een demo aan` request and confirm the internal notification and submitter confirmation emails arrive.
 
 Remaining launch risk is operational rather than product-code P0: Resend needs a verified company sender/domain for production, Vercel env vars must be set, and the full public app requires hosted FastAPI plus a populated hosted PostgreSQL/pgvector database.
 
