@@ -53,6 +53,18 @@ describe("approved static landing", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps the public landing free of old branding and fake trust claims", () => {
+    const { container } = render(<ApprovedStaticLanding />);
+    const text = container.textContent || "";
+
+    expect(text).toContain("Clarvo");
+    expect(text).toContain("Clarvo ondersteunt juridisch onderzoek");
+    expect(text).not.toContain("Veridicta");
+    expect(text).not.toContain("SOC 2");
+    expect(text).not.toContain("ISO 27001");
+    expect(text).not.toContain("zero hallucinations");
+  });
+
   it("opens the beta access modal and shows the success state", async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal("fetch", fetchMock);
