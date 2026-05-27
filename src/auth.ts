@@ -1,30 +1,18 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Resend from "next-auth/providers/resend";
-import PostgresAdapter from "@auth/pg-adapter";
-import { Pool } from "pg";
 import argon2 from "argon2";
+import PostgresAdapter from "@auth/pg-adapter";
 
 import { resolveCredentialIdentity } from "@/lib/auth-identifiers";
-
-function normalizePostgresUrl(value: string | undefined) {
-  return value
-    ?.replace("postgresql+psycopg://", "postgresql://")
-    .replace("postgresql+psycopg2://", "postgresql://");
-}
-
-const pool = new Pool({
-  connectionString: normalizePostgresUrl(
-    process.env.AUTH_DATABASE_URL || process.env.DATABASE_URL,
-  ),
-});
+import { authDbPool } from "@/lib/auth-db";
 
 async function getOrCreateCredentialsUser(
   email: string,
   password: string,
   name: string,
 ) {
-  const existing = await pool.query(
+  const existing = await authDbPool.query(
     "SELECT id, name, email, image, password_hash FROM users WHERE lower(email) = lower($1) LIMIT 1",
     [email],
   );
@@ -43,7 +31,7 @@ async function getOrCreateCredentialsUser(
   }
 
   const passwordHash = await argon2.hash(password);
-  const created = await pool.query(
+  const created = await authDbPool.query(
     'INSERT INTO users (name, email, "emailVerified", password_hash) VALUES ($1, $2, now(), $3) RETURNING id, name, email, image',
     [name, email, passwordHash],
   );
@@ -93,7 +81,7 @@ if (process.env.RESEND_API_KEY) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PostgresAdapter(pool),
+  adapter: PostgresAdapter(authDbPool),
   providers,
   trustHost: true,
   session: {
