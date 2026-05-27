@@ -38,8 +38,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <div className="mx-auto flex min-h-[calc(100svh-3.5rem)] max-w-6xl items-center sm:min-h-[calc(100vh-5rem)]">
         <div className="grid w-full gap-7 lg:grid-cols-[1fr_460px] lg:items-center">
           <section>
-            <Link href="/" className="font-serif text-2xl font-bold tracking-[0.02em] text-[#1F1D1A]">
-              Clarvo
+            <Link href="/" className="font-serif text-[1.6rem] font-bold uppercase tracking-[0.02em] text-[#1F1D1A]">
+              CLARVO
             </Link>
             <div className="mt-9 max-w-2xl sm:mt-12">
               <div className="mb-5 inline-flex items-center rounded-full border border-[#D8D2C8] bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#63534B] shadow-sm sm:mb-6">
