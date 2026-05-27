@@ -38,7 +38,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <div className="mx-auto flex min-h-[calc(100svh-3.5rem)] max-w-6xl items-center sm:min-h-[calc(100vh-5rem)]">
         <div className="grid w-full gap-7 lg:grid-cols-[1fr_460px] lg:items-center">
           <section>
-            <Link href="/" className="font-serif text-[1.6rem] font-bold uppercase tracking-[0.02em] text-[#1F1D1A]">
+            <Link
+              href="/"
+              style={{
+                color: "#1F1D1A",
+                fontFamily: 'Georgia, "Times New Roman", ui-serif, serif',
+                fontSize: "1.6rem",
+                fontWeight: 700,
+                letterSpacing: "0.02em",
+                lineHeight: 1.6,
+                textTransform: "uppercase",
+              }}
+            >
               CLARVO
             </Link>
             <div className="mt-9 max-w-2xl sm:mt-12">
