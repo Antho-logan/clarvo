@@ -1,4 +1,5 @@
 import { Code2, FileText, Paintbrush, ShieldCheck } from "lucide-react";
+import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +43,13 @@ const SANDBOX_FILES = [
 ] as const;
 
 export default function UiSandboxPage() {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.ENABLE_UI_SANDBOX !== "true"
+  ) {
+    notFound();
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-12">
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">

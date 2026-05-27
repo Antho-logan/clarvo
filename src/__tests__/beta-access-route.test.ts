@@ -9,11 +9,21 @@ vi.mock("resend", () => ({
   Resend: resendMocks.Resend,
 }));
 
-function jsonRequest(payload: unknown) {
+function jsonRequest(payload: unknown, headers?: HeadersInit) {
   return new Request("http://localhost/api/beta-access", {
     method: "POST",
+    headers,
     body: JSON.stringify(payload),
   });
+}
+
+function restoreEnv(name: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
 }
 
 describe("/api/beta-access", () => {
@@ -25,12 +35,13 @@ describe("/api/beta-access", () => {
   };
 
   afterEach(() => {
-    process.env.RESEND_API_KEY = originalEnv.resendApiKey;
-    process.env.BETA_LEAD_TO = originalEnv.betaLeadTo;
-    process.env.BETA_LEAD_FROM = originalEnv.betaLeadFrom;
-    process.env.AUTH_EMAIL_FROM = originalEnv.authEmailFrom;
+    restoreEnv("RESEND_API_KEY", originalEnv.resendApiKey);
+    restoreEnv("BETA_LEAD_TO", originalEnv.betaLeadTo);
+    restoreEnv("BETA_LEAD_FROM", originalEnv.betaLeadFrom);
+    restoreEnv("AUTH_EMAIL_FROM", originalEnv.authEmailFrom);
     resendMocks.send.mockReset();
     resendMocks.Resend.mockReset();
+    vi.resetModules();
   });
 
   it("rejects invalid demo request payloads", async () => {
@@ -42,6 +53,26 @@ describe("/api/beta-access", () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "Invalid lead payload" });
+    expect(resendMocks.Resend).not.toHaveBeenCalled();
+  });
+
+  it("rejects oversized demo request payload fields", async () => {
+    const { POST } = await import("@/app/api/beta-access/route");
+
+    const response = await POST(
+      jsonRequest({
+        locale: "nl",
+        name: "A".repeat(121),
+        email: "ada@example.com",
+        company: "Clarvo",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      error: "Invalid lead payload",
+      reason: "field_too_long",
+    });
     expect(resendMocks.Resend).not.toHaveBeenCalled();
   });
 
@@ -206,5 +237,52 @@ describe("/api/beta-access", () => {
         html: expect.stringContaining("This is not legal advice."),
       }),
     );
+  });
+
+  it("rate limits repeated demo requests by forwarded client IP", async () => {
+    process.env.RESEND_API_KEY = "test-resend-key";
+    process.env.BETA_LEAD_TO = "hello@clarvo.nl";
+    process.env.BETA_LEAD_FROM = "Clarvo <hello@clarvo.nl>";
+    resendMocks.send.mockResolvedValue({ error: null });
+    resendMocks.Resend.mockImplementation(function ResendMock(
+      this: { emails: { send: typeof resendMocks.send } },
+    ) {
+      this.emails = { send: resendMocks.send };
+    });
+    const { POST } = await import("@/app/api/beta-access/route");
+
+    for (let i = 0; i < 5; i += 1) {
+      const response = await POST(
+        jsonRequest(
+          {
+            locale: "nl",
+            name: `Ada Lovelace ${i}`,
+            email: `ada${i}@example.com`,
+            company: "Clarvo",
+          },
+          { "x-forwarded-for": "203.0.113.10, 10.0.0.1" },
+        ),
+      );
+
+      expect(response.status).toBe(200);
+    }
+
+    const limited = await POST(
+      jsonRequest(
+        {
+          locale: "nl",
+          name: "Ada Lovelace limited",
+          email: "ada-limited@example.com",
+          company: "Clarvo",
+        },
+        { "x-forwarded-for": "203.0.113.10, 10.0.0.1" },
+      ),
+    );
+
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toEqual({
+      error: "Too many demo requests. Please try again later.",
+    });
+    expect(resendMocks.send).toHaveBeenCalledTimes(10);
   });
 });

@@ -46,6 +46,8 @@ P2 tasks intentionally deferred beyond MVP:
 - Public self-serve signup.
 - Active workflow automation runner.
 - Large dashboard redesign.
+- Strict Content Security Policy; design and test separately so Next/Vercel
+  inline scripts and styles are not broken during the private demo.
 
 Current surface decision:
 - `Workflows` remains roadmap-only for MVP. Do not build real automation there before the Assistant, Knowledge, Vault, and Matters flows are proven.
