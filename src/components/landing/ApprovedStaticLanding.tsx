@@ -668,6 +668,7 @@ export function ApprovedStaticLanding() {
           >
             <span className="bar" />
             <span className="bar" />
+            <span className="bar" />
           </button>
         </div>
         <div className={`mobile-menu ${menuOpen ? "is-active" : ""}`}>
@@ -687,7 +688,7 @@ export function ApprovedStaticLanding() {
       <main>
         <div className="hero-bg-wrapper">
           <section className="hero container">
-            <div className="hero-content text-center center-block fade-in-section">
+            <div className="hero-content text-center center-block">
               <div className="beta-text-simple">{t.hero.beta}</div>
               <h1 className="hero-title">{t.hero.title}</h1>
               <p className="hero-subtitle center-block">{t.hero.subtitle}</p>
@@ -697,7 +698,7 @@ export function ApprovedStaticLanding() {
               <p className="hero-disclaimer center-block">{t.hero.disclaimer}</p>
             </div>
 
-            <div className="mockup-wrapper mt-lg fade-in-section">
+            <div className="mockup-wrapper mt-lg">
               <div className="mockup-container">
                 <div className="mockup-query">{t.hero.query}</div>
                 <div className="mockup-answer">

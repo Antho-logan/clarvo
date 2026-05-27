@@ -19,6 +19,11 @@ export const metadata: Metadata = {
   title: "Clarvo - Dutch legal research, grounded in sources",
   description:
     "A research assistant for Dutch legal professionals. Ask source-backed questions across Dutch legislation and case law, and inspect every citation. Currently in private beta, focused on employment and tenancy law.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({

@@ -34,28 +34,28 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const devBypass = process.env.AUTH_DEV_BYPASS === "true";
 
   return (
-    <main className="min-h-screen bg-[#EEEDE4] px-6 py-10 text-[#1F1D1A]">
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center">
-        <div className="grid w-full gap-8 lg:grid-cols-[1fr_460px] lg:items-center">
+    <main className="min-h-screen bg-[#EEEDE4] bg-[linear-gradient(rgba(245,245,244,0.88),rgba(245,245,244,0.88)),url('/landing/doodle_art_bg.png')] bg-[length:cover,980px_auto] bg-center bg-no-repeat px-5 py-7 text-[#1F1D1A] sm:px-6 sm:py-10">
+      <div className="mx-auto flex min-h-[calc(100svh-3.5rem)] max-w-6xl items-center sm:min-h-[calc(100vh-5rem)]">
+        <div className="grid w-full gap-7 lg:grid-cols-[1fr_460px] lg:items-center">
           <section>
-            <Link href="/" className="font-serif text-2xl font-bold tracking-tight">
-              CLARVO
+            <Link href="/" className="font-serif text-2xl font-bold tracking-[0.02em] text-[#1F1D1A]">
+              Clarvo
             </Link>
-            <div className="mt-12 max-w-2xl">
-              <div className="mb-6 inline-flex items-center rounded-full border border-[#D8D2C8] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#63534B]">
+            <div className="mt-9 max-w-2xl sm:mt-12">
+              <div className="mb-5 inline-flex items-center rounded-full border border-[#D8D2C8] bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#63534B] shadow-sm sm:mb-6">
                 <ShieldCheck className="mr-2 h-4 w-4 text-[#DD3300]" />
                 Protected workspace
               </div>
-              <h1 className="font-serif text-5xl leading-tight tracking-tight md:text-6xl">
+              <h1 className="font-serif text-4xl leading-tight tracking-tight sm:text-5xl md:text-6xl">
                 Legal research stays behind the dashboard gate.
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-8 text-[#63534B]">
+              <p className="mt-5 max-w-xl text-base leading-7 text-[#63534B] sm:mt-6 sm:text-lg sm:leading-8">
                 Sign in to search the BWB and ECLI corpus, run workflows, and inspect cited sources.
               </p>
             </div>
           </section>
 
-          <Card className="border-[#D8D2C8] bg-white shadow-xl">
+          <Card className="border-[#D8D2C8] bg-white/95 shadow-xl backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="font-serif text-3xl">Sign in</CardTitle>
               <p className="text-sm text-[#63534B]">

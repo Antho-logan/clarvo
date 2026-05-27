@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Clarvo">
+  <rect width="512" height="512" rx="108" fill="#EEEDE4"/>
+  <rect x="34" y="34" width="444" height="444" rx="88" fill="none" stroke="#D8D2C8" stroke-width="18"/>
+  <path d="M330 350c-25 20-54 30-88 30-78 0-136-55-136-124 0-71 58-124 136-124 35 0 66 11 90 31l-29 45c-17-14-36-21-59-21-44 0-75 29-75 69 0 41 31 69 76 69 23 0 43-7 60-22l25 47Z" fill="#1F1D1A"/>
+  <path d="M322 161c15 10 27 23 37 38l-54 9c-7-8-16-15-27-19l44-28Z" fill="#D94A1E"/>
+  <circle cx="372" cy="140" r="22" fill="#D94A1E"/>
+</svg>

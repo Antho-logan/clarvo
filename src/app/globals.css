@@ -49,13 +49,17 @@
 }
 
 @layer base {
+  html {
+    background-color: #EEEDE4;
+  }
+
   * {
     border-color: hsl(var(--border) / 1);
     /* Safe fallback instead of @apply for Tailwind 4 compat */
   }
 
   body {
-    background-color: hsl(var(--background) / 1);
+    background-color: #EEEDE4;
     color: hsl(var(--foreground) / 1);
     font-family: var(--font-inter), sans-serif;
     overflow-x: clip;
