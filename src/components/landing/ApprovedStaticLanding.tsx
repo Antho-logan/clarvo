@@ -575,8 +575,11 @@ export function ApprovedStaticLanding() {
   }, [leadModalOpen]);
 
   useEffect(() => {
+    const root = document.querySelector(".static-landing");
+    root?.classList.add("is-reveal-ready");
+
     const elements = document.querySelectorAll(
-      ".static-landing .section, .static-landing .fade-in-section",
+      ".static-landing .reveal-section, .static-landing .fade-in-section",
     );
     if (!("IntersectionObserver" in window)) {
       elements.forEach((element) => element.classList.add("is-visible"));
@@ -680,7 +683,6 @@ export function ApprovedStaticLanding() {
             <Link href="/login" className="btn-text">
               {t.nav.signIn}
             </Link>
-            {renderLeadButton(t.nav.request, "btn-primary")}
           </div>
         </div>
       </header>
@@ -736,7 +738,7 @@ export function ApprovedStaticLanding() {
           </section>
         </div>
 
-        <section id="problem" className="section section-alt">
+        <section id="problem" className="section section-alt reveal-section">
           <div className="container">
             <div className="section-intro">
               <div className="eyebrow">{t.problem.eyebrow}</div>
@@ -756,7 +758,7 @@ export function ApprovedStaticLanding() {
           </div>
         </section>
 
-        <section id="product" className="section">
+        <section id="product" className="section reveal-section">
           <div className="container">
             <div className="asymmetric-layout">
               <div className="layout-main">
@@ -792,7 +794,7 @@ export function ApprovedStaticLanding() {
           </div>
         </section>
 
-        <section id="practice-areas" className="section section-alt">
+        <section id="practice-areas" className="section section-alt reveal-section">
           <div className="container">
             <div className="section-intro">
               <div className="eyebrow">{t.practice.eyebrow}</div>
@@ -814,7 +816,7 @@ export function ApprovedStaticLanding() {
           </div>
         </section>
 
-        <section className="section">
+        <section className="section reveal-section">
           <div className="container">
             <div className="section-intro text-center">
               <div className="eyebrow">{t.how.eyebrow}</div>
@@ -875,7 +877,7 @@ export function ApprovedStaticLanding() {
           </div>
         </section>
 
-        <section id="trust" className="section section-alt">
+        <section id="trust" className="section section-alt reveal-section">
           <div className="container">
             <div className="section-intro">
               <div className="eyebrow">{t.trust.eyebrow}</div>
@@ -897,7 +899,7 @@ export function ApprovedStaticLanding() {
           </div>
         </section>
 
-        <section className="section clarity-section">
+        <section className="section clarity-section reveal-section">
           <div className="container">
             <h2 className="section-title text-center">{t.clarity.title}</h2>
             <div className="clarity-block">
@@ -921,7 +923,7 @@ export function ApprovedStaticLanding() {
           </div>
         </section>
 
-        <section id="beta" className="section section-alt beta-section">
+        <section id="beta" className="section section-alt beta-section reveal-section">
           <div className="container">
             <div className="beta-content">
               <div className="eyebrow">{t.beta.eyebrow}</div>
@@ -942,7 +944,7 @@ export function ApprovedStaticLanding() {
         </section>
 
         <div className="hero-bg-wrapper">
-          <section className="section final-cta">
+          <section className="section final-cta reveal-section">
             <div className="container text-center fade-in-section">
               <h2 className="section-title">{t.final.title}</h2>
               <p className="section-lede center-block">{t.final.lede}</p>

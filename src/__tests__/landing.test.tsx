@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApprovedStaticLanding } from "@/components/landing/ApprovedStaticLanding";
@@ -51,6 +51,23 @@ describe("approved static landing", () => {
     expect(
       screen.queryByRole("link", { name: /book a walkthrough/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps the mobile menu free of a duplicate demo CTA", () => {
+    const { container } = render(<ApprovedStaticLanding />);
+
+    fireEvent.click(screen.getByRole("button", { name: /menu in\/uitschakelen/i }));
+
+    const mobileMenu = container.querySelector(".mobile-menu");
+    expect(mobileMenu).not.toBeNull();
+    expect(
+      within(mobileMenu as HTMLElement).queryByRole("button", {
+        name: /vraag een demo aan/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: /vraag een demo aan/i }).length,
+    ).toBeGreaterThan(0);
   });
 
   it("keeps the public landing free of old branding and fake trust claims", () => {
