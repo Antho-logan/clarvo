@@ -1218,15 +1218,40 @@
 }
 
 /* Animations */
+.root :global(.hero-intro-eyebrow),
+.root :global(.hero-intro-title),
+.root :global(.hero-intro-copy),
+.root :global(.hero-intro-cta),
+.root :global(.hero-intro-preview) {
+    animation: heroSoftDrop 0.74s cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: opacity, filter, transform;
+}
+
+.root :global(.hero-intro-title) {
+    animation-delay: 0.04s;
+}
+
+.root :global(.hero-intro-copy) {
+    animation-delay: 0.1s;
+}
+
+.root :global(.hero-intro-cta) {
+    animation-delay: 0.14s;
+}
+
+.root :global(.hero-intro-preview) {
+    animation-delay: 0.18s;
+}
+
 .root:global(.is-reveal-ready) :global(.fade-in-section),
 .root:global(.is-reveal-ready) :global(.reveal-section) {
     opacity: 0;
-    filter: blur(5px);
-    transform: translateY(-24px);
+    filter: blur(1.5px);
+    transform: translateY(12px);
     transition:
-        opacity 0.82s cubic-bezier(0.22, 1, 0.36, 1),
-        filter 0.82s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.82s cubic-bezier(0.22, 1, 0.36, 1);
+        opacity 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+        filter 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
     will-change: opacity, filter, transform;
 }
 
@@ -1238,45 +1263,18 @@
     will-change: auto;
 }
 
-.root:global(.is-reveal-ready) :global(.reveal-section .editorial-card),
-.root:global(.is-reveal-ready) :global(.reveal-section .card-practice),
-.root:global(.is-reveal-ready) :global(.reveal-section .step-card),
-.root:global(.is-reveal-ready) :global(.reveal-section .trust-item),
-.root:global(.is-reveal-ready) :global(.reveal-section .capability-item) {
-    opacity: 0;
-    filter: blur(3px);
-    transform: translateY(-12px);
-    transition:
-        opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-        filter 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-    transition-delay: 0.04s;
-}
+@keyframes heroSoftDrop {
+    from {
+        opacity: 0;
+        filter: blur(2px);
+        transform: translateY(-14px);
+    }
 
-.root:global(.is-reveal-ready) :global(.reveal-section.is-visible .editorial-card),
-.root:global(.is-reveal-ready) :global(.reveal-section.is-visible .card-practice),
-.root:global(.is-reveal-ready) :global(.reveal-section.is-visible .step-card),
-.root:global(.is-reveal-ready) :global(.reveal-section.is-visible .trust-item),
-.root:global(.is-reveal-ready) :global(.reveal-section.is-visible .capability-item) {
-    opacity: 1;
-    filter: blur(0);
-    transform: none;
-}
-
-.root:global(.is-reveal-ready) :global(.reveal-section .editorial-card:nth-child(2)),
-.root:global(.is-reveal-ready) :global(.reveal-section .card-practice:nth-child(2)),
-.root:global(.is-reveal-ready) :global(.reveal-section .step-card:nth-child(2)),
-.root:global(.is-reveal-ready) :global(.reveal-section .trust-item:nth-child(2)),
-.root:global(.is-reveal-ready) :global(.reveal-section .capability-item:nth-child(2)) {
-    transition-delay: 0.1s;
-}
-
-.root:global(.is-reveal-ready) :global(.reveal-section .editorial-card:nth-child(3)),
-.root:global(.is-reveal-ready) :global(.reveal-section .card-practice:nth-child(3)),
-.root:global(.is-reveal-ready) :global(.reveal-section .step-card:nth-child(3)),
-.root:global(.is-reveal-ready) :global(.reveal-section .trust-item:nth-child(3)),
-.root:global(.is-reveal-ready) :global(.reveal-section .capability-item:nth-child(3)) {
-    transition-delay: 0.16s;
+    to {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0);
+    }
 }
 
 /* Responsive */
@@ -1297,21 +1295,19 @@
 }
 
 @media (max-width: 768px) {
-    .root:global(.is-reveal-ready) :global(.fade-in-section),
-    .root:global(.is-reveal-ready) :global(.reveal-section) {
-        filter: blur(1.5px);
-        transform: translateY(-12px);
-        transition-duration: 0.64s;
+    .root :global(.hero-intro-eyebrow),
+    .root :global(.hero-intro-title),
+    .root :global(.hero-intro-copy),
+    .root :global(.hero-intro-cta),
+    .root :global(.hero-intro-preview) {
+        animation-duration: 0.62s;
     }
 
-    .root:global(.is-reveal-ready) :global(.reveal-section .editorial-card),
-    .root:global(.is-reveal-ready) :global(.reveal-section .card-practice),
-    .root:global(.is-reveal-ready) :global(.reveal-section .step-card),
-    .root:global(.is-reveal-ready) :global(.reveal-section .trust-item),
-    .root:global(.is-reveal-ready) :global(.reveal-section .capability-item) {
+    .root:global(.is-reveal-ready) :global(.fade-in-section),
+    .root:global(.is-reveal-ready) :global(.reveal-section) {
         filter: none;
-        transform: translateY(-8px);
-        transition-duration: 0.56s;
+        transform: translateY(8px);
+        transition-duration: 0.58s;
     }
 
     .root :global(.section-title) {
@@ -1492,18 +1488,25 @@
     .root :global(.mobile-menu.is-active),
     .root :global(.mobile-menu-toggle .bar),
     .root :global(.lead-modal),
+    .root :global(.hero-intro-eyebrow),
+    .root :global(.hero-intro-title),
+    .root :global(.hero-intro-copy),
+    .root :global(.hero-intro-cta),
+    .root :global(.hero-intro-preview),
     .root :global(.fade-in-section),
-    .root :global(.reveal-section .editorial-card),
-    .root :global(.reveal-section .card-practice),
-    .root :global(.reveal-section .step-card),
-    .root :global(.reveal-section .trust-item),
-    .root :global(.reveal-section .capability-item) {
+    .root :global(.reveal-section) {
         animation: none;
         transition: none;
     }
 
+    .root :global(.hero-intro-eyebrow),
+    .root :global(.hero-intro-title),
+    .root :global(.hero-intro-copy),
+    .root :global(.hero-intro-cta),
+    .root :global(.hero-intro-preview),
     .root :global(.fade-in-section) {
         opacity: 1;
+        filter: none;
         transform: none;
         will-change: auto;
     }
@@ -1515,16 +1518,6 @@
         will-change: auto;
     }
 
-    .root:global(.is-reveal-ready) :global(.reveal-section .editorial-card),
-    .root:global(.is-reveal-ready) :global(.reveal-section .card-practice),
-    .root:global(.is-reveal-ready) :global(.reveal-section .step-card),
-    .root:global(.is-reveal-ready) :global(.reveal-section .trust-item),
-    .root:global(.is-reveal-ready) :global(.reveal-section .capability-item) {
-        opacity: 1;
-        filter: none;
-        transform: none;
-        will-change: auto;
-    }
 }
 
 /* Product CSS Card */

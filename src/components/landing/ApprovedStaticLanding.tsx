@@ -689,18 +689,18 @@ export function ApprovedStaticLanding() {
 
       <main>
         <div className="hero-bg-wrapper">
-          <section className="hero container">
+          <section className="hero container hero-intro">
             <div className="hero-content text-center center-block">
-              <div className="beta-text-simple">{t.hero.beta}</div>
-              <h1 className="hero-title">{t.hero.title}</h1>
-              <p className="hero-subtitle center-block">{t.hero.subtitle}</p>
-              <div className="hero-ctas justify-center">
+              <div className="beta-text-simple hero-intro-eyebrow">{t.hero.beta}</div>
+              <h1 className="hero-title hero-intro-title">{t.hero.title}</h1>
+              <p className="hero-subtitle center-block hero-intro-copy">{t.hero.subtitle}</p>
+              <div className="hero-ctas justify-center hero-intro-cta">
                 {renderLeadButton(t.nav.request, "btn-primary btn-large")}
               </div>
-              <p className="hero-disclaimer center-block">{t.hero.disclaimer}</p>
+              <p className="hero-disclaimer center-block hero-intro-copy">{t.hero.disclaimer}</p>
             </div>
 
-            <div className="mockup-wrapper mt-lg">
+            <div className="mockup-wrapper mt-lg hero-intro-preview">
               <div className="mockup-container">
                 <div className="mockup-query">{t.hero.query}</div>
                 <div className="mockup-answer">
