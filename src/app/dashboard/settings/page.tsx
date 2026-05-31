@@ -70,7 +70,7 @@ export default async function SettingsPage() {
         </Card>
       ) : null}
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <form action={updateSettingsAction} className="space-y-8">
           <Card className="border-[#D8D2C8] bg-white shadow-sm">
             <CardHeader>
@@ -229,16 +229,16 @@ function StatusCard({
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="divide-y divide-[#EEEDE4]">
         {rows.map(([label, value]) => (
           <div
             key={label}
-            className="rounded-lg border border-[#D8D2C8] bg-[#F8F6F1] p-3"
+            className="flex items-start justify-between gap-6 py-3 first:pt-0 last:pb-0"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
-              {label}
-            </p>
-            <p className="mt-1 text-sm text-[#1F1D1A]">{value}</p>
+            <span className="text-sm text-[#7C746B]">{label}</span>
+            <span className="text-right text-sm font-medium text-[#1F1D1A]">
+              {value}
+            </span>
           </div>
         ))}
       </CardContent>

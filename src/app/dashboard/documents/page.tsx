@@ -107,19 +107,22 @@ export default async function VaultPage({ searchParams }: VaultPageProps) {
   const drawerCloseHref = createDocumentsHref({ sourceType, domain, limit });
 
   return (
-    <div className="max-w-7xl mx-auto pb-12">
-      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="mx-auto max-w-7xl pb-12">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-serif text-[#1F1D1A] tracking-tight mb-2">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
+            Document store
+          </p>
+          <h1 className="mb-2 font-serif text-3xl tracking-tight text-[#1F1D1A]">
             Vault
           </h1>
-          <p className="text-[#63534B] max-w-3xl">
+          <p className="max-w-3xl text-sm leading-6 text-[#63534B]">
             Inspect stored BWB and Rechtspraak rows from the backend document
             store and open source detail views.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           <Badge
             variant="outline"
             className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] ${
@@ -141,74 +144,65 @@ export default async function VaultPage({ searchParams }: VaultPageProps) {
 
       <div className="grid lg:grid-cols-[minmax(0,2fr)_360px] gap-8 items-start">
         <div className="space-y-6">
-          <Card className="bg-white border-[#D8D2C8] shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-serif text-[#1F1D1A]">
-                Live Document Filters
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="grid md:grid-cols-4 gap-3" method="get">
-                <select
-                  name="source_type"
-                  defaultValue={isValidSourceType(sourceType) ? sourceType : ""}
-                  className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
-                >
-                  <option value="">All sources</option>
-                  {SOURCE_TYPE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+          <div className="rounded-xl border border-[#D8D2C8] bg-white p-5 shadow-sm">
+            <form className="grid gap-3 md:grid-cols-4" method="get">
+              <select
+                name="source_type"
+                defaultValue={isValidSourceType(sourceType) ? sourceType : ""}
+                className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
+              >
+                <option value="">All sources</option>
+                {SOURCE_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
 
-                <select
-                  name="domain"
-                  defaultValue={isValidDomain(domain) ? domain : ""}
-                  className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
-                >
-                  <option value="">All domains</option>
-                  {DOMAIN_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+              <select
+                name="domain"
+                defaultValue={isValidDomain(domain) ? domain : ""}
+                className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
+              >
+                <option value="">All domains</option>
+                {DOMAIN_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
 
-                <select
-                  name="limit"
-                  defaultValue={String(limit)}
-                  className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
-                >
-                  {[10, 12, 20, 30].map((option) => (
-                    <option key={option} value={option}>
-                      {option} documents
-                    </option>
-                  ))}
-                </select>
+              <select
+                name="limit"
+                defaultValue={String(limit)}
+                className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
+              >
+                {[10, 12, 20, 30].map((option) => (
+                  <option key={option} value={option}>
+                    {option} documents
+                  </option>
+                ))}
+              </select>
 
-                <Button className="h-11 bg-[#1F1D1A] text-white hover:bg-[#1F1D1A]/90">
-                  Refresh Vault
-                </Button>
-              </form>
+              <Button className="h-11 bg-[#1F1D1A] text-white hover:bg-[#1F1D1A]/90">
+                Refresh Vault
+              </Button>
+            </form>
 
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[#63534B]">
-                <span className="font-medium text-[#1F1D1A]">
-                  {isValidSourceType(sourceType)
-                    ? getSourceTypeLabel(sourceType)
-                    : "All sources"}
-                </span>
-                <span>·</span>
-                <span>
-                  {isValidDomain(domain)
-                    ? getDomainLabel(domain)
-                    : "All domains"}
-                </span>
-                <span>·</span>
-                <span>Showing up to {limit} records</span>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[#63534B]">
+              <span className="font-medium text-[#1F1D1A]">
+                {isValidSourceType(sourceType)
+                  ? getSourceTypeLabel(sourceType)
+                  : "All sources"}
+              </span>
+              <span>·</span>
+              <span>
+                {isValidDomain(domain) ? getDomainLabel(domain) : "All domains"}
+              </span>
+              <span>·</span>
+              <span>Showing up to {limit} records</span>
+            </div>
+          </div>
 
           {documentsError ? (
             <Card className="bg-white border-[#DD3300]/20 shadow-sm">

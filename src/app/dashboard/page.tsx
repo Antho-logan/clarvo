@@ -157,24 +157,31 @@ export default async function DashboardHome() {
       : null;
 
   return (
-    <div className="space-y-10 max-w-6xl mx-auto pb-12">
-      {/* Greeting + quick actions */}
-      <section className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="mx-auto max-w-6xl space-y-8 pb-12">
+      {/* Header: greeting + status + primary actions */}
+      <section className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em] text-[#7C746B]">
             {formatTime(now)} · {now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
           </p>
-          <h1 className="mt-2 text-3xl md:text-4xl font-serif text-[#1F1D1A] tracking-tight">
+          <h1 className="mt-2 font-serif text-3xl tracking-tight text-[#1F1D1A] md:text-4xl">
             {greeting(now)}, {displayName}.
           </h1>
           <p className="mt-1 text-[#63534B]">
             Here&rsquo;s what&rsquo;s live in your Clarvo workspace.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#D8D2C8] bg-white px-3 py-1.5 text-xs font-medium text-[#1F1D1A]">
+            <span
+              className={`h-2 w-2 rounded-full ${isBackendLive ? "bg-emerald-500" : "bg-red-500"}`}
+              aria-hidden="true"
+            />
+            {isBackendLive ? "Backend live" : "Backend offline"}
+          </span>
           <Button asChild variant="outline" className="border-[#D8D2C8] bg-white text-[#1F1D1A] hover:bg-[#F5F5F4]">
             <Link href="/dashboard/agents">
-              <Sparkles className="w-4 h-4 mr-2 text-[#DD3300]" />
+              <Sparkles className="mr-2 h-4 w-4 text-[#DD3300]" />
               Ask Clarvo
             </Link>
           </Button>
@@ -184,123 +191,128 @@ export default async function DashboardHome() {
         </div>
       </section>
 
-      {/* Pulse strip */}
-      <section className="rounded-xl border border-[#D8D2C8] bg-white px-5 py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-        <div className="flex items-center gap-2">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              isBackendLive ? "bg-emerald-500" : "bg-red-500"
-            }`}
-            aria-hidden="true"
-          />
-          <span className="text-sm font-medium text-[#1F1D1A]">
-            {isBackendLive ? "Backend live" : "Backend offline"}
-          </span>
-        </div>
-        <PulseStat label="Loaded sample" value={totalSourceCount.toLocaleString()} />
-        <PulseStat label="Last ingest" value={lastIngestRelative || "—"} />
-        <PulseStat
-          label="Running jobs"
-          value={runningJobs > 0 ? String(runningJobs) : "Idle"}
-        />
-        <PulseStat label="Workflow previews" value={workflows.length.toLocaleString()} />
-        <PulseStat label="Matters" value={matterCount.toLocaleString()} />
-      </section>
-
-      {/* Jump back in */}
-      <section className="grid gap-4 md:grid-cols-3">
-        <JumpCard
-          href="/dashboard/agents"
-          icon={Bot}
-          title="Ask the assistant"
-          description="Pose a research question and get source-backed citations."
-          ctaLabel="Open assistant"
-        />
-        <JumpCard
-          href="/dashboard/knowledge"
-          icon={Scale}
-          title="Search the corpus"
-          description="Hybrid retrieval across stored BWB legislation and Rechtspraak rows."
-          ctaLabel="Search sources"
-        />
-        <JumpCard
-          href="/dashboard/matters"
-          icon={Briefcase}
-          title="Matter notes"
-          description={
-            matterCount > 0
-              ? `${matterCount} lightweight matter note${matterCount === 1 ? "" : "s"}.`
-              : "Lightweight matter notes are available; full matter workspaces come later."
-          }
-          ctaLabel="Open preview"
-        />
-      </section>
-
-      {/* Practice areas */}
-      <section>
-        <div className="flex items-end justify-between mb-3">
-          <h2 className="text-sm font-semibold text-[#1F1D1A] tracking-tight">
-            Practice areas
-          </h2>
-          <Link
-            href="/dashboard/knowledge"
-            className="text-xs text-[#7C746B] hover:text-[#1F1D1A]"
-          >
-            All sources →
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {domainCounts.map((area) => (
-            <Link
-              key={area.domain}
-              href={`/dashboard/knowledge?domain=${area.domain}`}
-              className="group rounded-xl border border-[#D8D2C8] bg-white p-4 hover:border-[#1F1D1A]/30 hover:shadow-sm transition-all"
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-8 h-8 rounded-lg bg-[#EEEDE4] flex items-center justify-center">
-                  <area.icon className="w-4 h-4 text-[#63534B]" />
-                </div>
-                <span className="text-xs font-medium text-[#7C746B] group-hover:text-[#1F1D1A]">
-                  {area.count === null
-                    ? "Check"
-                    : area.count > 0
-                      ? "Available"
-                      : "No sample"}
-                </span>
-              </div>
-              <p className="mt-3 text-sm font-medium text-[#1F1D1A] leading-tight">
-                {area.label}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
       {dataError ? (
-        <Card className="bg-white border-[#DD3300]/20 shadow-none">
-          <CardContent className="p-5 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-[#DD3300] mt-0.5 shrink-0" />
+        <Card className="border-[#DD3300]/20 bg-white shadow-none">
+          <CardContent className="flex gap-3 p-5">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#DD3300]" />
             <div>
-              <p className="font-medium text-[#1F1D1A] mb-1">
+              <p className="mb-1 font-medium text-[#1F1D1A]">
                 Dashboard data unavailable
               </p>
-              <p className="text-sm text-[#63534B] leading-6">{dataError}</p>
+              <p className="text-sm leading-6 text-[#63534B]">{dataError}</p>
             </div>
           </CardContent>
         </Card>
       ) : null}
 
-      {/* Latest + activity */}
-      <section className="grid lg:grid-cols-5 gap-6">
+      {/* At-a-glance metrics */}
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          icon={Database}
+          label="Stored sources"
+          value={totalSourceCount.toLocaleString()}
+          hint="In your sample corpus"
+        />
+        <StatCard
+          icon={Clock}
+          label="Last ingest"
+          value={lastIngestRelative || "—"}
+          hint={
+            runningJobs > 0
+              ? `${runningJobs} job${runningJobs === 1 ? "" : "s"} running`
+              : "Queue idle"
+          }
+        />
+        <StatCard
+          icon={Briefcase}
+          label="Matters"
+          value={matterCount.toLocaleString()}
+          hint="Lightweight notes"
+        />
+        <StatCard
+          icon={Sparkles}
+          label="Workflow previews"
+          value={workflows.length.toLocaleString()}
+          hint="Preview flows"
+        />
+      </section>
+
+      {/* Quick actions */}
+      <section>
+        <SectionHeading title="Jump back in" />
+        <div className="grid gap-4 md:grid-cols-3">
+          <JumpCard
+            href="/dashboard/agents"
+            icon={Bot}
+            title="Ask the assistant"
+            description="Pose a research question and get source-backed citations."
+            ctaLabel="Open assistant"
+          />
+          <JumpCard
+            href="/dashboard/knowledge"
+            icon={Scale}
+            title="Search the corpus"
+            description="Hybrid retrieval across stored BWB legislation and Rechtspraak rows."
+            ctaLabel="Search sources"
+          />
+          <JumpCard
+            href="/dashboard/matters"
+            icon={Briefcase}
+            title="Matter notes"
+            description={
+              matterCount > 0
+                ? `${matterCount} lightweight matter note${matterCount === 1 ? "" : "s"}.`
+                : "Lightweight matter notes are available; full matter workspaces come later."
+            }
+            ctaLabel="Open preview"
+          />
+        </div>
+      </section>
+
+      {/* Practice areas */}
+      <section>
+        <SectionHeading
+          title="Practice areas"
+          action={{ href: "/dashboard/knowledge", label: "All sources" }}
+        />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {domainCounts.map((area) => (
+            <Link
+              key={area.domain}
+              href={`/dashboard/knowledge?domain=${area.domain}`}
+              className="group flex items-center gap-3 rounded-xl border border-[#D8D2C8] bg-white p-4 transition-all hover:border-[#1F1D1A]/30 hover:shadow-sm"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EEEDE4]">
+                <area.icon className="h-4 w-4 text-[#63534B]" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium leading-tight text-[#1F1D1A]">
+                  {area.label}
+                </p>
+                <p className="mt-0.5 text-xs text-[#7C746B] group-hover:text-[#1F1D1A]">
+                  {area.count === null
+                    ? "Check availability"
+                    : area.count > 0
+                      ? "Sources available"
+                      : "No sample yet"}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Live data: latest sources + ingestion activity */}
+      <section className="grid gap-6 lg:grid-cols-5">
         {/* Latest stored sources */}
-        <div className="lg:col-span-3 rounded-xl border border-[#D8D2C8] bg-white">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-[#D8D2C8]/60">
+        <div className="rounded-xl border border-[#D8D2C8] bg-white lg:col-span-3">
+          <div className="flex items-center justify-between border-b border-[#D8D2C8]/60 px-5 py-3">
             <h2 className="text-sm font-semibold text-[#1F1D1A]">
               Latest stored sources
             </h2>
             <Link
               href="/dashboard/documents"
-              className="text-xs text-[#7C746B] hover:text-[#1F1D1A]"
+              className="text-xs font-medium text-[#7C746B] transition-colors hover:text-[#1F1D1A]"
             >
               Open vault →
             </Link>
@@ -321,10 +333,10 @@ export default async function DashboardHome() {
                         ? `?domain=${encodeURIComponent(document.domain)}`
                         : ""
                     }`}
-                    className="flex items-start justify-between gap-4 px-5 py-3 hover:bg-[#F5F5F4] transition-colors"
+                    className="flex items-start justify-between gap-4 px-5 py-3 transition-colors hover:bg-[#F5F5F4]"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#1F1D1A] truncate">
+                      <p className="truncate text-sm font-medium text-[#1F1D1A]">
                         {getDocumentHeading(document)}
                       </p>
                       <p className="mt-0.5 text-xs text-[#7C746B]">
@@ -332,7 +344,7 @@ export default async function DashboardHome() {
                         {getDomainLabel(document.domain)}
                       </p>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-[#BDA989] mt-1 shrink-0" />
+                    <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-[#BDA989]" />
                   </Link>
                 </li>
               ))
@@ -341,10 +353,10 @@ export default async function DashboardHome() {
         </div>
 
         {/* Ingestion timeline */}
-        <div className="lg:col-span-2 rounded-xl border border-[#D8D2C8] bg-white">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-[#D8D2C8]/60">
-            <h2 className="text-sm font-semibold text-[#1F1D1A] flex items-center gap-2">
-              <Database className="w-4 h-4 text-[#BDA989]" />
+        <div className="rounded-xl border border-[#D8D2C8] bg-white lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-[#D8D2C8]/60 px-5 py-3">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-[#1F1D1A]">
+              <Database className="h-4 w-4 text-[#BDA989]" />
               Ingestion activity
             </h2>
             <span className="text-xs text-[#7C746B]">Queue history</span>
@@ -355,23 +367,23 @@ export default async function DashboardHome() {
                 No ingestion jobs recorded yet.
               </p>
             ) : (
-              <ol className="relative border-l border-[#D8D2C8]/70 ml-2 space-y-5">
+              <ol className="relative ml-2 space-y-5 border-l border-[#D8D2C8]/70">
                 {jobs.slice(0, 5).map((job) => (
-                  <li key={job.id} className="pl-5 relative">
+                  <li key={job.id} className="relative pl-5">
                     <span
-                      className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#BDA989]"
+                      className="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-[#BDA989] bg-white"
                       aria-hidden="true"
                     />
-                    <p className="text-sm font-medium text-[#1F1D1A] leading-snug">
+                    <p className="text-sm font-medium leading-snug text-[#1F1D1A]">
                       {job.job_type.replace(/_/g, " ")}
                     </p>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="text-xs text-[#7C746B] flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <span className="flex items-center text-xs text-[#7C746B]">
+                        <Clock className="mr-1 h-3 w-3" />
                         {relativeTime(job.started_at) || "—"}
                       </span>
                       <span
-                        className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${statusPalette(
+                        className={`rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${statusPalette(
                           job.status,
                         )}`}
                       >
@@ -389,13 +401,51 @@ export default async function DashboardHome() {
   );
 }
 
-function PulseStat({ label, value }: { label: string; value: string }) {
+function SectionHeading({
+  title,
+  action,
+}: {
+  title: string;
+  action?: { href: string; label: string };
+}) {
   return (
-    <div className="flex items-baseline gap-2">
-      <span className="text-[11px] uppercase tracking-[0.14em] text-[#7C746B]">
-        {label}
-      </span>
-      <span className="text-sm font-medium text-[#1F1D1A]">{value}</span>
+    <div className="mb-4 flex items-center justify-between">
+      <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
+        {title}
+      </h2>
+      {action ? (
+        <Link
+          href={action.href}
+          className="text-xs font-medium text-[#7C746B] transition-colors hover:text-[#1F1D1A]"
+        >
+          {action.label} →
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-xl border border-[#D8D2C8] bg-white p-4">
+      <div className="flex items-center gap-2 text-[#7C746B]">
+        <Icon className="h-4 w-4" />
+        <span className="text-[11px] uppercase tracking-[0.14em]">{label}</span>
+      </div>
+      <p className="mt-3 font-serif text-2xl tracking-tight text-[#1F1D1A]">
+        {value}
+      </p>
+      <p className="mt-1 text-xs text-[#7C746B]">{hint}</p>
     </div>
   );
 }

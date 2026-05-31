@@ -40,15 +40,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <section>
             <Link
               href="/"
-              style={{
-                color: "#1F1D1A",
-                fontFamily: 'Georgia, "Times New Roman", ui-serif, serif',
-                fontSize: "1.6rem",
-                fontWeight: 700,
-                letterSpacing: "0.02em",
-                lineHeight: 1.6,
-                textTransform: "uppercase",
-              }}
+              aria-label="Clarvo home"
+              className="font-[Georgia,'Times_New_Roman',ui-serif,serif] text-[1.6rem] font-bold uppercase tracking-[0.02em] text-[#1F1D1A]"
             >
               CLARVO
             </Link>

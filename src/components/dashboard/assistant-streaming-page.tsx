@@ -26,6 +26,7 @@ import {
   UserCircle,
   X,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,49 @@ type AssistantStreamingPageProps = {
   domain?: string;
 };
 
+// --- Mock assistant (demo mode) ---------------------------------------------
+// The real RAG backend isn't wired up locally yet. With this flag on, the
+// assistant produces a realistic "thinking" sequence and a streamed fake
+// answer so the UI/animation can be reviewed without any backend or token
+// cost. Flip to false to restore the live /api/agent/stream path.
+const USE_MOCK_ASSISTANT = true;
+
+const MOCK_STAGES: ReadonlyArray<{ id: string; label: string }> = [
+  { id: "analyzing", label: "Reading your question" },
+  { id: "searching", label: "Searching stored sources" },
+  { id: "reading", label: "Reading the most relevant passages" },
+  { id: "composing", label: "Composing a source-backed answer" },
+];
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+function mockAnswerFor(question: string): string {
+  const q = question.trim().toLowerCase();
+  if (
+    /^(hi+|hey+|hello|hoi|hallo|yo|goeie?morgen|goedemiddag|goedenavond|good (morning|afternoon|evening))\b/.test(
+      q,
+    ) ||
+    /how are you|how's it going|how is it going|hoe gaat het|alles goed/.test(q)
+  ) {
+    return "Hallo! I'm Clarvo, your Dutch legal research assistant. I'm doing well and ready to help. Ask me something about Dutch employment or tenancy law and I'll search the stored sources, then answer with citations you can inspect before relying on them.";
+  }
+  if (/who are you|wie ben je|wat ben je|what can you do|wat kun je/.test(q)) {
+    return "I'm Clarvo — a source-backed research assistant for Dutch legal professionals. I search stored BWB legislation and Rechtspraak case law, draft answers grounded in those sources, and keep every citation visible so a lawyer can verify the work before relying on it.";
+  }
+  if (/\b(thanks|thank you|dank|bedankt|thx)\b/.test(q)) {
+    return "You're welcome! Happy to help. Let me know whenever there's a Dutch legal question you'd like me to look into.";
+  }
+  return `Good question. Here's a short, source-backed summary on “${question.trim()}”. In the live product this answer would cite the specific BWB articles and Rechtspraak rulings it relied on, and clearly flag anywhere the stored corpus doesn't fully support a confident conclusion so it can be reviewed by a lawyer.`;
+}
+
 type StreamState = "streaming" | "grounded" | "insufficient_sources" | "error";
+
+type ThinkingStage = {
+  id: string;
+  label: string;
+  done: boolean;
+};
 
 type ConversationTurn = {
   id: string;
@@ -72,6 +115,7 @@ type ConversationTurn = {
   citations: AssistantCitation[];
   sourceIds: string[];
   toolTrace: Array<Record<string, unknown>>;
+  stages: ThinkingStage[];
   error?: string;
   saveState?: "saving" | "saved" | "error";
   saveMessage?: string;
@@ -91,6 +135,7 @@ type ClientDocument = {
 };
 
 type AssistantStreamEvent =
+  | { type: "stage"; id: string; label: string }
   | { type: "token"; content: string }
   | { type: "citation"; citation?: AssistantCitation }
   | {
@@ -588,8 +633,54 @@ export function AssistantStreamingPage({
           citations: [],
           sourceIds: [],
           toolTrace: [],
+          stages: [],
         },
       ]);
+
+      if (USE_MOCK_ASSISTANT) {
+        try {
+          for (const stage of MOCK_STAGES) {
+            if (abortController.signal.aborted) return;
+            updateTurn(turnId, (turn) => ({
+              ...turn,
+              stages: [
+                ...turn.stages.map((item) => ({ ...item, done: true })),
+                { ...stage, done: false },
+              ],
+            }));
+            await sleep(420 + Math.random() * 280);
+          }
+          if (abortController.signal.aborted) return;
+          updateTurn(turnId, (turn) => ({
+            ...turn,
+            stages: turn.stages.map((item) => ({ ...item, done: true })),
+          }));
+          await sleep(300);
+
+          const answer = mockAnswerFor(trimmedQuestion);
+          const words = answer.split(" ");
+          for (let index = 0; index < words.length; index += 1) {
+            if (abortController.signal.aborted) return;
+            const chunk = words[index] + (index < words.length - 1 ? " " : "");
+            updateTurn(turnId, (turn) => ({
+              ...turn,
+              answerText: turn.answerText + chunk,
+            }));
+            await sleep(26 + Math.random() * 40);
+          }
+          if (abortController.signal.aborted) return;
+          updateTurn(turnId, (turn) => ({
+            ...turn,
+            citations: [],
+            sourceIds: [],
+            toolTrace: [],
+            state: "grounded",
+          }));
+        } finally {
+          abortControllersRef.current.delete(abortController);
+        }
+        return;
+      }
 
       try {
         const response = await fetch("/api/agent/stream", {
@@ -634,7 +725,15 @@ export function AssistantStreamingPage({
           buffer = parsed.remainder;
 
           for (const event of parsed.events) {
-            if (event.type === "token") {
+            if (event.type === "stage") {
+              updateTurn(turnId, (turn) => ({
+                ...turn,
+                stages: [
+                  ...turn.stages.map((item) => ({ ...item, done: true })),
+                  { id: event.id, label: event.label, done: false },
+                ],
+              }));
+            } else if (event.type === "token") {
               streamedAnswer += event.content;
               updateTurn(turnId, (turn) => ({
                 ...turn,
@@ -1116,7 +1215,7 @@ export function AssistantStreamingPage({
 
               <form
                 onSubmit={handleSubmit}
-                className="flex items-end rounded-xl border border-[#D8D2C8] bg-white p-2 shadow-sm transition-all focus-within:border-[#DD3300] focus-within:ring-2 focus-within:ring-[#DD3300]/10"
+                className="overflow-hidden rounded-2xl border border-[#D8D2C8] bg-white shadow-sm transition-all focus-within:border-[#DD3300] focus-within:ring-2 focus-within:ring-[#DD3300]/10"
               >
                 <input
                   ref={fileInputRef}
@@ -1128,90 +1227,118 @@ export function AssistantStreamingPage({
                   onChange={handleAttachFiles}
                 />
 
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  className="h-[46px] w-[46px] shrink-0 rounded-lg border-[#D8D2C8] bg-white text-[#63534B] transition-all hover:border-[#DD3300]/30 hover:bg-[#FFF8F5]"
-                  onClick={() => fileInputRef.current?.click()}
-                  aria-label="Attach contract document"
-                  title="Attach a PDF, DOCX, or text contract"
-                >
-                  <Paperclip className="h-4 w-4" />
-                </Button>
-
                 <textarea
                   name="q"
-                  className="min-h-[46px] flex-1 resize-none bg-transparent px-3 py-3 text-sm text-[#1F1D1A] placeholder:text-[#BDA989] focus:outline-none"
+                  className="block max-h-48 min-h-[56px] w-full resize-none bg-transparent px-4 pt-4 text-sm leading-6 text-[#1F1D1A] placeholder:text-[#BDA989] focus:outline-none"
                   placeholder="Ask one Dutch legal question, for example: huurcontract opzegtermijn"
                   value={draftQuery}
                   onChange={(event) => setDraftQuery(event.target.value)}
                   rows={1}
                 />
 
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  className={`ml-2 h-[46px] w-[46px] shrink-0 rounded-lg border-[#D8D2C8] bg-white transition-all hover:border-[#DD3300]/30 hover:bg-[#FFF8F5] ${
-                    speechStatus === "listening"
-                      ? "border-[#DD3300]/40 bg-[#FFF8F5] text-[#DD3300]"
-                      : "text-[#63534B]"
-                  }`}
-                  disabled={!speechSupported && speechStatus !== "error"}
-                  onClick={handleVoiceInput}
-                  title={
-                    speechSupported
-                      ? "Speak a Dutch legal question"
-                      : "Voice input is not supported in this browser yet. Type your question instead."
-                  }
-                  aria-label={
-                    speechSupported
-                      ? speechStatus === "listening"
-                        ? "Stop voice input"
-                        : "Start voice input"
-                      : "Voice input not supported"
-                  }
-                >
-                  {speechSupported ? (
-                    <Mic className="h-4 w-4" />
-                  ) : (
-                    <MicOff className="h-4 w-4" />
-                  )}
-                </Button>
+                <div className="flex items-center justify-between gap-2 px-2.5 pb-2.5 pt-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-9 w-9 shrink-0 rounded-lg text-[#63534B] transition-colors hover:bg-[#F5F5F4] hover:text-[#DD3300]"
+                      onClick={() => fileInputRef.current?.click()}
+                      aria-label="Attach contract document"
+                      title="Attach a PDF, DOCX, or text contract"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
 
-                <select
-                  name="domain"
-                  value={selectedDomain}
-                  onChange={(event) => setSelectedDomain(event.target.value)}
-                  className="mr-2 hidden h-[46px] rounded-lg border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-xs text-[#1F1D1A] transition-colors focus:border-[#DD3300]/50 focus:outline-none sm:block"
-                >
-                  <option value="">All domains</option>
-                  {DOMAIN_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                    <select
+                      name="domain"
+                      value={selectedDomain}
+                      onChange={(event) => setSelectedDomain(event.target.value)}
+                      className="hidden h-9 rounded-lg border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-xs text-[#1F1D1A] transition-colors focus:border-[#DD3300]/50 focus:outline-none sm:block"
+                    >
+                      <option value="">All domains</option>
+                      {DOMAIN_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <Button
-                  type="submit"
-                  size="icon"
-                  className="ml-2 h-[46px] w-[46px] shrink-0 rounded-lg bg-[#DD3300] text-white shadow-sm transition-all hover:bg-[#C22D00] hover:shadow-md disabled:opacity-50"
-                  disabled={!draftQuery.trim()}
-                  aria-label="Send question"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className={`h-9 w-9 shrink-0 rounded-lg transition-colors hover:bg-[#F5F5F4] hover:text-[#DD3300] ${
+                        speechStatus === "listening"
+                          ? "bg-[#FFF8F5] text-[#DD3300]"
+                          : "text-[#63534B]"
+                      }`}
+                      disabled={!speechSupported && speechStatus !== "error"}
+                      onClick={handleVoiceInput}
+                      title={
+                        speechSupported
+                          ? "Speak a Dutch legal question"
+                          : "Voice input is not supported in this browser yet. Type your question instead."
+                      }
+                      aria-label={
+                        speechSupported
+                          ? speechStatus === "listening"
+                            ? "Stop voice input"
+                            : "Start voice input"
+                          : "Voice input not supported"
+                      }
+                    >
+                      {speechSupported ? (
+                        <Mic className="h-4 w-4" />
+                      ) : (
+                        <MicOff className="h-4 w-4" />
+                      )}
+                    </Button>
+
+                    <Button
+                      type="submit"
+                      size="icon"
+                      className="h-9 w-9 shrink-0 rounded-lg bg-[#DD3300] text-white shadow-sm transition-all hover:bg-[#C22D00] hover:shadow-md disabled:opacity-50"
+                      disabled={!draftQuery.trim()}
+                      aria-label="Send question"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </form>
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-5 text-[#7C746B]">
-                <span>
+              <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                <Badge
+                  variant="outline"
+                  className="border-[#D8D2C8] text-[10px] font-semibold uppercase text-[#BDA989]"
+                >
+                  Context: Stored sources
+                </Badge>
+                {clientDocuments.length > 0 ? (
+                  <Badge
+                    variant="outline"
+                    className="border-[#D8D2C8] bg-[#F8F6F1] text-[10px] font-semibold uppercase text-[#63534B]"
+                  >
+                    {clientDocuments.length} chat attachment
+                    {clientDocuments.length === 1 ? "" : "s"}
+                  </Badge>
+                ) : null}
+                {speechMessage ? (
+                  <Badge
+                    variant="outline"
+                    className="border-[#D8D2C8] bg-[#FFF8F5] text-[10px] font-semibold uppercase text-[#DD3300]"
+                  >
+                    {speechMessage}
+                  </Badge>
+                ) : null}
+                <span className="text-xs leading-5 text-[#7C746B]">
                   Upload a clause or contract excerpt, then ask for a legal
-                  review.
-                </span>
-                <span>
-                  Contract text is treated as user-provided facts, not legal
-                  authority.
+                  review. Contract text is treated as user-provided facts, not
+                  legal authority. Results are grounded in the live backend
+                  search index. Voice input is transcribed locally by the
+                  browser when supported. Review before sending.
                 </span>
               </div>
 
@@ -1264,37 +1391,6 @@ export function AssistantStreamingPage({
                   </div>
                 ) : null}
               </div>
-            </div>
-
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-center">
-            <Badge
-              variant="outline"
-              className="border-[#D8D2C8] text-[10px] font-semibold uppercase text-[#BDA989]"
-            >
-              Context: Stored sources
-            </Badge>
-            {clientDocuments.length > 0 ? (
-              <Badge
-                variant="outline"
-                className="border-[#D8D2C8] bg-[#F8F6F1] text-[10px] font-semibold uppercase text-[#63534B]"
-              >
-                {clientDocuments.length} chat attachment
-                {clientDocuments.length === 1 ? "" : "s"}
-              </Badge>
-            ) : null}
-            {speechMessage ? (
-              <Badge
-                variant="outline"
-                className="border-[#D8D2C8] bg-[#FFF8F5] text-[10px] font-semibold uppercase text-[#DD3300]"
-              >
-                {speechMessage}
-              </Badge>
-            ) : null}
-            <span className="text-xs text-[#7C746B]">
-              Results are grounded in the live backend search index. Voice input
-              is transcribed locally by the browser when supported. Review
-              before sending.
-            </span>
             </div>
           </div>
         </Card>
@@ -1477,9 +1573,6 @@ function ConversationTurnView({
   const refusalDisplay = getRefusalDisplay(turn.query);
   const domainsFound = getTurnDomains(turn);
   const sourceCount = turn.sourceIds.length || turn.citations.length;
-  const loadingLabel = turn.answerText
-    ? "Checking citations..."
-    : "Researching sources...";
 
   return (
     <article className="space-y-4 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2">
@@ -1521,19 +1614,14 @@ function ConversationTurnView({
 
           {turn.state === "streaming" ? (
             <div className="rounded-lg border border-[#D8D2C8] bg-white px-5 py-4 shadow-sm">
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#63534B]">
-                <Loader2 className="h-4 w-4 text-[#DD3300] motion-safe:animate-spin" />
-                {loadingLabel}
-              </div>
               {turn.answerText ? (
-                <p className="whitespace-pre-wrap text-sm leading-7 text-[#1F1D1A]">
-                  {turn.answerText}
-                </p>
+                <StreamingAnswer text={turn.answerText} />
+              ) : turn.stages.length > 0 ? (
+                <ThinkingTrace stages={turn.stages} />
               ) : (
-                <div className="space-y-2" aria-hidden="true">
-                  <div className="h-3 w-2/3 rounded-full bg-[#EEEDE4] motion-safe:animate-pulse" />
-                  <div className="h-3 w-5/6 rounded-full bg-[#EEEDE4] motion-safe:animate-pulse" />
-                  <div className="h-3 w-1/2 rounded-full bg-[#EEEDE4] motion-safe:animate-pulse" />
+                <div className="flex items-center gap-2 text-sm font-medium text-[#63534B]">
+                  <Loader2 className="h-4 w-4 text-[#DD3300] motion-safe:animate-spin" />
+                  Connecting…
                 </div>
               )}
             </div>
@@ -1645,5 +1733,62 @@ function ConversationTurnView({
         </div>
       </div>
     </article>
+  );
+}
+
+function ThinkingTrace({ stages }: { stages: ThinkingStage[] }) {
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2 text-sm font-medium text-[#63534B]">
+        <span className="relative flex h-2 w-2" aria-hidden="true">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-[#DD3300] opacity-60 motion-safe:animate-ping" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-[#DD3300]" />
+        </span>
+        Thinking
+      </div>
+      <ul className="space-y-1.5 pl-0.5">
+        <AnimatePresence initial={false}>
+          {stages.map((stage) => (
+            <motion.li
+              key={stage.id}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              className="flex items-center gap-2 text-xs"
+            >
+              {stage.done ? (
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+              ) : (
+                <Loader2 className="h-3.5 w-3.5 shrink-0 text-[#BDA989] motion-safe:animate-spin" />
+              )}
+              <span
+                className={
+                  stage.done
+                    ? "text-[#7C746B]"
+                    : "font-medium text-[#1F1D1A]"
+                }
+              >
+                {stage.label}
+              </span>
+            </motion.li>
+          ))}
+        </AnimatePresence>
+      </ul>
+    </div>
+  );
+}
+
+function StreamingAnswer({ text }: { text: string }) {
+  return (
+    <p className="whitespace-pre-wrap text-sm leading-7 text-[#1F1D1A]">
+      {text}
+      <motion.span
+        aria-hidden="true"
+        className="ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[0.15em] rounded-full bg-[#DD3300] align-middle"
+        animate={{ opacity: [1, 1, 0, 0] }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear", times: [0, 0.5, 0.5, 1] }}
+      />
+    </p>
   );
 }

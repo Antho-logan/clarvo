@@ -1,114 +1,151 @@
-import { BookOpenCheck, FileSearch, GitMerge, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  BookOpenCheck,
+  FileSearch,
+  GitMerge,
+  ShieldCheck,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const ROADMAP_WORKFLOWS = [
+type WorkflowPhase = "Available now" | "Next" | "Planned";
+
+type WorkflowEntry = {
+  title: string;
+  phase: WorkflowPhase;
+  icon: React.ComponentType<{ className?: string }>;
+  body: string;
+  href?: string;
+  cta?: string;
+};
+
+const WORKFLOWS: readonly WorkflowEntry[] = [
   {
-    title: "Research memo workflow",
-    status: "Next",
-    availability: "Not yet generally available",
-    icon: BookOpenCheck,
-    body:
-      "Planned path from saved Assistant research to a structured memo outline with citations preserved for lawyer review.",
+    title: "Document review",
+    phase: "Available now",
+    icon: FileSearch,
+    body: "Upload a contract, ask one Dutch legal question, and inspect the contract passages alongside the legal citations. Live in the Assistant today.",
+    href: "/dashboard/agents",
+    cta: "Open in Assistant",
   },
   {
-    title: "Document review workflow",
-    status: "Design partner preview",
-    availability: "Available in Assistant",
-    icon: FileSearch,
-    body:
-      "Document and legal review are available in Assistant today: upload a contract, ask one Dutch legal question, and inspect the contract passages plus legal citations. A separate autonomous workflow runner is not active in this beta.",
+    title: "Research memo workflow",
+    phase: "Next",
+    icon: BookOpenCheck,
+    body: "A guided path from saved Assistant research to a structured memo outline, with every citation preserved for lawyer review.",
   },
   {
     title: "Citation audit workflow",
-    status: "Planned",
-    availability: "Not yet generally available",
+    phase: "Planned",
     icon: ShieldCheck,
-    body:
-      "Planned quality gate for checking whether generated answers remain tied to relevant BWB and Rechtspraak sources.",
+    body: "An automated quality gate that checks whether generated answers stay tied to the relevant BWB and Rechtspraak sources.",
   },
 ] as const;
+
+function phaseBadgeClass(phase: WorkflowPhase) {
+  if (phase === "Available now") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+  if (phase === "Next") {
+    return "border-[#DD3300]/30 bg-[#FFF7F3] text-[#8A2408]";
+  }
+  return "border-[#D8D2C8] bg-[#F8F6F1] text-[#7C746B]";
+}
 
 export default async function WorkflowsPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-12">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
-            Private beta roadmap
-          </p>
-          <h1 className="mb-2 font-serif text-3xl tracking-tight text-[#1F1D1A]">
-            Workflows
-          </h1>
-          <p className="max-w-3xl text-sm leading-6 text-[#63534B]">
-            Clarvo currently focuses on source-backed research, saved matter
-            notes, Knowledge search, Vault browsing, and document review inside
-            Assistant. Workflow automation is being designed carefully and is
-            not generally available in this MVP.
-          </p>
+      <div>
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
+          Product roadmap
+        </p>
+        <h1 className="mb-2 font-serif text-3xl tracking-tight text-[#1F1D1A]">
+          Workflows
+        </h1>
+        <p className="max-w-3xl text-sm leading-6 text-[#63534B]">
+          Where Clarvo&rsquo;s research turns into repeatable, source-backed
+          steps. Document review already runs inside the Assistant — the
+          workflows below are being designed deliberately, in order.
+        </p>
+      </div>
+
+      <div className="flex items-start gap-3 rounded-xl border border-[#D8D2C8] bg-[#F8F6F1] px-4 py-3">
+        <GitMerge className="mt-0.5 h-5 w-5 shrink-0 text-[#DD3300]" />
+        <p className="text-sm leading-6 text-[#63534B]">
+          One workflow is live today; the others are on the roadmap and not yet
+          active as autonomous runners. Use the Assistant for legal and document
+          review, then save grounded answers into Matters.
+        </p>
+      </div>
+
+      <section className="space-y-4">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
+          Now → Next → Later
+        </h2>
+        <div className="grid gap-6 md:grid-cols-3">
+          {WORKFLOWS.map((workflow) => (
+            <WorkflowCard key={workflow.title} workflow={workflow} />
+          ))}
         </div>
-        <Badge
-          variant="outline"
-          className="w-fit border-[#D8D2C8] bg-white px-3 py-1.5 text-[#63534B]"
+      </section>
+    </div>
+  );
+}
+
+function WorkflowCard({ workflow }: { workflow: WorkflowEntry }) {
+  const available = workflow.phase === "Available now";
+  const Icon = workflow.icon;
+
+  const content = (
+    <>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+            available ? "bg-emerald-50" : "bg-[#F8F6F1]"
+          }`}
         >
-          Roadmap only
+          <Icon
+            className={`h-6 w-6 ${available ? "text-emerald-600" : "text-[#BDA989]"}`}
+          />
+        </div>
+        <Badge variant="outline" className={phaseBadgeClass(workflow.phase)}>
+          {workflow.phase}
         </Badge>
       </div>
+      <h3 className="font-serif text-xl leading-7 text-[#1F1D1A]">
+        {workflow.title}
+      </h3>
+      <p className="mt-2 flex-1 text-sm leading-6 text-[#63534B]">
+        {workflow.body}
+      </p>
+      {available && workflow.cta ? (
+        <span className="mt-5 inline-flex items-center text-sm font-medium text-[#DD3300] transition-colors group-hover:text-[#A92700]">
+          {workflow.cta}
+          <ArrowRight className="ml-1.5 h-4 w-4" />
+        </span>
+      ) : (
+        <span className="mt-5 text-xs font-medium uppercase tracking-[0.14em] text-[#BDA989]">
+          On the roadmap
+        </span>
+      )}
+    </>
+  );
 
-      <Card className="border-[#D8D2C8] bg-white shadow-sm">
-        <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-start">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#F8F6F1]">
-            <GitMerge className="h-5 w-5 text-[#DD3300]" />
-          </div>
-          <div>
-            <h2 className="font-serif text-xl text-[#1F1D1A]">
-              No workflow runner is active in this beta
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#63534B]">
-              The cards below describe intended product directions, not active
-              autonomous runners. Use Assistant for legal and document review,
-              then save grounded answers into Matters for the current private
-              beta workflow.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+  if (available && workflow.href) {
+    return (
+      <Link
+        href={workflow.href}
+        className="group flex h-full flex-col rounded-xl border border-emerald-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0"
+      >
+        {content}
+      </Link>
+    );
+  }
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {ROADMAP_WORKFLOWS.map((workflow) => (
-          <Card
-            key={workflow.title}
-            className="flex h-full flex-col border-[#D8D2C8] bg-white shadow-sm"
-          >
-            <CardHeader>
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#FFF8F5]">
-                  <workflow.icon className="h-6 w-6 text-[#DD3300]" />
-                </div>
-                <Badge
-                  variant="outline"
-                  className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
-                >
-                  {workflow.status}
-                </Badge>
-              </div>
-              <CardTitle className="font-serif text-xl leading-7 text-[#1F1D1A]">
-                {workflow.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-1 flex-col justify-between gap-6">
-              <p className="text-sm leading-6 text-[#63534B]">{workflow.body}</p>
-              <Badge
-                variant="outline"
-                className="w-fit border-[#D8D2C8] bg-white text-[#63534B]"
-              >
-                {workflow.availability}
-              </Badge>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+  return (
+    <div className="flex h-full flex-col rounded-xl border border-[#D8D2C8] bg-white p-5 shadow-sm">
+      {content}
     </div>
   );
 }

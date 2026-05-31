@@ -7,7 +7,6 @@ import {
   FileText,
   PlusCircle,
   Search,
-  SlidersHorizontal,
 } from "lucide-react";
 
 import {
@@ -175,41 +174,33 @@ export default async function MattersPage({ searchParams }: MattersPageProps) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-12">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
-            Legal workspace
-          </p>
-          <h1 className="mb-2 font-serif text-3xl tracking-tight text-[#1F1D1A]">
-            Matters
-          </h1>
-          <p className="max-w-3xl text-sm leading-6 text-[#63534B]">
-            Saved assistant research, grouped by matter. Keep questions,
-            answer previews, and citation trails visible while the fuller matter
-            workspace stays deliberately lightweight.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge
-            variant="outline"
-            className="w-fit border-[#D8D2C8] bg-white px-3 py-1.5 text-[#63534B]"
-          >
-            {formatCount(matters.length, "matter", "matters")}
-          </Badge>
-          <Badge
-            variant="outline"
-            className="w-fit border-[#D8D2C8] bg-white px-3 py-1.5 text-[#63534B]"
-          >
-            {formatCount(totalResearchNotes, "research note", "research notes")}
-          </Badge>
-          <Badge
-            variant="outline"
-            className="w-fit border-[#D8D2C8] bg-white px-3 py-1.5 text-[#63534B]"
-          >
-            {formatCount(totalResearchMemos, "draft memo", "draft memos")}
-          </Badge>
-        </div>
+      <div>
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
+          Legal workspace
+        </p>
+        <h1 className="mb-2 font-serif text-3xl tracking-tight text-[#1F1D1A]">
+          Matters
+        </h1>
+        <p className="max-w-3xl text-sm leading-6 text-[#63534B]">
+          Your workspace for ongoing work. Saved assistant research, grouped by
+          matter, so you and your team can pick up where you left off — every
+          question, answer preview, and citation trail kept together.
+        </p>
       </div>
+
+      <section className="grid grid-cols-3 gap-3">
+        <MatterStat label="Matters" value={matters.length} icon={Briefcase} />
+        <MatterStat
+          label="Research notes"
+          value={totalResearchNotes}
+          icon={BookOpenText}
+        />
+        <MatterStat
+          label="Draft memos"
+          value={totalResearchMemos}
+          icon={FileText}
+        />
+      </section>
 
       {"error" in mattersResult ? (
         <Card className="border-[#DD3300]/20 bg-white">
@@ -219,55 +210,54 @@ export default async function MattersPage({ searchParams }: MattersPageProps) {
         </Card>
       ) : null}
 
-      <Card className="border-[#D8D2C8] bg-white shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center font-serif text-xl text-[#1F1D1A]">
-            <SlidersHorizontal className="mr-2 h-5 w-5 text-[#BDA989]" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="grid gap-3 md:grid-cols-4" method="get">
-            <Input
-              name="q"
-              defaultValue={query}
-              placeholder="Search title or client"
-            />
-            <select
-              name="status"
-              defaultValue={status}
-              className="h-10 rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm"
-            >
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-              <option value="archived">Archived</option>
-            </select>
-            <select
-              name="rechtsgebied"
-              defaultValue={rechtsgebied}
-              className="h-10 rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm"
-            >
-              <option value="">All domains</option>
-              {DOMAIN_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <Button className="bg-[#1F1D1A] text-white">
-              <Search className="mr-2 h-4 w-4" />
-              Apply
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <form
+        method="get"
+        className="flex flex-col gap-2 rounded-xl border border-[#D8D2C8] bg-white p-2 sm:flex-row sm:items-center"
+      >
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#BDA989]" />
+          <Input
+            name="q"
+            defaultValue={query}
+            placeholder="Search title or client"
+            className="border-0 bg-transparent pl-9 shadow-none focus-visible:ring-0"
+          />
+        </div>
+        <select
+          name="status"
+          defaultValue={status}
+          className="h-10 rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm sm:w-40"
+        >
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="paused">Paused</option>
+          <option value="archived">Archived</option>
+        </select>
+        <select
+          name="rechtsgebied"
+          defaultValue={rechtsgebied}
+          className="h-10 rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm sm:w-44"
+        >
+          <option value="">All domains</option>
+          {DOMAIN_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <Button className="bg-[#1F1D1A] text-white">
+          <Search className="mr-2 h-4 w-4" />
+          Apply
+        </Button>
+      </form>
 
-      <div className="grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
         <aside className="space-y-6">
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-xl text-[#1F1D1A]">Matter list</h2>
+              <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
+                Matter list
+              </h2>
               <Badge
                 variant="outline"
                 className="border-[#D8D2C8] bg-white text-[#63534B]"
@@ -322,6 +312,28 @@ export default async function MattersPage({ searchParams }: MattersPageProps) {
           )}
         </main>
       </div>
+    </div>
+  );
+}
+
+function MatterStat({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="rounded-xl border border-[#D8D2C8] bg-white p-4">
+      <div className="flex items-center gap-2 text-[#7C746B]">
+        <Icon className="h-4 w-4" />
+        <span className="text-[11px] uppercase tracking-[0.14em]">{label}</span>
+      </div>
+      <p className="mt-3 font-serif text-2xl tracking-tight text-[#1F1D1A]">
+        {value}
+      </p>
     </div>
   );
 }

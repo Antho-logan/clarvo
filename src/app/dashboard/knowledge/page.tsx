@@ -103,19 +103,22 @@ export default async function KnowledgePage({
   const broaderSearchHref = `/dashboard/knowledge?${broaderSearchParams.toString()}`;
 
   return (
-    <div className="max-w-7xl mx-auto pb-12">
-      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="mx-auto max-w-7xl pb-12">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-serif text-[#1F1D1A] tracking-tight mb-2">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
+            Legal corpus
+          </p>
+          <h1 className="mb-2 font-serif text-3xl tracking-tight text-[#1F1D1A]">
             Knowledge Base
           </h1>
-          <p className="text-[#63534B] max-w-3xl">
+          <p className="max-w-3xl text-sm leading-6 text-[#63534B]">
             Search the live Clarvo retrieval layer across curated Dutch
             legislation and case law already stored in the backend.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           <Badge
             variant="outline"
             className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] ${
@@ -137,85 +140,79 @@ export default async function KnowledgePage({
 
       <div className="grid lg:grid-cols-[minmax(0,2fr)_360px] gap-8 items-start">
         <div className="space-y-6">
-          <Card className="bg-white border-[#D8D2C8] shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-serif text-[#1F1D1A]">
-                Live Legal Search
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4" method="get">
-                <div className="relative">
-                  <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-[#BDA989]" />
-                  <input
-                    type="text"
-                    name="q"
-                    defaultValue={query}
-                    placeholder="Search Dutch legal sources, for example: huurcontract, ontslag, bezwaar..."
-                    className="w-full bg-[#F5F5F4] border border-[#D8D2C8] text-base placeholder:text-[#7C746B] text-[#1F1D1A] pl-12 pr-4 py-4 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-4 gap-3">
-                  <select
-                    name="source_type"
-                    defaultValue={
-                      isValidSourceType(sourceType) ? sourceType : ""
-                    }
-                    className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
-                  >
-                    <option value="">All sources</option>
-                    {SOURCE_TYPE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    name="domain"
-                    defaultValue={isValidDomain(domain) ? domain : ""}
-                    className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
-                  >
-                    <option value="">All domains</option>
-                    {DOMAIN_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    name="limit"
-                    defaultValue={String(limit)}
-                    className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
-                  >
-                    {[5, 8, 10, 12].map((option) => (
-                      <option key={option} value={option}>
-                        {option} results
-                      </option>
-                    ))}
-                  </select>
-
-                  <Button className="h-11 bg-[#1F1D1A] text-white hover:bg-[#1F1D1A]/90">
-                    Search
-                  </Button>
-                </div>
-              </form>
-
-              <div className="flex flex-wrap gap-2 mt-4">
-                {["huurcontract", "ontslag", "bezwaar", "ECLI"].map((term) => (
-                  <Link
-                    key={term}
-                    href={`/dashboard/knowledge?q=${encodeURIComponent(term)}&limit=${limit}`}
-                    className="inline-flex items-center rounded-full border border-[#D8D2C8] bg-[#F5F5F4] px-3 py-1.5 text-xs font-medium text-[#63534B] hover:border-[#DD3300]/30 hover:text-[#DD3300] transition-colors"
-                  >
-                    {term}
-                  </Link>
-                ))}
+          <div className="rounded-xl border border-[#D8D2C8] bg-white p-5 shadow-sm">
+            <form className="space-y-4" method="get">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#BDA989]" />
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={query}
+                  placeholder="Search Dutch legal sources, for example: huurcontract, ontslag, bezwaar..."
+                  className="w-full rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] py-4 pl-12 pr-4 text-base text-[#1F1D1A] placeholder:text-[#7C746B] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
+                />
               </div>
-            </CardContent>
-          </Card>
+
+              <div className="grid gap-3 md:grid-cols-4">
+                <select
+                  name="source_type"
+                  defaultValue={isValidSourceType(sourceType) ? sourceType : ""}
+                  className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
+                >
+                  <option value="">All sources</option>
+                  {SOURCE_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  name="domain"
+                  defaultValue={isValidDomain(domain) ? domain : ""}
+                  className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
+                >
+                  <option value="">All domains</option>
+                  {DOMAIN_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  name="limit"
+                  defaultValue={String(limit)}
+                  className="h-11 rounded-xl border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm text-[#1F1D1A] focus:outline-none focus:ring-1 focus:ring-[#DD3300]/40"
+                >
+                  {[5, 8, 10, 12].map((option) => (
+                    <option key={option} value={option}>
+                      {option} results
+                    </option>
+                  ))}
+                </select>
+
+                <Button className="h-11 bg-[#1F1D1A] text-white hover:bg-[#1F1D1A]/90">
+                  Search
+                </Button>
+              </div>
+            </form>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
+                Try
+              </span>
+              {["huurcontract", "ontslag", "bezwaar", "ECLI"].map((term) => (
+                <Link
+                  key={term}
+                  href={`/dashboard/knowledge?q=${encodeURIComponent(term)}&limit=${limit}`}
+                  className="inline-flex items-center rounded-full border border-[#D8D2C8] bg-[#F5F5F4] px-3 py-1.5 text-xs font-medium text-[#63534B] transition-colors hover:border-[#DD3300]/30 hover:text-[#DD3300]"
+                >
+                  {term}
+                </Link>
+              ))}
+            </div>
+          </div>
 
           {query ? (
             <div className="grid md:grid-cols-3 gap-4">
