@@ -62,6 +62,14 @@ type AssistantStreamingPageProps = {
   domain?: string;
 };
 
+const LIVE_RESEARCH_STAGES: ReadonlyArray<{ id: string; label: string }> = [
+  { id: "reading-question", label: "Reading your question" },
+  { id: "preparing-search", label: "Preparing legal source search" },
+  { id: "searching-sources", label: "Searching stored legal sources" },
+  { id: "checking-passages", label: "Checking relevant passages" },
+  { id: "drafting-answer", label: "Composing a source-backed answer" },
+];
+
 type StreamState = "streaming" | "grounded" | "insufficient_sources" | "error";
 
 type ThinkingStage = {
@@ -69,6 +77,17 @@ type ThinkingStage = {
   label: string;
   done: boolean;
 };
+
+function visibleThinkingStages(activeIndex: number): ThinkingStage[] {
+  return LIVE_RESEARCH_STAGES.slice(0, activeIndex + 1).map((stage, index) => ({
+    ...stage,
+    done: index < activeIndex,
+  }));
+}
+
+function completedThinkingStages(): ThinkingStage[] {
+  return LIVE_RESEARCH_STAGES.map((stage) => ({ ...stage, done: true }));
+}
 
 type ConversationTurn = {
   id: string;
@@ -585,6 +604,8 @@ export function AssistantStreamingPage({
       const turnId = makeTurnId();
       const abortController = new AbortController();
       abortControllersRef.current.add(abortController);
+      const stageTimers: Array<ReturnType<typeof setTimeout>> = [];
+      let stagesCompleted = false;
 
       setTurns((current) => [
         ...current,
@@ -597,11 +618,40 @@ export function AssistantStreamingPage({
           citations: [],
           sourceIds: [],
           toolTrace: [],
-          stages: [],
+          stages: visibleThinkingStages(0),
         },
       ]);
 
       try {
+        const showThinkingStage = (stageIndex: number) => {
+          if (abortController.signal.aborted || stagesCompleted) {
+            return;
+          }
+          updateTurn(turnId, (turn) => ({
+            ...turn,
+            stages: visibleThinkingStages(stageIndex),
+          }));
+        };
+        const completeThinkingTrace = () => {
+          if (stagesCompleted) {
+            return;
+          }
+          stagesCompleted = true;
+          for (const timer of stageTimers) {
+            clearTimeout(timer);
+          }
+          updateTurn(turnId, (turn) => ({
+            ...turn,
+            stages: completedThinkingStages(),
+          }));
+        };
+
+        LIVE_RESEARCH_STAGES.slice(1).forEach((_, index) => {
+          stageTimers.push(
+            setTimeout(() => showThinkingStage(index + 1), 520 * (index + 1)),
+          );
+        });
+
         const response = await fetch("/api/agent/stream", {
           method: "POST",
           headers: {
@@ -645,6 +695,7 @@ export function AssistantStreamingPage({
 
           for (const event of parsed.events) {
             if (event.type === "stage") {
+              stagesCompleted = false;
               updateTurn(turnId, (turn) => ({
                 ...turn,
                 stages: [
@@ -653,6 +704,7 @@ export function AssistantStreamingPage({
                 ],
               }));
             } else if (event.type === "token") {
+              completeThinkingTrace();
               streamedAnswer += event.content;
               updateTurn(turnId, (turn) => ({
                 ...turn,
@@ -672,6 +724,7 @@ export function AssistantStreamingPage({
               }));
             } else if (event.type === "insufficient_sources") {
               sawFinalEvent = true;
+              completeThinkingTrace();
               const answer =
                 event.answer?.trim() ||
                 getInsufficientMessage(trimmedQuestion, requestedDomain);
@@ -687,6 +740,7 @@ export function AssistantStreamingPage({
               }));
             } else if (event.type === "done") {
               sawFinalEvent = true;
+              completeThinkingTrace();
               const finalAnswer = streamedAnswer.trim();
               if (!finalAnswer || isRefusalAnswer(finalAnswer)) {
                 updateTurn(turnId, (turn) => ({
@@ -714,6 +768,7 @@ export function AssistantStreamingPage({
         }
 
         if (!sawFinalEvent) {
+          completeThinkingTrace();
           const finalAnswer = streamedAnswer.trim();
           if (!finalAnswer || isRefusalAnswer(finalAnswer)) {
             updateTurn(turnId, (turn) => ({
@@ -735,6 +790,10 @@ export function AssistantStreamingPage({
         }
       } catch (error) {
         if (!abortController.signal.aborted) {
+          stagesCompleted = true;
+          for (const timer of stageTimers) {
+            clearTimeout(timer);
+          }
           updateTurn(turnId, (turn) => ({
             ...turn,
             error:
@@ -745,6 +804,9 @@ export function AssistantStreamingPage({
           }));
         }
       } finally {
+        for (const timer of stageTimers) {
+          clearTimeout(timer);
+        }
         abortControllersRef.current.delete(abortController);
       }
     },
@@ -1544,10 +1606,15 @@ function ConversationTurnView({
 
           {turn.state === "streaming" ? (
             <div className="rounded-lg border border-[#D8D2C8] bg-white px-5 py-4 shadow-sm">
-              {turn.answerText ? (
+              {turn.stages.length > 0 ? (
+                <div className="space-y-4">
+                  <ThinkingTrace stages={turn.stages} />
+                  {turn.answerText ? (
+                    <StreamingAnswer text={turn.answerText} />
+                  ) : null}
+                </div>
+              ) : turn.answerText ? (
                 <StreamingAnswer text={turn.answerText} />
-              ) : turn.stages.length > 0 ? (
-                <ThinkingTrace stages={turn.stages} />
               ) : (
                 <div className="flex items-center gap-2 text-sm font-medium text-[#63534B]">
                   <Loader2 className="h-4 w-4 text-[#DD3300] motion-safe:animate-spin" />

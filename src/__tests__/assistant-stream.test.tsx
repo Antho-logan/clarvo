@@ -402,6 +402,7 @@ describe("assistant streaming page", () => {
     );
 
     await waitFor(() => expect(fetch).toHaveBeenCalled());
+    expect(screen.getByText("Reading your question")).toBeInTheDocument();
 
     await act(async () => {
       streamController?.enqueue(
@@ -410,6 +411,10 @@ describe("assistant streaming page", () => {
     });
 
     expect(await screen.findByText(/Eerste/)).toBeInTheDocument();
+    expect(screen.getByText("Searching stored legal sources")).toBeInTheDocument();
+    expect(
+      screen.getByText("Composing a source-backed answer"),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/Tweede/)).not.toBeInTheDocument();
 
     await act(async () => {
