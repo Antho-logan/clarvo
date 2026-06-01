@@ -62,42 +62,6 @@ type AssistantStreamingPageProps = {
   domain?: string;
 };
 
-// --- Mock assistant (demo mode) ---------------------------------------------
-// The real RAG backend isn't wired up locally yet. With this flag on, the
-// assistant produces a realistic "thinking" sequence and a streamed fake
-// answer so the UI/animation can be reviewed without any backend or token
-// cost. Flip to false to restore the live /api/agent/stream path.
-const USE_MOCK_ASSISTANT = true;
-
-const MOCK_STAGES: ReadonlyArray<{ id: string; label: string }> = [
-  { id: "analyzing", label: "Reading your question" },
-  { id: "searching", label: "Searching stored sources" },
-  { id: "reading", label: "Reading the most relevant passages" },
-  { id: "composing", label: "Composing a source-backed answer" },
-];
-
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-function mockAnswerFor(question: string): string {
-  const q = question.trim().toLowerCase();
-  if (
-    /^(hi+|hey+|hello|hoi|hallo|yo|goeie?morgen|goedemiddag|goedenavond|good (morning|afternoon|evening))\b/.test(
-      q,
-    ) ||
-    /how are you|how's it going|how is it going|hoe gaat het|alles goed/.test(q)
-  ) {
-    return "Hallo! I'm Clarvo, your Dutch legal research assistant. I'm doing well and ready to help. Ask me something about Dutch employment or tenancy law and I'll search the stored sources, then answer with citations you can inspect before relying on them.";
-  }
-  if (/who are you|wie ben je|wat ben je|what can you do|wat kun je/.test(q)) {
-    return "I'm Clarvo — a source-backed research assistant for Dutch legal professionals. I search stored BWB legislation and Rechtspraak case law, draft answers grounded in those sources, and keep every citation visible so a lawyer can verify the work before relying on it.";
-  }
-  if (/\b(thanks|thank you|dank|bedankt|thx)\b/.test(q)) {
-    return "You're welcome! Happy to help. Let me know whenever there's a Dutch legal question you'd like me to look into.";
-  }
-  return `Good question. Here's a short, source-backed summary on “${question.trim()}”. In the live product this answer would cite the specific BWB articles and Rechtspraak rulings it relied on, and clearly flag anywhere the stored corpus doesn't fully support a confident conclusion so it can be reviewed by a lawyer.`;
-}
-
 type StreamState = "streaming" | "grounded" | "insufficient_sources" | "error";
 
 type ThinkingStage = {
@@ -636,51 +600,6 @@ export function AssistantStreamingPage({
           stages: [],
         },
       ]);
-
-      if (USE_MOCK_ASSISTANT) {
-        try {
-          for (const stage of MOCK_STAGES) {
-            if (abortController.signal.aborted) return;
-            updateTurn(turnId, (turn) => ({
-              ...turn,
-              stages: [
-                ...turn.stages.map((item) => ({ ...item, done: true })),
-                { ...stage, done: false },
-              ],
-            }));
-            await sleep(420 + Math.random() * 280);
-          }
-          if (abortController.signal.aborted) return;
-          updateTurn(turnId, (turn) => ({
-            ...turn,
-            stages: turn.stages.map((item) => ({ ...item, done: true })),
-          }));
-          await sleep(300);
-
-          const answer = mockAnswerFor(trimmedQuestion);
-          const words = answer.split(" ");
-          for (let index = 0; index < words.length; index += 1) {
-            if (abortController.signal.aborted) return;
-            const chunk = words[index] + (index < words.length - 1 ? " " : "");
-            updateTurn(turnId, (turn) => ({
-              ...turn,
-              answerText: turn.answerText + chunk,
-            }));
-            await sleep(26 + Math.random() * 40);
-          }
-          if (abortController.signal.aborted) return;
-          updateTurn(turnId, (turn) => ({
-            ...turn,
-            citations: [],
-            sourceIds: [],
-            toolTrace: [],
-            state: "grounded",
-          }));
-        } finally {
-          abortControllersRef.current.delete(abortController);
-        }
-        return;
-      }
 
       try {
         const response = await fetch("/api/agent/stream", {
@@ -1334,11 +1253,22 @@ export function AssistantStreamingPage({
                   </Badge>
                 ) : null}
                 <span className="text-xs leading-5 text-[#7C746B]">
-                  Upload a clause or contract excerpt, then ask for a legal
-                  review. Contract text is treated as user-provided facts, not
-                  legal authority. Results are grounded in the live backend
-                  search index. Voice input is transcribed locally by the
-                  browser when supported. Review before sending.
+                  <span>
+                    Upload a clause or contract excerpt, then ask for a legal
+                    review.
+                  </span>{" "}
+                  <span>
+                    Contract text is treated as user-provided facts, not legal
+                    authority.
+                  </span>{" "}
+                  <span>
+                    Results are grounded in the live backend search index.
+                  </span>{" "}
+                  <span>
+                    Voice input is transcribed locally by the browser when
+                    supported.
+                  </span>{" "}
+                  <span>Review before sending.</span>
                 </span>
               </div>
 

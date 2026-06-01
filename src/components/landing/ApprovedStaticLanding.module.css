@@ -1246,19 +1246,16 @@
 .root:global(.is-reveal-ready) :global(.fade-in-section),
 .root:global(.is-reveal-ready) :global(.reveal-section) {
     opacity: 0;
-    filter: blur(1.5px);
-    transform: translateY(12px);
+    transform: translateY(6px);
     transition:
-        opacity 0.72s cubic-bezier(0.22, 1, 0.36, 1),
-        filter 0.72s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: opacity, filter, transform;
+        opacity 0.44s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.44s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
 }
 
 .root :global(.fade-in-section.is-visible),
 .root:global(.is-reveal-ready) :global(.reveal-section.is-visible) {
     opacity: 1;
-    filter: blur(0);
     transform: none;
     will-change: auto;
 }
@@ -1305,9 +1302,8 @@
 
     .root:global(.is-reveal-ready) :global(.fade-in-section),
     .root:global(.is-reveal-ready) :global(.reveal-section) {
-        filter: none;
-        transform: translateY(8px);
-        transition-duration: 0.58s;
+        transform: translateY(4px);
+        transition-duration: 0.36s;
     }
 
     .root :global(.section-title) {

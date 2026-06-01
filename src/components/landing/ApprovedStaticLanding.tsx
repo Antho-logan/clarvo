@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import styles from "./ApprovedStaticLanding.module.css";
-import { SmoothScroll } from "./SmoothScroll";
 
 type Locale = "en" | "nl";
 type NavCopy = {
@@ -640,7 +639,6 @@ export function ApprovedStaticLanding() {
 
   return (
     <div className={rootClassName}>
-      <SmoothScroll />
       <header className="header">
         <div className="container header-container">
           <button

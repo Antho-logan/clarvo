@@ -22,7 +22,7 @@ type WorkflowEntry = {
 
 const WORKFLOWS: readonly WorkflowEntry[] = [
   {
-    title: "Document review",
+    title: "Document review workflow",
     phase: "Available now",
     icon: FileSearch,
     body: "Upload a contract, ask one Dutch legal question, and inspect the contract passages alongside the legal citations. Live in the Assistant today.",
@@ -58,7 +58,7 @@ export default async function WorkflowsPage() {
     <div className="mx-auto max-w-7xl space-y-8 pb-12">
       <div>
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
-          Product roadmap
+          Private beta roadmap
         </p>
         <h1 className="mb-2 font-serif text-3xl tracking-tight text-[#1F1D1A]">
           Workflows
@@ -73,9 +73,12 @@ export default async function WorkflowsPage() {
       <div className="flex items-start gap-3 rounded-xl border border-[#D8D2C8] bg-[#F8F6F1] px-4 py-3">
         <GitMerge className="mt-0.5 h-5 w-5 shrink-0 text-[#DD3300]" />
         <p className="text-sm leading-6 text-[#63534B]">
-          One workflow is live today; the others are on the roadmap and not yet
-          active as autonomous runners. Use the Assistant for legal and document
-          review, then save grounded answers into Matters.
+          <span>No workflow runner is active in this beta</span>.{" "}
+          <span>
+            Document and legal review are available in Assistant; the workflows
+            below are not active autonomous runners and are not yet generally
+            available.
+          </span>
         </p>
       </div>
 
@@ -126,7 +129,7 @@ function WorkflowCard({ workflow }: { workflow: WorkflowEntry }) {
         </span>
       ) : (
         <span className="mt-5 text-xs font-medium uppercase tracking-[0.14em] text-[#BDA989]">
-          On the roadmap
+          On the roadmap; not yet generally available
         </span>
       )}
     </>
