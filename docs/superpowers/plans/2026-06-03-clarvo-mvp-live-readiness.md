@@ -27,6 +27,11 @@
 - Local `.env.local` is ignored and must not be committed.
 - Local Vercel link for `/Users/antho/Desktop/clarvo` now points to project `antho-logans-projects/clarvo`.
 - Production deployment history still shows Git source `Antho-logan/veridicta`, branch `main`.
+- Vercel Git source was switched on 2026-06-03 to `Antho-logan/clarvo`, production branch `ui-polish-session`.
+- A production deployment from `/Users/antho/Desktop/clarvo` completed on 2026-06-03:
+  - Deployment ID: `dpl_59LFhKemTJvdYAsxJQPhVXkrbiNh`
+  - Deployment URL: `https://clarvo-jocu1zlis-antho-logans-projects.vercel.app`
+  - Aliases: `https://clarvo.nl`, `https://www.clarvo.nl`
 - Production `NEXT_PUBLIC_API_BASE_URL` currently resolves to `http://127.0.0.1:8000`, which cannot support live RAG on Vercel.
 - Production env names exist, but sensitive values are encrypted/write-only; only safe values should be verified via runtime smoke or dashboard.
 
@@ -126,9 +131,9 @@ Observed project metadata, with no secrets:
 
 Do not commit `.vercel/` unless we intentionally decide to track project metadata.
 
-- [ ] **Step 5: Switch Vercel Git integration to the new repo**
+- [x] **Step 5: Switch Vercel Git integration to the new repo**
 
-Current Vercel production deployment metadata still shows:
+Before the switch, Vercel production deployment metadata showed:
 
 ```text
 githubRepo: veridicta
@@ -136,15 +141,23 @@ githubCommitRef: main
 latest production SHA: 2b439a3a4c5aaf8ba69aa3a01662ba4e73919d96
 ```
 
-Required dashboard action:
+Completed dashboard action:
 
 ```text
 Vercel project clarvo -> Settings -> Git -> Connected Git Repository
 Switch from Antho-logan/veridicta to Antho-logan/clarvo.
-Set production branch to ui-polish-session, or rename/merge ui-polish-session to main and use main.
+Production branch: ui-polish-session.
 ```
 
-Expected after switching:
+Verified by Vercel API:
+
+```text
+repo: clarvo
+org: Antho-logan
+productionBranch: ui-polish-session
+```
+
+Check future Git-triggered deployments with:
 
 ```bash
 cd /Users/antho/Desktop/clarvo
@@ -171,6 +184,35 @@ npx vercel --prod
 ```
 
 This updates production once but does not fix future auto-deploys from Git.
+
+- [x] **Step 6: Deploy current connected app shell**
+
+Completed:
+
+```bash
+cd /Users/antho/Desktop/clarvo
+npm run lint
+npm run typecheck
+npm test -- --run
+npm run build
+npx vercel --prod
+```
+
+Observed:
+
+```text
+Deployment Ready
+Aliased: https://clarvo.nl
+Aliased: https://www.clarvo.nl
+```
+
+Public smoke:
+
+```text
+https://clarvo.nl -> 200
+https://clarvo.nl/login -> 200
+https://clarvo.nl/dashboard logged out -> 307 /login?callbackUrl=%2Fdashboard
+```
 
 ---
 
