@@ -34,6 +34,14 @@
   - Aliases: `https://clarvo.nl`, `https://www.clarvo.nl`
 - Production `NEXT_PUBLIC_API_BASE_URL` currently resolves to `http://127.0.0.1:8000`, which cannot support live RAG on Vercel.
 - Production env names exist, but sensitive values are encrypted/write-only; only safe values should be verified via runtime smoke or dashboard.
+- Supabase project `clarvo-auth` (`rxhdkenfaleqmwuxvheh`) is now prepared as the hosted RAG database:
+  - `vector` extension installed, version `0.8.0`
+  - RAG/app schema created
+  - local corpus imported
+  - `14,346` documents
+  - `14,346` embeddings
+  - `14,346` completed embeddings
+- Use the Supabase **session pooler** URL for the Python backend (`aws-1-eu-central-1.pooler.supabase.com:5432`) because the transaction pooler forced an empty `search_path`.
 
 ## File/Component Map
 
@@ -398,7 +406,7 @@ relation does not exist
 - Search: `search.py`
 - Deployment docs: `docs/DEPLOYMENT_CHECKLIST.md`
 
-- [ ] **Step 1: Provision hosted PostgreSQL with pgvector**
+- [x] **Step 1: Provision hosted PostgreSQL with pgvector**
 
 Required capabilities:
 
@@ -410,6 +418,15 @@ EU region preferred
 stable connection URL for FastAPI backend
 ```
 
+Completed with existing Supabase project:
+
+```text
+project: clarvo-auth
+ref: rxhdkenfaleqmwuxvheh
+region: eu-central-1
+pgvector: installed, version 0.8.0
+```
+
 Recommended MVP choices:
 
 ```text
@@ -417,7 +434,7 @@ Option A: Managed Postgres with pgvector on Railway/Render/Neon/Supabase, same r
 Option B: Self-hosted Postgres + pgvector on a small VPS if cost/control matters more than setup speed.
 ```
 
-- [ ] **Step 2: Apply migrations to hosted DB**
+- [x] **Step 2: Apply migrations to hosted DB**
 
 Use a temporary local environment variable. Do not print the URL.
 
@@ -433,7 +450,29 @@ Expected:
 Alembic upgrade completes without dropping/resetting existing production data.
 ```
 
-- [ ] **Step 3: Export local populated corpus**
+Completed as a Supabase schema migration named `clarvo_rag_schema`.
+
+Created/verified:
+
+```text
+documents
+source_registry
+ingestion_jobs
+ingestion_job_items
+matter
+matter_documents
+matter_agent_runs
+user_settings
+research_notes
+research_memos
+alembic_version
+```
+
+RLS was enabled on the new RAG/app tables.
+
+Important note: Supabase still reports RLS disabled on existing Auth.js auth tables (`users`, `accounts`, `sessions`, `verification_token`) and `alembic_version`. Do not enable RLS on those blindly because that can break Auth.js login without policies.
+
+- [x] **Step 3: Export local populated corpus**
 
 Do not run embedding jobs. Dump the existing local DB that already has embeddings.
 
@@ -450,7 +489,14 @@ Expected:
 tmp/db-migration/clarvo-rag.dump exists
 ```
 
-- [ ] **Step 4: Restore corpus into hosted DB**
+Completed data-only dump:
+
+```text
+tmp/db-migration/clarvo-rag-data.dump
+size: 112 MB
+```
+
+- [x] **Step 4: Restore corpus into hosted DB**
 
 Run:
 
@@ -466,7 +512,9 @@ Expected:
 Restore completes. Warnings about dropping non-existent objects are acceptable only if restore succeeds.
 ```
 
-- [ ] **Step 5: Verify hosted corpus counts**
+Completed with Supabase connection. Restore produced trigger permission warnings because Supabase does not allow disabling system triggers, but the data import succeeded.
+
+- [x] **Step 5: Verify hosted corpus counts**
 
 Run without printing DB URL:
 
@@ -493,6 +541,40 @@ documents: 14346
 embeddings: 14346
 completed: 14346
 ```
+
+Observed via Supabase:
+
+```text
+documents: 14346
+embeddings: 14346
+completed: 14346
+source_registry: 1248
+ingestion_jobs: 13
+ingestion_job_items: 2599
+```
+
+- [x] **Step 6: Verify app database driver against Supabase**
+
+Tested locally with:
+
+```bash
+DATABASE_URL=<Supabase session pooler URL with postgresql+psycopg driver> python3 - <<'PY'
+from sqlalchemy import text
+from backend_common import get_engine
+engine = get_engine()
+with engine.connect() as conn:
+    print(conn.execute(text('select count(*) from documents')).scalar_one())
+PY
+```
+
+Observed:
+
+```text
+documents: 14346
+embeddings: 14346
+```
+
+Do not use the transaction pooler URL for the FastAPI backend unless the app explicitly sets `search_path=public`; the transaction pooler returned an empty search path.
 
 ---
 
