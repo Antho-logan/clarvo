@@ -136,6 +136,7 @@ class AgentStreamRequest(BaseModel):
     question: str
     max_iterations: int = 4
     domain: Optional[str] = None
+    response_language: Optional[str] = None
     conversation_history: list[AgentConversationMessage] = Field(default_factory=list)
     client_documents: list[AgentClientDocument] = Field(default_factory=list)
 
@@ -191,6 +192,7 @@ class SettingsRequest(BaseModel):
     display_name: Optional[str] = None
     firm_name: Optional[str] = None
     theme_preference: Optional[str] = None
+    language_preference: Optional[str] = None
     bwb_enabled: Optional[bool] = None
     rechtspraak_enabled: Optional[bool] = None
     openai_key_configured: Optional[bool] = None
@@ -829,6 +831,7 @@ def stream_agent(
             request.question,
             max_iterations=request.max_iterations,
             domain=request.domain,
+            response_language=request.response_language or "nl",
             conversation_history=[
                 message.model_dump() for message in request.conversation_history
             ],

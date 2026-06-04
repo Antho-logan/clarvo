@@ -480,6 +480,7 @@ class UserSettings(Base):
     display_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     firm_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     theme_preference: Mapped[str] = mapped_column(Text, nullable=False, default="system")
+    language_preference: Mapped[str] = mapped_column(Text, nullable=False, default="nl")
     bwb_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     rechtspraak_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     openai_key_configured: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -501,6 +502,7 @@ class UserSettings(Base):
             "display_name": self.display_name,
             "firm_name": self.firm_name,
             "theme_preference": self.theme_preference,
+            "language_preference": self.language_preference,
             "bwb_enabled": self.bwb_enabled,
             "rechtspraak_enabled": self.rechtspraak_enabled,
             "openai_key_configured": self.openai_key_configured,

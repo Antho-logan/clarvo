@@ -276,6 +276,7 @@ def test_get_or_create_settings_initializes_defaults(ensure_user) -> None:
     user_id = ensure_user("settings-user", "settings@example.com")
     settings = get_or_create_settings(user_id)
     assert settings.theme_preference == "system"
+    assert settings.language_preference == "nl"
     assert settings.bwb_enabled is True
     assert settings.openai_key_configured is False
     # Second call returns the same row without inserting a duplicate.
@@ -298,6 +299,7 @@ def test_update_settings_respects_whitelist(ensure_user) -> None:
             "display_name": "Test Gebruiker",
             "firm_name": "Gebruikers BV",
             "theme_preference": "dark",
+            "language_preference": "en",
             "bwb_enabled": False,
             "openai_key_configured": True,
             "primary_domain": "employment_law",
@@ -308,6 +310,7 @@ def test_update_settings_respects_whitelist(ensure_user) -> None:
     assert updated.display_name == "Test Gebruiker"
     assert updated.firm_name == "Gebruikers BV"
     assert updated.theme_preference == "dark"
+    assert updated.language_preference == "en"
     assert updated.bwb_enabled is False
     assert updated.openai_key_configured is True
     assert updated.primary_domain == "employment_law"

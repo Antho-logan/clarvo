@@ -49,6 +49,7 @@ describe("beta dashboard surfaces", () => {
         display_name: "Test User",
         firm_name: "Test Firm",
         theme_preference: "system",
+        language_preference: "nl",
         bwb_enabled: true,
         rechtspraak_enabled: true,
         openai_key_configured: true,
@@ -71,6 +72,7 @@ describe("beta dashboard surfaces", () => {
     expect(screen.getByText("Model status")).toBeInTheDocument();
     expect(screen.getByText("14,346 indexed")).toBeInTheDocument();
     expect(screen.getByText("Legal disclaimer")).toBeInTheDocument();
+    expect(screen.getByLabelText("Dashboard language")).toBeInTheDocument();
     expect(screen.getByText("Save profile settings")).toBeInTheDocument();
     expect(screen.queryByText("API Keys")).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/OPENAI_API_KEY/i)).not.toBeInTheDocument();

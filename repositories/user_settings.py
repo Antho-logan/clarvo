@@ -10,6 +10,7 @@ from backend_common import User, UserSettings, get_session_factory, utcnow
 
 DEFAULT_SETTINGS: dict[str, Any] = {
     "theme_preference": "system",
+    "language_preference": "nl",
     "bwb_enabled": True,
     "rechtspraak_enabled": True,
     "openai_key_configured": False,
@@ -44,6 +45,7 @@ def update_settings(user_id: str, values: dict[str, Any]) -> UserSettings:
         "display_name",
         "firm_name",
         "theme_preference",
+        "language_preference",
         "bwb_enabled",
         "rechtspraak_enabled",
         "openai_key_configured",
@@ -61,6 +63,8 @@ def update_settings(user_id: str, values: dict[str, Any]) -> UserSettings:
 
         for key, value in values.items():
             if key in allowed_fields and value is not None:
+                if key == "language_preference" and value not in {"nl", "en"}:
+                    value = "nl"
                 setattr(settings, key, value)
         settings.updated_at = utcnow()
         session.commit()

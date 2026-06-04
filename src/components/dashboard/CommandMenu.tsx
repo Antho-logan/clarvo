@@ -25,49 +25,61 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
+import {
+  dashboardCopy,
+  normalizeDashboardLocale,
+  type DashboardLocale,
+} from "@/lib/dashboard-i18n";
 
 type NavLink = {
-  label: string;
+  key?: keyof typeof dashboardCopy.en.nav;
+  label?: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   keywords?: string[];
 };
 
 const NAV: NavLink[] = [
-  { label: "Home", href: "/dashboard", icon: LayoutDashboard, keywords: ["overview", "start"] },
-  { label: "Assistant", href: "/dashboard/agents", icon: Bot, keywords: ["ai", "chat", "ask"] },
-  { label: "Matters", href: "/dashboard/matters", icon: Briefcase, keywords: ["cases", "clients"] },
-  { label: "Workflows", href: "/dashboard/workflows", icon: GitMerge, keywords: ["flows", "automation"] },
-  { label: "Knowledge", href: "/dashboard/knowledge", icon: Scale, keywords: ["search", "bwb", "ecli", "case law"] },
-  { label: "Vault", href: "/dashboard/documents", icon: Files, keywords: ["documents", "files"] },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings, keywords: ["profile", "account"] },
+  { key: "home", href: "/dashboard", icon: LayoutDashboard, keywords: ["overview", "start"] },
+  { key: "assistant", href: "/dashboard/agents", icon: Bot, keywords: ["ai", "chat", "ask"] },
+  { key: "matters", href: "/dashboard/matters", icon: Briefcase, keywords: ["cases", "clients"] },
+  { key: "workflows", href: "/dashboard/workflows", icon: GitMerge, keywords: ["flows", "automation"] },
+  { key: "knowledge", href: "/dashboard/knowledge", icon: Scale, keywords: ["search", "bwb", "ecli", "case law"] },
+  { key: "vault", href: "/dashboard/documents", icon: Files, keywords: ["documents", "files"] },
+  { key: "settings", href: "/dashboard/settings", icon: Settings, keywords: ["profile", "account"] },
 ];
 
-const DOMAIN_SHORTCUTS: NavLink[] = [
-  {
-    label: "Search Arbeidsrecht",
-    href: "/dashboard/knowledge?domain=employment_law",
-    icon: Scale,
-    keywords: ["employment", "labour"],
-  },
-  {
-    label: "Search Huurrecht",
-    href: "/dashboard/knowledge?domain=tenancy_law",
-    icon: Scale,
-    keywords: ["rental", "tenancy"],
-  },
-  {
-    label: "Search Bestuursrecht",
-    href: "/dashboard/knowledge?domain=administrative_law",
-    icon: Scale,
-    keywords: ["administrative"],
-  },
-];
+type CommandMenuProps = {
+  locale?: DashboardLocale | string | null;
+};
 
-export function CommandMenu() {
+export function CommandMenu({ locale }: CommandMenuProps) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
+  const resolvedLocale =
+    locale == null ? "en" : normalizeDashboardLocale(locale);
+  const copy = dashboardCopy[resolvedLocale];
+  const domainShortcuts: NavLink[] = [
+    {
+      label: copy.command.searchEmployment,
+      href: "/dashboard/knowledge?domain=employment_law",
+      icon: Scale,
+      keywords: ["employment", "labour", "arbeidsrecht"],
+    },
+    {
+      label: copy.command.searchTenancy,
+      href: "/dashboard/knowledge?domain=tenancy_law",
+      icon: Scale,
+      keywords: ["rental", "tenancy", "huurrecht"],
+    },
+    {
+      label: copy.command.searchAdministrative,
+      href: "/dashboard/knowledge?domain=administrative_law",
+      icon: Scale,
+      keywords: ["administrative", "bestuursrecht"],
+    },
+  ];
 
   React.useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -100,7 +112,7 @@ export function CommandMenu() {
       >
         <span className="flex items-center gap-2 text-sm">
           <Search className="w-4 h-4 text-[#BDA989]" />
-          Search or jump to…
+          {copy.shell.searchButton}
         </span>
         <kbd className="pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-[#D8D2C8] bg-white px-1.5 font-mono text-[10px] font-medium text-[#63534B]">
           <span className="text-xs">⌘</span>K
@@ -111,14 +123,14 @@ export function CommandMenu() {
         <CommandInput
           value={query}
           onValueChange={setQuery}
-          placeholder="Search matters, documents, research…"
+          placeholder={copy.command.inputPlaceholder}
         />
         <CommandList>
-          <CommandEmpty>No results. Try a different term.</CommandEmpty>
+          <CommandEmpty>{copy.command.empty}</CommandEmpty>
 
           {trimmedQuery.length >= 2 ? (
             <>
-              <CommandGroup heading="Ask Clarvo">
+              <CommandGroup heading={copy.command.askClarvo}>
                 <CommandItem
                   value={`assistant ${trimmedQuery}`}
                   onSelect={() =>
@@ -131,7 +143,7 @@ export function CommandMenu() {
                 >
                   <Sparkles className="text-[#DD3300]" />
                   <span className="truncate">
-                    Ask the assistant:{" "}
+                    {copy.command.askAssistant}:{" "}
                     <span className="text-[#1F1D1A] font-medium">
                       &ldquo;{trimmedQuery}&rdquo;
                     </span>
@@ -150,7 +162,7 @@ export function CommandMenu() {
                 >
                   <Scale className="text-[#63534B]" />
                   <span className="truncate">
-                    Search knowledge base for{" "}
+                    {copy.command.searchKnowledge}{" "}
                     <span className="text-[#1F1D1A] font-medium">
                       &ldquo;{trimmedQuery}&rdquo;
                     </span>
@@ -161,8 +173,26 @@ export function CommandMenu() {
             </>
           ) : null}
 
-          <CommandGroup heading="Navigate">
-            {NAV.map((item) => (
+          <CommandGroup heading={copy.command.navigate}>
+            {NAV.map((item) => {
+              const label = item.key ? copy.nav[item.key] : item.label || "";
+              return (
+              <CommandItem
+                key={item.href}
+                value={`${label} ${(item.keywords ?? []).join(" ")}`}
+                onSelect={() => runCommand(() => router.push(item.href))}
+              >
+                <item.icon className="text-[#63534B]" />
+                <span>{label}</span>
+              </CommandItem>
+              );
+            })}
+          </CommandGroup>
+
+          <CommandSeparator />
+
+          <CommandGroup heading={copy.command.knowledgeShortcuts}>
+            {domainShortcuts.map((item) => (
               <CommandItem
                 key={item.href}
                 value={`${item.label} ${(item.keywords ?? []).join(" ")}`}
@@ -176,28 +206,13 @@ export function CommandMenu() {
 
           <CommandSeparator />
 
-          <CommandGroup heading="Knowledge shortcuts">
-            {DOMAIN_SHORTCUTS.map((item) => (
-              <CommandItem
-                key={item.href}
-                value={`${item.label} ${(item.keywords ?? []).join(" ")}`}
-                onSelect={() => runCommand(() => router.push(item.href))}
-              >
-                <item.icon className="text-[#63534B]" />
-                <span>{item.label}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-
-          <CommandSeparator />
-
-          <CommandGroup heading="Account">
+          <CommandGroup heading={copy.command.account}>
             <CommandItem
               value="profile settings account"
               onSelect={() => runCommand(() => router.push("/dashboard/settings"))}
             >
               <Settings className="text-[#63534B]" />
-              <span>Profile & settings</span>
+              <span>{copy.command.profileSettings}</span>
             </CommandItem>
           </CommandGroup>
         </CommandList>

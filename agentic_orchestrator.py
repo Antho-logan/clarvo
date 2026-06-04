@@ -218,6 +218,7 @@ def _llm_answer(
     hits: list[dict],
     conversation_history: list[dict] | None = None,
     client_documents: list[dict] | None = None,
+    response_language: str = "nl",
 ) -> str:
     from agents import Agent, Runner
     import asyncio
@@ -250,32 +251,54 @@ def _llm_answer(
         block for block in (history_context, document_context) if block
     )
 
+    if response_language == "en":
+        answer_language = "English"
+        ordinary_headings = (
+            "Brief conclusion, Legal framework, Application to the situation, "
+            "Important exceptions / points of attention, Sources / citations, Practical next step, "
+            "Lawyer review required"
+        )
+        contract_headings = (
+            "Brief conclusion, Contract passage, Legal rule, Risk, Recommendation, "
+            "Sources/citations, Lawyer review required"
+        )
+        language_rule = "Answer in English."
+    else:
+        answer_language = "Dutch"
+        ordinary_headings = (
+            "Korte conclusie, Juridisch kader, Toepassing op de situatie, "
+            "Belangrijke uitzonderingen / aandachtspunten, Bronnen / citaties, "
+            "Praktische vervolgstap, and Juristencontrole vereist"
+        )
+        contract_headings = (
+            "Korte conclusie, Contractpassage, Juridische regel, Risico, Aanbeveling, "
+            "Bronnen/citaties, and Juristencontrole vereist"
+        )
+        language_rule = "Answer in Dutch."
+
     instructions = (
         "You are Clarvo, a Dutch legal research assistant. Answer only from the provided Dutch legal sources "
         "and any client-provided document text. Treat client documents as user-provided facts or contract text, "
         "not as legal authority. Every legal claim must include an inline citation using one of the provided "
         "citation labels in square brackets. Contract observations may reference the document name, but legal "
         "rules still require a legal-source citation. For ordinary Dutch legal research answers in the supported "
-        "huurrecht and arbeidsrecht domains, use these exact compact Dutch headings: Korte conclusie, Juridisch "
-        "kader, Toepassing op de situatie, Belangrijke uitzonderingen / aandachtspunten, Bronnen / citaties, "
-        "Praktische vervolgstap, and Juristencontrole vereist. Keep the answer practical, distinguish the legal "
+        f"huurrecht and arbeidsrecht domains, answer in {answer_language} and use these exact compact headings: "
+        f"{ordinary_headings}. Keep the answer practical, distinguish the legal "
         "rule from its application, and name important caveats when the sources support them. When reviewing a "
-        "contract, write like a senior Dutch jurist and use these exact compact Dutch headings: Korte conclusie, "
-        "Contractpassage, Juridische regel, Risico, Aanbeveling, Bronnen/citaties, and Juristencontrole vereist. "
+        f"contract, write like a senior Dutch jurist, answer in {answer_language}, and use these exact compact headings: "
+        f"{contract_headings}. "
         "Cite the exact Contractpassage using labels like [Contract D1.P2], and cite legal sources inline for every legal rule. "
         "If the provided sources do not support a legal conclusion, say that specific point is not supported "
-        "instead of guessing. Answer in Dutch."
+        f"instead of guessing. {language_rule}"
     )
     prompt = (
         f"Question:\n{question}\n\n"
         f"{optional_context}\n\n"
         f"Allowed citation labels: {', '.join(allowed_labels)}\n\n"
         f"Sources:\n\n{chr(10).join(context_blocks)}\n\n"
-        "Answer in Dutch. For ordinary Dutch legal research answers in huurrecht or arbeidsrecht, use these exact "
-        "compact headings: Korte conclusie, Juridisch kader, Toepassing op de situatie, Belangrijke uitzonderingen "
-        "/ aandachtspunten, Bronnen / citaties, Praktische vervolgstap, and Juristencontrole vereist. For contract "
-        "checks, use these exact compact headings: Korte conclusie, Contractpassage, Juridische regel, Risico, "
-        "Aanbeveling, Bronnen/citaties, and Juristencontrole vereist."
+        f"{language_rule} For ordinary Dutch legal research answers in huurrecht or arbeidsrecht, use these exact "
+        f"compact headings: {ordinary_headings}. For contract checks, use these exact compact headings: "
+        f"{contract_headings}."
     )
     agent = Agent(name="GroundedLegalAnswerAgent", instructions=instructions, model=DEFAULT_CHAT_MODEL)
     result = asyncio.run(Runner.run(agent, prompt))
@@ -287,6 +310,7 @@ def generate_answer(
     collected_hits: list[dict],
     conversation_history: list[dict] | None = None,
     client_documents: list[dict] | None = None,
+    response_language: str = "nl",
 ) -> dict:
     """Return a cited answer or a refusal when supporting sources are missing."""
     hits = _deduplicate_hits(collected_hits)
@@ -298,6 +322,7 @@ def generate_answer(
             hits,
             conversation_history=conversation_history,
             client_documents=client_documents,
+            response_language=response_language,
         )
     else:
         answer = _extractive_answer(question, hits)
@@ -322,6 +347,7 @@ def chat(
     question: str,
     max_iterations: int = 2,
     domain: str | None = None,
+    response_language: str = "nl",
     conversation_history: list[dict] | None = None,
     client_documents: list[dict] | None = None,
 ) -> dict:
@@ -352,6 +378,7 @@ def chat(
         hits,
         conversation_history=conversation_history,
         client_documents=client_documents,
+        response_language=response_language if response_language in {"nl", "en"} else "nl",
     )
     final["tool_trace"] = tool_trace
     if final["status"] == "insufficient_sources":

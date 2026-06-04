@@ -19,6 +19,14 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
+vi.mock("@/lib/api/client", () => ({
+  getSettings: vi.fn(async () => ({
+    settings: {
+      language_preference: "nl",
+    },
+  })),
+}));
+
 let capturedSignOutAction: null | (() => Promise<void>) = null;
 
 vi.mock("@/components/dashboard/DashboardShell", () => ({

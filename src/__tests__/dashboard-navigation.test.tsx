@@ -27,6 +27,7 @@ describe("dashboard navigation", () => {
     render(
       <DashboardShell
         user={{ name: "Demo User", email: "demo@clarvo.local" }}
+        locale="en"
         signOutAction={async () => {}}
       >
         <p>Dashboard content</p>
@@ -42,6 +43,7 @@ describe("dashboard navigation", () => {
     render(
       <DashboardShell
         user={{ name: "Demo User", email: "demo@clarvo.local" }}
+        locale="en"
         signOutAction={async () => {}}
       >
         <p>Dashboard content</p>
@@ -53,5 +55,23 @@ describe("dashboard navigation", () => {
     expect(screen.getByText("Navigate")).toBeInTheDocument();
     expect(screen.getAllByText("Assistant").length).toBeGreaterThan(0);
     expect(screen.queryByText("UI Sandbox")).not.toBeInTheDocument();
+  });
+
+  it("renders Dutch dashboard navigation when locale is nl", () => {
+    render(
+      <DashboardShell
+        user={{ name: "Demo User", email: "demo@clarvo.local" }}
+        locale="nl"
+        signOutAction={async () => {}}
+      >
+        <p>Dashboard content</p>
+      </DashboardShell>,
+    );
+
+    expect(screen.getByText("Start")).toBeInTheDocument();
+    expect(screen.getByText("Assistent")).toBeInTheDocument();
+    expect(screen.getByText("Dossiers")).toBeInTheDocument();
+    expect(screen.getByText("Kennisbank")).toBeInTheDocument();
+    expect(screen.getByText("Instellingen")).toBeInTheDocument();
   });
 });

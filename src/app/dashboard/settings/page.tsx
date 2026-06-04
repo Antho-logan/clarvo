@@ -127,6 +127,23 @@ export default async function SettingsPage() {
               <div>
                 <label
                   className="mb-2 block text-sm font-medium text-[#1F1D1A]"
+                  htmlFor="language_preference"
+                >
+                  Dashboard language
+                </label>
+                <select
+                  id="language_preference"
+                  name="language_preference"
+                  defaultValue={settings?.language_preference || "nl"}
+                  className="h-10 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm"
+                >
+                  <option value="nl">Nederlands</option>
+                  <option value="en">English</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  className="mb-2 block text-sm font-medium text-[#1F1D1A]"
                   htmlFor="primary_domain"
                 >
                   Primary practice area

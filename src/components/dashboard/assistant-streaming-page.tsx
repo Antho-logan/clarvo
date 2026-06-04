@@ -31,6 +31,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  dashboardCopy,
+  normalizeDashboardLocale,
+  type DashboardLocale,
+} from "@/lib/dashboard-i18n";
 import { getDomainLabel } from "@/lib/legal-display";
 import { DOMAIN_OPTIONS, type AssistantCitation } from "@/lib/types";
 
@@ -60,6 +65,7 @@ const SUGGESTED_PROMPTS = [
 type AssistantStreamingPageProps = {
   query: string;
   domain?: string;
+  locale?: DashboardLocale | string | null;
 };
 
 const LIVE_RESEARCH_STAGES: ReadonlyArray<{ id: string; label: string }> = [
@@ -562,7 +568,11 @@ function getSpeechRecognitionConstructor() {
 export function AssistantStreamingPage({
   query,
   domain,
+  locale,
 }: AssistantStreamingPageProps) {
+  const resolvedLocale =
+    locale == null ? "en" : normalizeDashboardLocale(locale);
+  const copy = dashboardCopy[resolvedLocale].assistant;
   const [turns, setTurns] = useState<ConversationTurn[]>([]);
   const [draftQuery, setDraftQuery] = useState(query);
   const [selectedDomain, setSelectedDomain] = useState(domain || "");
@@ -665,6 +675,7 @@ export function AssistantStreamingPage({
           body: JSON.stringify({
             question: trimmedQuestion,
             domain: requestedDomain,
+            response_language: resolvedLocale,
             max_iterations: 2,
             conversation_history: buildConversationHistory(turnsRef.current),
             client_documents: clientDocumentsRef.current.map((document) => ({
@@ -892,7 +903,7 @@ export function AssistantStreamingPage({
         abortControllersRef.current.delete(abortController);
       }
     },
-    [updateTurn],
+    [resolvedLocale, updateTurn],
   );
 
   const saveTurnToMatter = useCallback(
@@ -901,7 +912,7 @@ export function AssistantStreamingPage({
         updateTurn(turn.id, (current) => ({
           ...current,
           saveState: "error",
-          saveMessage: "Only grounded answers with citations can be saved.",
+          saveMessage: copy.onlyGrounded,
         }));
         return;
       }
@@ -935,10 +946,14 @@ export function AssistantStreamingPage({
         const body = (await response.json()) as {
           matter?: { title?: string };
         };
+        const matterTitle = body.matter?.title || "matter";
         updateTurn(turn.id, (current) => ({
           ...current,
           saveState: "saved",
-          saveMessage: `Saved to ${body.matter?.title || "matter"}.`,
+          saveMessage:
+            resolvedLocale === "nl"
+              ? `${copy.savedToMatter}: ${matterTitle}.`
+              : `Saved to ${matterTitle}.`,
         }));
       } catch (error) {
         updateTurn(turn.id, (current) => ({
@@ -951,7 +966,7 @@ export function AssistantStreamingPage({
         }));
       }
     },
-    [updateTurn],
+    [copy.onlyGrounded, copy.savedToMatter, resolvedLocale, updateTurn],
   );
 
   useEffect(() => {
@@ -1156,16 +1171,14 @@ export function AssistantStreamingPage({
       <div className="mb-6 flex shrink-0 flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
-            Source-backed legal research
+            {copy.kicker}
           </p>
           <h1 className="flex items-center text-3xl font-serif tracking-tight text-[#1F1D1A] md:text-4xl">
             <Bot className="mr-3 h-8 w-8 text-[#DD3300]" />
-            Legal Research Assistant
+            {copy.title}
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-[#63534B]">
-            Ask one Dutch legal research question. The assistant checks stored
-            sources first, answers only when support is strong, and keeps the
-            citations visible in the conversation.
+            {copy.description}
           </p>
         </div>
       </div>
@@ -1225,6 +1238,7 @@ export function AssistantStreamingPage({
                     key={turn.id}
                     turn={turn}
                     onSave={saveTurnToMatter}
+                    locale={resolvedLocale}
                   />
                 ))}
               </div>
@@ -1252,7 +1266,7 @@ export function AssistantStreamingPage({
                           {document.name}
                         </span>
                         <span className="text-[10px] text-[#7C746B]">
-                          Current-chat document ·{" "}
+                          {copy.currentChatDocument} ·{" "}
                           {formatParagraphCount(paragraphCount)} ·{" "}
                           {formatFileSize(document.size)}
                           {document.truncated ? " · trimmed" : ""}
@@ -1293,7 +1307,11 @@ export function AssistantStreamingPage({
                 <textarea
                   name="q"
                   className="block max-h-48 min-h-[56px] w-full resize-none bg-transparent px-4 pt-4 text-sm leading-6 text-[#1F1D1A] placeholder:text-[#BDA989] focus:outline-none"
-                  placeholder="Ask one Dutch legal question, for example: huurcontract opzegtermijn"
+                  placeholder={
+                    resolvedLocale === "nl"
+                      ? "Stel een Nederlandse juridische vraag, bijvoorbeeld: opzegtermijn huurcontract"
+                      : "Ask one Dutch legal question, for example: huurcontract opzegtermijn"
+                  }
                   value={draftQuery}
                   onChange={(event) => setDraftQuery(event.target.value)}
                   rows={1}
@@ -1319,7 +1337,7 @@ export function AssistantStreamingPage({
                       onChange={(event) => setSelectedDomain(event.target.value)}
                       className="hidden h-9 rounded-lg border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-xs text-[#1F1D1A] transition-colors focus:border-[#DD3300]/50 focus:outline-none sm:block"
                     >
-                      <option value="">All domains</option>
+                      <option value="">{copy.allDomains}</option>
                       {DOMAIN_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -1377,15 +1395,17 @@ export function AssistantStreamingPage({
                   variant="outline"
                   className="border-[#D8D2C8] text-[10px] font-semibold uppercase text-[#BDA989]"
                 >
-                  Context: Stored sources
+                  {copy.contextStoredSources}
                 </Badge>
                 {clientDocuments.length > 0 ? (
                   <Badge
                     variant="outline"
                     className="border-[#D8D2C8] bg-[#F8F6F1] text-[10px] font-semibold uppercase text-[#63534B]"
                   >
-                    {clientDocuments.length} chat attachment
-                    {clientDocuments.length === 1 ? "" : "s"}
+                    {clientDocuments.length}{" "}
+                    {clientDocuments.length === 1
+                      ? copy.chatAttachment
+                      : copy.chatAttachments}
                   </Badge>
                 ) : null}
                 {speechMessage ? (
@@ -1398,32 +1418,26 @@ export function AssistantStreamingPage({
                 ) : null}
                 <span className="text-xs leading-5 text-[#7C746B]">
                   <span>
-                    Upload a clause or contract excerpt, then ask for a legal
-                    review.
+                    {copy.uploadInstruction}
                   </span>{" "}
                   <span>
-                    Contract text is treated as user-provided facts, not legal
-                    authority.
+                    {copy.contractFactWarning}
                   </span>{" "}
+                  <span>{copy.liveBackend}</span>{" "}
                   <span>
-                    Results are grounded in the live backend search index.
+                    {copy.voiceLocal}
                   </span>{" "}
-                  <span>
-                    Voice input is transcribed locally by the browser when
-                    supported.
-                  </span>{" "}
-                  <span>Review before sending.</span>
+                  <span>{copy.reviewBeforeSending}</span>
                 </span>
               </div>
 
               <div className="mt-3 rounded-lg border border-[#EEEDE4] bg-[#F8F6F1] px-3 py-3">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
-                    Demo example prompts
+                    {copy.demoPrompts}
                   </span>
                   <span className="text-xs text-[#7C746B]">
-                    Citations and lawyer review are required before relying on
-                    an answer.
+                    {copy.demoPromptNote}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1447,7 +1461,7 @@ export function AssistantStreamingPage({
                 {clientDocuments.length > 0 ? (
                   <div className="mt-3 border-t border-[#D8D2C8] pt-3">
                     <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
-                      Document review example
+                      {copy.documentReviewExample}
                     </p>
                     <button
                       type="button"
@@ -1458,7 +1472,7 @@ export function AssistantStreamingPage({
                       }
                     >
                       <span className="mr-2 font-semibold text-[#1F1D1A]">
-                        Legal Review Mode
+                        {copy.legalReviewMode}
                       </span>
                       {LEGAL_REVIEW_DEMO_PROMPT}
                     </button>
@@ -1469,7 +1483,11 @@ export function AssistantStreamingPage({
           </div>
         </Card>
         {hasResearchContext ? (
-          <CitationSidebar citations={activeCitations} documents={clientDocuments} />
+          <CitationSidebar
+            citations={activeCitations}
+            documents={clientDocuments}
+            locale={resolvedLocale}
+          />
         ) : null}
       </div>
       <span className="sr-only">{totalToolEvents} tool events inspected.</span>
@@ -1480,10 +1498,13 @@ export function AssistantStreamingPage({
 function CitationSidebar({
   citations,
   documents,
+  locale,
 }: {
   citations: AssistantCitation[];
   documents: ClientDocument[];
+  locale: DashboardLocale;
 }) {
+  const copy = dashboardCopy[locale].assistant;
   return (
     <motion.aside
       initial={{ opacity: 0, y: 14, filter: "blur(3px)" }}
@@ -1492,14 +1513,16 @@ function CitationSidebar({
       className="h-fit rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm motion-reduce:transform-none lg:sticky lg:top-6"
     >
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-base font-serif text-[#1F1D1A]">Research context</h2>
+        <h2 className="text-base font-serif text-[#1F1D1A]">
+          {copy.researchContext}
+        </h2>
         <div className="flex flex-wrap items-center justify-end gap-2">
           {citations.length > 0 ? (
             <Badge
               variant="outline"
               className="border-emerald-200 bg-emerald-50 text-emerald-700"
             >
-              Source trail preserved
+              {copy.sourceTrailBadge}
             </Badge>
           ) : null}
           <Badge
@@ -1514,7 +1537,7 @@ function CitationSidebar({
         {citations.length > 0 ? (
           <section>
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C746B]">
-              Legal source trail
+              {copy.legalSourceTrail}
             </h3>
             <div className="space-y-3">
               {citations.map((citation, index) => {
@@ -1544,8 +1567,8 @@ function CitationSidebar({
                         className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
                       >
                         {citation.source_type === "case_law"
-                          ? "Cited case law"
-                          : "Cited legislation"}
+                          ? copy.citedCaseLaw
+                          : copy.citedLegislation}
                       </Badge>
                       <Badge
                         variant="outline"
@@ -1565,11 +1588,11 @@ function CitationSidebar({
                     {citation.snippet ? (
                       <details className="mt-2">
                         <summary className="cursor-pointer text-xs font-medium text-[#DD3300]">
-                          Show source preview
+                          {copy.showSourcePreview}
                         </summary>
                         <p className="mt-2 text-xs leading-5 text-[#63534B]">
                           <span className="font-medium text-[#1F1D1A]">
-                            Source preview:
+                            {copy.sourcePreview}
                           </span>{" "}
                           {citation.snippet}
                         </p>
@@ -1580,7 +1603,7 @@ function CitationSidebar({
                         href={sourceHref}
                         className="mt-3 inline-flex items-center text-xs font-medium text-[#DD3300] hover:text-[#A92700]"
                       >
-                        Open source
+                        {copy.openSource}
                         <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
                       </Link>
                     ) : null}
@@ -1594,7 +1617,7 @@ function CitationSidebar({
         {documents.length > 0 ? (
           <section>
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7C746B]">
-              Contract context
+              {copy.contractContext}
             </h3>
             <div className="space-y-3">
               {documents.map((document, index) => {
@@ -1620,11 +1643,11 @@ function CitationSidebar({
                         D{index + 1}
                       </Badge>
                       <span className="text-[10px] uppercase tracking-[0.14em] text-[#7C746B]">
-                        Current-chat context only; not permanent storage.
+                        {copy.currentChatOnly}
                       </span>
                     </div>
                     <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-[#7C746B]">
-                      Current-chat document ·{" "}
+                      {copy.currentChatDocument} ·{" "}
                       {formatParagraphCount(paragraphs.length)}
                     </p>
                     <p className="text-sm font-medium leading-5 text-[#1F1D1A]">
@@ -1632,17 +1655,16 @@ function CitationSidebar({
                     </p>
                     <p className="mt-2 text-xs leading-5 text-[#63534B]">
                       <span className="font-medium text-[#1F1D1A]">
-                        First contract paragraph
+                        {copy.firstContractParagraph}
                       </span>
                       : {previewDocumentText(paragraphs[0] || document.text)}
                     </p>
                     <p className="mt-2 text-[11px] leading-5 text-[#7C746B]">
-                      Contract text is treated as user-provided facts, not legal
-                      authority.
+                      {copy.contractFactWarning}
                     </p>
                     {document.truncated ? (
                       <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-[#8A2408]">
-                        Trimmed for review
+                        {copy.trimmedForReview}
                       </p>
                     ) : null}
                   </motion.div>
@@ -1659,10 +1681,13 @@ function CitationSidebar({
 function ConversationTurnView({
   turn,
   onSave,
+  locale,
 }: {
   turn: ConversationTurn;
   onSave: (turn: ConversationTurn) => void;
+  locale: DashboardLocale;
 }) {
+  const copy = dashboardCopy[locale].assistant;
   const refusalDisplay = getRefusalDisplay(turn.query);
   const domainsFound = getTurnDomains(turn);
   const sourceCount = turn.sourceIds.length || turn.citations.length;
@@ -1681,13 +1706,13 @@ function ConversationTurnView({
         <div className="min-w-0 flex-1 rounded-lg border border-[#D8D2C8] bg-white px-5 py-4 shadow-sm">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
-              Question
+              {copy.question}
             </span>
             <Badge
               variant="outline"
               className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
             >
-              {turn.domain ? getDomainLabel(turn.domain) : "All domains"}
+              {turn.domain ? getDomainLabel(turn.domain) : copy.allDomains}
             </Badge>
           </div>
           <p className="whitespace-pre-wrap text-base leading-7 text-[#1F1D1A]">
@@ -1704,7 +1729,7 @@ function ConversationTurnView({
           {turn.state === "error" ? (
             <div className="rounded-lg border border-[#DD3300]/20 bg-white px-5 py-4 shadow-sm">
               <p className="mb-1 font-medium text-[#1F1D1A]">
-                Retrieval unavailable
+                {copy.retrievalUnavailable}
               </p>
               <p className="text-sm leading-6 text-[#63534B]">{turn.error}</p>
             </div>
@@ -1719,7 +1744,7 @@ function ConversationTurnView({
             >
               {turn.stages.length > 0 ? (
                 <div className="space-y-4">
-                  <ThinkingTrace stages={turn.stages} />
+                  <ThinkingTrace stages={turn.stages} locale={locale} />
                   {turn.answerText ? (
                     <StreamingAnswer text={turn.answerText} />
                   ) : null}
@@ -1729,7 +1754,7 @@ function ConversationTurnView({
               ) : (
                 <div className="flex items-center gap-2 text-sm font-medium text-[#63534B]">
                   <Loader2 className="h-4 w-4 text-[#DD3300] motion-safe:animate-spin" />
-                  Connecting…
+                  {copy.connecting}
                 </div>
               )}
             </motion.div>
@@ -1786,21 +1811,21 @@ function ConversationTurnView({
                     className="border-emerald-200 bg-emerald-50 text-emerald-700"
                   >
                     <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
-                    Grounded answer
+                    {copy.groundedAnswer}
                   </Badge>
                   <Badge
                     variant="outline"
                     className="border-[#DD3300]/30 bg-[#FFF7F3] text-[#8A2408]"
                   >
-                    Needs lawyer review
+                    {copy.needsReview}
                   </Badge>
                   <p className="text-xs text-[#7C746B]">
-                    Domains surfaced:{" "}
+                    {copy.domainsSurfaced}:{" "}
                     {domainsFound.length > 0
                       ? domainsFound
                           .map((item) => getDomainLabel(item))
                           .join(", ")
-                      : "None"}
+                      : copy.noDomains}
                   </p>
                 </div>
                 <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[#1F1D1A]">
@@ -1810,8 +1835,11 @@ function ConversationTurnView({
 	                  <div aria-live="polite" className="text-sm text-[#63534B]">
 	                    {sourceCount > 0 ? (
 	                      <span>
-	                        Source trail preserved: {sourceCount} cited legal source
-	                        {sourceCount === 1 ? "" : "s"} in the side panel.
+	                        {copy.sourceTrailPreserved}: {sourceCount}{" "}
+	                        {sourceCount === 1
+                            ? copy.citedLegalSource
+                            : copy.citedLegalSources}{" "}
+                          {copy.sidePanel}.
 	                      </span>
 	                    ) : null}
 	                    {turn.saveState === "saved" ? (
@@ -1834,10 +1862,10 @@ function ConversationTurnView({
                   >
                     <Briefcase className="mr-2 h-4 w-4 text-[#DD3300]" />
                     {turn.saveState === "saving"
-                      ? "Saving..."
+                      ? copy.saving
                       : turn.saveState === "saved"
-                        ? "Saved to Matter"
-                        : "Save to Matter"}
+                        ? copy.savedToMatter
+                        : copy.saveToMatter}
                   </Button>
                 </div>
               </motion.div>
@@ -1849,7 +1877,14 @@ function ConversationTurnView({
   );
 }
 
-function ThinkingTrace({ stages }: { stages: ThinkingStage[] }) {
+function ThinkingTrace({
+  stages,
+  locale,
+}: {
+  stages: ThinkingStage[];
+  locale: DashboardLocale;
+}) {
+  const copy = dashboardCopy[locale].assistant;
   return (
     <div className="space-y-2.5">
       <div className="flex items-center gap-2 text-sm font-medium text-[#63534B]">
@@ -1857,7 +1892,7 @@ function ThinkingTrace({ stages }: { stages: ThinkingStage[] }) {
           <span className="absolute inline-flex h-full w-full rounded-full bg-[#DD3300] opacity-60 motion-safe:animate-ping" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-[#DD3300]" />
         </span>
-        Thinking
+        {copy.thinking}
       </div>
       <ul className="space-y-1.5 pl-0.5">
         <AnimatePresence initial={false}>

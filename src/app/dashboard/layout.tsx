@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { auth, signOut } from "@/auth";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { getSettings } from "@/lib/api/client";
+import { normalizeDashboardLocale, type DashboardLocale } from "@/lib/dashboard-i18n";
 
 export const runtime = "nodejs";
 
@@ -19,6 +21,7 @@ export default async function DashboardLayout({
   const devBypass = process.env.AUTH_DEV_BYPASS === "true";
 
   let resolvedUser: { name: string; email: string; image: string | null };
+  let locale: DashboardLocale = "nl";
 
   if (devBypass) {
     resolvedUser = DEV_BYPASS_USER;
@@ -35,6 +38,9 @@ export default async function DashboardLayout({
     };
   }
 
+  const settingsResult = await getSettings().catch(() => null);
+  locale = normalizeDashboardLocale(settingsResult?.settings.language_preference);
+
   async function signOutAction() {
     "use server";
     if (process.env.AUTH_DEV_BYPASS === "true") {
@@ -44,7 +50,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <DashboardShell user={resolvedUser} signOutAction={signOutAction}>
+    <DashboardShell
+      user={resolvedUser}
+      signOutAction={signOutAction}
+      locale={locale}
+    >
       {children}
     </DashboardShell>
   );

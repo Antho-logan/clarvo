@@ -199,6 +199,7 @@ export type UserSettings = {
   display_name: string | null;
   firm_name: string | null;
   theme_preference: string;
+  language_preference: "nl" | "en";
   bwb_enabled: boolean;
   rechtspraak_enabled: boolean;
   openai_key_configured: boolean;

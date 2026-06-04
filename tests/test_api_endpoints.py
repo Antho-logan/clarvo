@@ -530,16 +530,22 @@ def test_settings_get_and_patch(
     initial = api_client.get("/settings", headers=auth_headers)
     assert initial.status_code == 200
     assert initial.json()["settings"]["theme_preference"] == "system"
+    assert initial.json()["settings"]["language_preference"] == "nl"
 
     patched = api_client.patch(
         "/settings",
         headers=auth_headers,
-        json={"theme_preference": "dark", "firm_name": "Test BV"},
+        json={
+            "theme_preference": "dark",
+            "firm_name": "Test BV",
+            "language_preference": "en",
+        },
     )
     assert patched.status_code == 200
     settings = patched.json()["settings"]
     assert settings["theme_preference"] == "dark"
     assert settings["firm_name"] == "Test BV"
+    assert settings["language_preference"] == "en"
 
 
 def test_ingestion_jobs_list_and_detail(
