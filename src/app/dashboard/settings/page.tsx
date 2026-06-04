@@ -3,17 +3,13 @@ import {
   Database,
   Info,
   Scale,
-  Settings,
   ShieldAlert,
-  UserCircle,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
-import { updateSettingsAction } from "@/app/dashboard/settings/actions";
+import { SettingsProfileForm } from "@/app/dashboard/settings/SettingsProfileForm";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { ApiError, getSettings } from "@/lib/api/client";
 import { DOMAIN_OPTIONS } from "@/lib/types";
 
@@ -29,7 +25,19 @@ function modelStatus() {
   };
 }
 
-export default async function SettingsPage() {
+type SettingsPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function readSingleValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function SettingsPage({
+  searchParams,
+}: SettingsPageProps) {
+  const params = searchParams ? await searchParams : {};
+  const showSavedMessage = readSingleValue(params.saved) === "profile";
   const settingsResult = await getSettings().catch((error) => ({
     error:
       error instanceof ApiError
@@ -71,105 +79,12 @@ export default async function SettingsPage() {
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <form action={updateSettingsAction} className="space-y-8">
-          <Card className="border-[#D8D2C8] bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center font-serif text-xl text-[#1F1D1A]">
-                <UserCircle className="mr-2 h-5 w-5 text-[#DD3300]" />
-                Profile and workspace
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label
-                  className="mb-2 block text-sm font-medium text-[#1F1D1A]"
-                  htmlFor="display_name"
-                >
-                  Display name
-                </label>
-                <Input
-                  id="display_name"
-                  name="display_name"
-                  defaultValue={settings?.display_name || ""}
-                />
-              </div>
-              <div>
-                <label
-                  className="mb-2 block text-sm font-medium text-[#1F1D1A]"
-                  htmlFor="firm_name"
-                >
-                  Workspace or firm
-                </label>
-                <Input
-                  id="firm_name"
-                  name="firm_name"
-                  defaultValue={settings?.firm_name || ""}
-                />
-              </div>
-              <div>
-                <label
-                  className="mb-2 block text-sm font-medium text-[#1F1D1A]"
-                  htmlFor="theme_preference"
-                >
-                  Theme preference
-                </label>
-                <select
-                  id="theme_preference"
-                  name="theme_preference"
-                  defaultValue={settings?.theme_preference || "system"}
-                  className="h-10 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm"
-                >
-                  <option value="system">System</option>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  className="mb-2 block text-sm font-medium text-[#1F1D1A]"
-                  htmlFor="language_preference"
-                >
-                  Dashboard language
-                </label>
-                <select
-                  id="language_preference"
-                  name="language_preference"
-                  defaultValue={settings?.language_preference || "nl"}
-                  className="h-10 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm"
-                >
-                  <option value="nl">Nederlands</option>
-                  <option value="en">English</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  className="mb-2 block text-sm font-medium text-[#1F1D1A]"
-                  htmlFor="primary_domain"
-                >
-                  Primary practice area
-                </label>
-                <select
-                  id="primary_domain"
-                  name="primary_domain"
-                  defaultValue={settings?.primary_domain || ""}
-                  className="h-10 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm"
-                >
-                  <option value="">No default practice area</option>
-                  {PRIMARY_DOMAIN_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <Button className="bg-[#DD3300] text-white hover:bg-[#DD3300]/90">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Save profile settings
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-8">
+          <SettingsProfileForm
+            initialSettings={settings}
+            primaryDomainOptions={PRIMARY_DOMAIN_OPTIONS}
+            showSavedMessage={showSavedMessage}
+          />
 
           <Card className="border-[#D8D2C8] bg-white shadow-sm">
             <CardContent className="flex gap-4 p-6">
@@ -186,7 +101,7 @@ export default async function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </form>
+        </div>
 
         <aside className="space-y-6">
           <StatusCard

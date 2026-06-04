@@ -9,6 +9,12 @@ vi.mock("@/lib/api/client", () => ({
   updateSettings: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: vi.fn(),
+  }),
+}));
+
 const mockedGetSettings = vi.mocked(getSettings);
 
 describe("beta dashboard surfaces", () => {
@@ -64,7 +70,7 @@ describe("beta dashboard surfaces", () => {
       "@/app/dashboard/settings/page"
     );
 
-    render(await SettingsPage());
+    render(await SettingsPage({ searchParams: Promise.resolve({}) }));
 
     expect(screen.getByText("Private beta settings")).toBeInTheDocument();
     expect(screen.getByText("Beta status")).toBeInTheDocument();
