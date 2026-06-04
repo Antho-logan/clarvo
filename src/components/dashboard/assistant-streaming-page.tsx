@@ -70,6 +70,10 @@ const LIVE_RESEARCH_STAGES: ReadonlyArray<{ id: string; label: string }> = [
   { id: "drafting-answer", label: "Composing a source-backed answer" },
 ];
 
+const SOFT_REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
+const STREAM_DISPLAY_TICK_MS = 32;
+const STREAM_DISPLAY_CHARS_PER_TICK = 7;
+
 type StreamState = "streaming" | "grounded" | "insufficient_sources" | "error";
 
 type ThinkingStage = {
@@ -606,6 +610,7 @@ export function AssistantStreamingPage({
       abortControllersRef.current.add(abortController);
       const stageTimers: Array<ReturnType<typeof setTimeout>> = [];
       let stagesCompleted = false;
+      let stopDisplayTicker = () => {};
 
       setTurns((current) => [
         ...current,
@@ -683,6 +688,75 @@ export function AssistantStreamingPage({
         let streamedAnswer = "";
         let streamedCitations: AssistantCitation[] = [];
         let sawFinalEvent = false;
+        let displayedAnswer = "";
+        let displayQueue = "";
+        let displayTimer: ReturnType<typeof setInterval> | null = null;
+        let displayDrainResolvers: Array<() => void> = [];
+
+        const resolveDisplayDrain = () => {
+          const resolvers = displayDrainResolvers;
+          displayDrainResolvers = [];
+          resolvers.forEach((resolve) => resolve());
+        };
+
+        stopDisplayTicker = () => {
+          if (displayTimer) {
+            clearInterval(displayTimer);
+            displayTimer = null;
+          }
+          displayQueue = "";
+          resolveDisplayDrain();
+        };
+
+        const flushDisplayChunk = () => {
+          if (abortController.signal.aborted) {
+            stopDisplayTicker();
+            return;
+          }
+          if (!displayQueue) {
+            stopDisplayTicker();
+            return;
+          }
+
+          const nextChunk = displayQueue.slice(0, STREAM_DISPLAY_CHARS_PER_TICK);
+          displayQueue = displayQueue.slice(STREAM_DISPLAY_CHARS_PER_TICK);
+          displayedAnswer += nextChunk;
+          updateTurn(turnId, (turn) => ({
+            ...turn,
+            answerText: displayedAnswer,
+          }));
+
+          if (!displayQueue) {
+            stopDisplayTicker();
+          }
+        };
+
+        const startDisplayTicker = () => {
+          if (!displayTimer) {
+            displayTimer = setInterval(
+              flushDisplayChunk,
+              STREAM_DISPLAY_TICK_MS,
+            );
+          }
+        };
+
+        const queueAnswerDisplay = (content: string) => {
+          if (!content) {
+            return;
+          }
+          displayQueue += content;
+          startDisplayTicker();
+        };
+
+        const waitForDisplayQueue = async () => {
+          if (!displayQueue && !displayTimer) {
+            return;
+          }
+          await new Promise<void>((resolve) => {
+            displayDrainResolvers.push(resolve);
+            startDisplayTicker();
+          });
+        };
 
         while (true) {
           const { done, value } = await reader.read();
@@ -706,10 +780,7 @@ export function AssistantStreamingPage({
             } else if (event.type === "token") {
               completeThinkingTrace();
               streamedAnswer += event.content;
-              updateTurn(turnId, (turn) => ({
-                ...turn,
-                answerText: turn.answerText + event.content,
-              }));
+              queueAnswerDisplay(event.content);
             } else if (event.type === "citation" && event.citation) {
               streamedCitations = [
                 ...streamedCitations,
@@ -730,6 +801,8 @@ export function AssistantStreamingPage({
                 getInsufficientMessage(trimmedQuestion, requestedDomain);
               streamedAnswer = answer;
               streamedCitations = [];
+              stopDisplayTicker();
+              displayedAnswer = answer;
               updateTurn(turnId, (turn) => ({
                 ...turn,
                 answerText: answer,
@@ -743,6 +816,7 @@ export function AssistantStreamingPage({
               completeThinkingTrace();
               const finalAnswer = streamedAnswer.trim();
               if (!finalAnswer || isRefusalAnswer(finalAnswer)) {
+                stopDisplayTicker();
                 updateTurn(turnId, (turn) => ({
                   ...turn,
                   answerText:
@@ -756,8 +830,10 @@ export function AssistantStreamingPage({
                 continue;
               }
 
+              await waitForDisplayQueue();
               updateTurn(turnId, (turn) => ({
                 ...turn,
+                answerText: finalAnswer,
                 citations: streamedCitations,
                 sourceIds: event.source_ids || [],
                 toolTrace: event.tool_trace || [],
@@ -771,6 +847,7 @@ export function AssistantStreamingPage({
           completeThinkingTrace();
           const finalAnswer = streamedAnswer.trim();
           if (!finalAnswer || isRefusalAnswer(finalAnswer)) {
+            stopDisplayTicker();
             updateTurn(turnId, (turn) => ({
               ...turn,
               answerText:
@@ -781,8 +858,10 @@ export function AssistantStreamingPage({
               state: "insufficient_sources",
             }));
           } else {
+            await waitForDisplayQueue();
             updateTurn(turnId, (turn) => ({
               ...turn,
+              answerText: finalAnswer,
               citations: streamedCitations,
               state: "grounded",
             }));
@@ -790,6 +869,7 @@ export function AssistantStreamingPage({
         }
       } catch (error) {
         if (!abortController.signal.aborted) {
+          stopDisplayTicker();
           stagesCompleted = true;
           for (const timer of stageTimers) {
             clearTimeout(timer);
@@ -804,6 +884,8 @@ export function AssistantStreamingPage({
           }));
         }
       } finally {
+        // Make sure no pacing interval survives a completed or aborted request.
+        stopDisplayTicker();
         for (const timer of stageTimers) {
           clearTimeout(timer);
         }
@@ -1403,7 +1485,12 @@ function CitationSidebar({
   documents: ClientDocument[];
 }) {
   return (
-    <aside className="h-fit rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm lg:sticky lg:top-6">
+    <motion.aside
+      initial={{ opacity: 0, y: 14, filter: "blur(3px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.68, ease: SOFT_REVEAL_EASE }}
+      className="h-fit rounded-lg border border-[#D8D2C8] bg-white p-4 shadow-sm motion-reduce:transform-none lg:sticky lg:top-6"
+    >
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-base font-serif text-[#1F1D1A]">Research context</h2>
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -1440,8 +1527,15 @@ function CitationSidebar({
                   : null;
 
                 return (
-                  <div
+                  <motion.div
                     key={getCitationKey(citation, index)}
+                    initial={{ opacity: 0, y: 10, filter: "blur(2px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{
+                      duration: 0.56,
+                      delay: 0.12 + Math.min(index * 0.08, 0.28),
+                      ease: SOFT_REVEAL_EASE,
+                    }}
                     className="rounded-lg border border-[#D8D2C8] bg-white p-3"
                   >
                     <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -1490,7 +1584,7 @@ function CitationSidebar({
                         <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
                       </Link>
                     ) : null}
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -1507,8 +1601,15 @@ function CitationSidebar({
                 const paragraphs = getDocumentParagraphs(document.text);
 
                 return (
-                  <div
+                  <motion.div
                     key={document.id}
+                    initial={{ opacity: 0, y: 10, filter: "blur(2px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{
+                      duration: 0.56,
+                      delay: 0.12 + Math.min(index * 0.08, 0.28),
+                      ease: SOFT_REVEAL_EASE,
+                    }}
                     className="rounded-lg border border-[#D8D2C8] bg-[#F8F6F1] p-3"
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
@@ -1544,14 +1645,14 @@ function CitationSidebar({
                         Trimmed for review
                       </p>
                     ) : null}
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
           </section>
         ) : null}
       </div>
-    </aside>
+    </motion.aside>
   );
 }
 
@@ -1567,7 +1668,12 @@ function ConversationTurnView({
   const sourceCount = turn.sourceIds.length || turn.citations.length;
 
   return (
-    <article className="space-y-4 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2">
+    <motion.article
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.36, ease: SOFT_REVEAL_EASE }}
+      className="space-y-4 motion-reduce:transform-none"
+    >
       <div className="flex items-start gap-3">
         <div className="mt-1 hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#D8D2C8] bg-white sm:flex">
           <UserCircle className="h-5 w-5 text-[#7C746B]" />
@@ -1605,7 +1711,12 @@ function ConversationTurnView({
           ) : null}
 
           {turn.state === "streaming" ? (
-            <div className="rounded-lg border border-[#D8D2C8] bg-white px-5 py-4 shadow-sm">
+            <motion.div
+              initial={{ opacity: 0, y: 6, filter: "blur(1px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.3, ease: SOFT_REVEAL_EASE }}
+              className="rounded-lg border border-[#D8D2C8] bg-white px-5 py-4 shadow-sm motion-reduce:transform-none"
+            >
               {turn.stages.length > 0 ? (
                 <div className="space-y-4">
                   <ThinkingTrace stages={turn.stages} />
@@ -1621,7 +1732,7 @@ function ConversationTurnView({
                   Connecting…
                 </div>
               )}
-            </div>
+            </motion.div>
           ) : null}
 
           {turn.state === "insufficient_sources" ? (
@@ -1663,7 +1774,12 @@ function ConversationTurnView({
 
           {turn.state === "grounded" ? (
             <div className="space-y-4">
-              <div className="rounded-lg border border-[#D8D2C8] bg-white px-5 py-5 shadow-sm">
+              <motion.div
+                initial={{ opacity: 0, y: 6, filter: "blur(1px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.36, ease: SOFT_REVEAL_EASE }}
+                className="rounded-lg border border-[#D8D2C8] bg-white px-5 py-5 shadow-sm motion-reduce:transform-none"
+              >
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <Badge
                     variant="outline"
@@ -1687,7 +1803,7 @@ function ConversationTurnView({
                       : "None"}
                   </p>
                 </div>
-                <p className="whitespace-pre-wrap text-sm leading-7 text-[#1F1D1A]">
+                <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[#1F1D1A]">
                   {turn.answerText}
                 </p>
 	                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#EEEDE4] pt-4">
@@ -1724,12 +1840,12 @@ function ConversationTurnView({
                         : "Save to Matter"}
                   </Button>
                 </div>
-              </div>
+              </motion.div>
 	            </div>
 	          ) : null}
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
@@ -1778,7 +1894,14 @@ function ThinkingTrace({ stages }: { stages: ThinkingStage[] }) {
 
 function StreamingAnswer({ text }: { text: string }) {
   return (
-    <p className="whitespace-pre-wrap text-sm leading-7 text-[#1F1D1A]">
+    <motion.p
+      initial={{ opacity: 0.92 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18, ease: "linear" }}
+      aria-live="polite"
+      className="whitespace-pre-wrap break-words text-sm leading-7 text-[#1F1D1A]"
+      style={{ overflowAnchor: "none" }}
+    >
       {text}
       <motion.span
         aria-hidden="true"
@@ -1786,6 +1909,6 @@ function StreamingAnswer({ text }: { text: string }) {
         animate={{ opacity: [1, 1, 0, 0] }}
         transition={{ duration: 1, repeat: Infinity, ease: "linear", times: [0, 0.5, 0.5, 1] }}
       />
-    </p>
+    </motion.p>
   );
 }
