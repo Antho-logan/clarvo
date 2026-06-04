@@ -72,14 +72,14 @@ describe("beta dashboard surfaces", () => {
 
     render(await SettingsPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByText("Private beta settings")).toBeInTheDocument();
-    expect(screen.getByText("Beta status")).toBeInTheDocument();
-    expect(screen.getByText("Corpus status")).toBeInTheDocument();
-    expect(screen.getByText("Model status")).toBeInTheDocument();
-    expect(screen.getByText("14,346 indexed")).toBeInTheDocument();
-    expect(screen.getByText("Legal disclaimer")).toBeInTheDocument();
-    expect(screen.getByLabelText("Dashboard language")).toBeInTheDocument();
-    expect(screen.getByText("Save profile settings")).toBeInTheDocument();
+    expect(screen.getByText("Private beta instellingen")).toBeInTheDocument();
+    expect(screen.getByText("Betastatus")).toBeInTheDocument();
+    expect(screen.getByText("Corpusstatus")).toBeInTheDocument();
+    expect(screen.getByText("Modelstatus")).toBeInTheDocument();
+    expect(screen.getByText("14.346 geindexeerd")).toBeInTheDocument();
+    expect(screen.getByText("Juridische disclaimer")).toBeInTheDocument();
+    expect(screen.getByLabelText("Dashboardtaal")).toBeInTheDocument();
+    expect(screen.getByText("Profielinstellingen opslaan")).toBeInTheDocument();
     expect(screen.queryByText("API Keys")).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/OPENAI_API_KEY/i)).not.toBeInTheDocument();
   });

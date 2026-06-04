@@ -7,6 +7,7 @@ import type {
 } from "@/lib/types";
 
 import { DOMAIN_OPTIONS, SOURCE_TYPE_OPTIONS } from "@/lib/types";
+import type { DashboardLocale } from "@/lib/dashboard-i18n";
 
 type LegalRecord = DocumentRecord | SearchResult;
 
@@ -18,18 +19,79 @@ const sourceTypeLabelMap = new Map<string, string>(
   SOURCE_TYPE_OPTIONS.map((option) => [option.value, option.label]),
 );
 
-export function getDomainLabel(domain?: string | null) {
+const localizedDomainLabels: Record<
+  DashboardLocale,
+  Partial<Record<DomainKey, string>>
+> = {
+  nl: {
+    tenancy_law: "Huurrecht",
+    employment_law: "Arbeidsrecht",
+    administrative_law: "Bestuursrecht",
+    immigration_law: "Migratierecht",
+    sme_business_law: "Mkb-ondernemingsrecht",
+  },
+  en: {
+    tenancy_law: "Tenancy law",
+    employment_law: "Employment law",
+    administrative_law: "Administrative law",
+    immigration_law: "Immigration law",
+    sme_business_law: "SME business law",
+  },
+};
+
+const localizedSourceTypeLabels: Record<
+  DashboardLocale,
+  Partial<Record<SourceType, string>>
+> = {
+  nl: {
+    legislation: "Wetgeving",
+    case_law: "Rechtspraak",
+  },
+  en: {
+    legislation: "Legislation",
+    case_law: "Case law",
+  },
+};
+
+export function getDomainLabel(
+  domain?: string | null,
+  locale: DashboardLocale = "en",
+) {
   if (!domain) {
-    return "Domain pending";
+    return locale === "nl" ? "Rechtsgebied onbekend" : "Domain pending";
+  }
+  if (isValidDomain(domain)) {
+    return (
+      localizedDomainLabels[locale][domain] ||
+      domainLabelMap.get(domain) ||
+      startCase(domain)
+    );
   }
   return domainLabelMap.get(domain) || startCase(domain);
 }
 
-export function getSourceTypeLabel(sourceType?: string | null) {
+export function getSourceTypeLabel(
+  sourceType?: string | null,
+  locale: DashboardLocale = "en",
+) {
   if (!sourceType) {
-    return "Stored source";
+    return locale === "nl" ? "Opgeslagen bron" : "Stored source";
+  }
+  if (isValidSourceType(sourceType)) {
+    return (
+      localizedSourceTypeLabels[locale][sourceType] ||
+      sourceTypeLabelMap.get(sourceType) ||
+      startCase(sourceType)
+    );
   }
   return sourceTypeLabelMap.get(sourceType) || startCase(sourceType);
+}
+
+export function getLocalizedDomainOptions(locale: DashboardLocale) {
+  return DOMAIN_OPTIONS.map((option) => ({
+    value: option.value,
+    label: getDomainLabel(option.value, locale),
+  }));
 }
 
 export function getSourceSystemLabel(

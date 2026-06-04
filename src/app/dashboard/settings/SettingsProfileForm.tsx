@@ -11,11 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { dashboardCopy, type DashboardLocale } from "@/lib/dashboard-i18n";
 import type { UserSettings } from "@/lib/types";
 
 type SettingsProfileFormProps = {
   initialSettings: UserSettings | null;
   primaryDomainOptions: Array<{ label: string; value: string }>;
+  locale: DashboardLocale;
   showSavedMessage?: boolean;
 };
 
@@ -26,6 +28,7 @@ const initialUpdateSettingsState: UpdateSettingsState = {
 export function SettingsProfileForm({
   initialSettings,
   primaryDomainOptions,
+  locale,
   showSavedMessage = false,
 }: SettingsProfileFormProps) {
   const [state, formAction] = useActionState(
@@ -34,6 +37,7 @@ export function SettingsProfileForm({
   );
   const settings =
     state.status === "success" ? state.settings : initialSettings;
+  const copy = dashboardCopy[locale].settings;
 
   return (
     <form action={formAction} className="space-y-8">
@@ -41,7 +45,7 @@ export function SettingsProfileForm({
         <CardHeader>
           <CardTitle className="flex items-center font-serif text-xl text-[#1F1D1A]">
             <UserCircle className="mr-2 h-5 w-5 text-[#DD3300]" />
-            Profile and workspace
+            {copy.profileTitle}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
@@ -50,7 +54,7 @@ export function SettingsProfileForm({
               className="mb-2 block text-sm font-medium text-[#1F1D1A]"
               htmlFor="display_name"
             >
-              Display name
+              {copy.displayName}
             </label>
             <Input
               id="display_name"
@@ -63,7 +67,7 @@ export function SettingsProfileForm({
               className="mb-2 block text-sm font-medium text-[#1F1D1A]"
               htmlFor="firm_name"
             >
-              Workspace or firm
+              {copy.firmName}
             </label>
             <Input
               id="firm_name"
@@ -76,7 +80,7 @@ export function SettingsProfileForm({
               className="mb-2 block text-sm font-medium text-[#1F1D1A]"
               htmlFor="theme_preference"
             >
-              Theme preference
+              {copy.themePreference}
             </label>
             <select
               id="theme_preference"
@@ -84,9 +88,9 @@ export function SettingsProfileForm({
               defaultValue={settings?.theme_preference || "system"}
               className="h-10 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm"
             >
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
+              <option value="system">{copy.themeSystem}</option>
+              <option value="light">{copy.themeLight}</option>
+              <option value="dark">{copy.themeDark}</option>
             </select>
           </div>
           <div>
@@ -94,7 +98,7 @@ export function SettingsProfileForm({
               className="mb-2 block text-sm font-medium text-[#1F1D1A]"
               htmlFor="language_preference"
             >
-              Dashboard language
+              {copy.dashboardLanguage}
             </label>
             <select
               id="language_preference"
@@ -111,7 +115,7 @@ export function SettingsProfileForm({
               className="mb-2 block text-sm font-medium text-[#1F1D1A]"
               htmlFor="primary_domain"
             >
-              Primary practice area
+              {copy.primaryPracticeArea}
             </label>
             <select
               id="primary_domain"
@@ -119,7 +123,7 @@ export function SettingsProfileForm({
               defaultValue={settings?.primary_domain || ""}
               className="h-10 w-full rounded-md border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-sm"
             >
-              <option value="">No default practice area</option>
+              <option value="">{copy.noDefaultPracticeArea}</option>
               {primaryDomainOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -128,7 +132,7 @@ export function SettingsProfileForm({
             </select>
           </div>
           <div className="flex flex-col gap-3 md:col-span-2">
-            <SaveSettingsButton />
+            <SaveSettingsButton locale={locale} />
             {state.status === "success" || showSavedMessage ? (
               <p
                 role="status"
@@ -136,7 +140,7 @@ export function SettingsProfileForm({
               >
                 {state.status === "success"
                   ? state.message
-                  : "Profile settings saved."}
+                  : copy.saved}
               </p>
             ) : null}
             {state.status === "error" ? (
@@ -154,8 +158,9 @@ export function SettingsProfileForm({
   );
 }
 
-function SaveSettingsButton() {
+function SaveSettingsButton({ locale }: { locale: DashboardLocale }) {
   const { pending } = useFormStatus();
+  const copy = dashboardCopy[locale].settings;
 
   return (
     <Button
@@ -163,7 +168,7 @@ function SaveSettingsButton() {
       className="w-fit bg-[#DD3300] text-white hover:bg-[#DD3300]/90 disabled:opacity-70"
     >
       <Settings className="mr-2 h-4 w-4" />
-      {pending ? "Saving profile settings..." : "Save profile settings"}
+      {pending ? copy.saving : copy.save}
     </Button>
   );
 }

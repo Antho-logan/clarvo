@@ -36,29 +36,24 @@ import {
   normalizeDashboardLocale,
   type DashboardLocale,
 } from "@/lib/dashboard-i18n";
-import { getDomainLabel } from "@/lib/legal-display";
-import { DOMAIN_OPTIONS, type AssistantCitation } from "@/lib/types";
+import { getDomainLabel, getLocalizedDomainOptions } from "@/lib/legal-display";
+import type { AssistantCitation } from "@/lib/types";
 
 const SUGGESTED_PROMPTS = [
   {
     domain: "tenancy_law",
     icon: FileText,
     prompt: "Wat geldt bij opzegging van huur van woonruimte?",
-    description: "Checks the stored tenancy corpus and cites matching sources.",
   },
   {
     domain: "employment_law",
     icon: Briefcase,
     prompt: "Wat zijn aandachtspunten bij ontslag op staande voet?",
-    description:
-      "Uses employment-law sources when the corpus supports the answer.",
   },
   {
     domain: "administrative_law",
     icon: Scale,
     prompt: "Welke eisen gelden voor bezwaar tegen een besluit?",
-    description:
-      "Surfaces administrative-law sources or refuses transparently.",
   },
 ] as const;
 
@@ -314,14 +309,15 @@ function isOutOfScopeQuestion(query: string) {
   return OUT_OF_SCOPE_PATTERNS.some((pattern) => pattern.test(query));
 }
 
-function getRefusalDisplay(query: string) {
+type AssistantCopy = (typeof dashboardCopy)[DashboardLocale]["assistant"];
+
+function getRefusalDisplay(query: string, copy: AssistantCopy) {
   if (appearsToContainMultipleQuestions(query)) {
     return {
       kind: "multi-question",
-      statusLabel: "Ask one legal question at a time",
-      title: "Ask one legal question at a time",
-      body:
-        "This prompt contains multiple separate legal questions. Clarvo retrieves sources per legal issue. Ask one question at a time so the assistant can attach the right citations.",
+      statusLabel: copy.askOneAtATime,
+      title: copy.askOneAtATime,
+      body: copy.askOneAtATimeBody,
       suggestions: MULTI_QUESTION_SUGGESTED_PROMPTS,
     } as const;
   }
@@ -329,21 +325,33 @@ function getRefusalDisplay(query: string) {
   if (isOutOfScopeQuestion(query)) {
     return {
       kind: "out-of-scope",
-      statusLabel: "Outside current coverage",
-      title: "Outside current coverage",
-      body:
-        "Clarvo currently supports selected Dutch legal research workflows. This question is outside the current corpus or requires professional advice beyond the product scope.",
+      statusLabel: copy.outsideCoverage,
+      title: copy.outsideCoverage,
+      body: copy.outsideCoverageBody,
       suggestions: [],
     } as const;
   }
 
   return {
     kind: "insufficient-sources",
-    statusLabel: "Not enough supporting sources",
-    title: "Not enough supporting sources",
+    statusLabel: copy.notEnoughSources,
+    title: copy.notEnoughSources,
     body: "",
     suggestions: SUGGESTED_PROMPTS.map((item) => item.prompt),
   } as const;
+}
+
+function getSuggestedPromptDescription(
+  domain: (typeof SUGGESTED_PROMPTS)[number]["domain"],
+  copy: AssistantCopy,
+) {
+  if (domain === "tenancy_law") {
+    return copy.suggestedTenancyDescription;
+  }
+  if (domain === "employment_law") {
+    return copy.suggestedEmploymentDescription;
+  }
+  return copy.suggestedAdministrativeDescription;
 }
 
 function readSseEvents(buffer: string) {
@@ -573,6 +581,10 @@ export function AssistantStreamingPage({
   const resolvedLocale =
     locale == null ? "en" : normalizeDashboardLocale(locale);
   const copy = dashboardCopy[resolvedLocale].assistant;
+  const localizedDomainOptions = useMemo(
+    () => getLocalizedDomainOptions(resolvedLocale),
+    [resolvedLocale],
+  );
   const [turns, setTurns] = useState<ConversationTurn[]>([]);
   const [draftQuery, setDraftQuery] = useState(query);
   const [selectedDomain, setSelectedDomain] = useState(domain || "");
@@ -1199,11 +1211,10 @@ export function AssistantStreamingPage({
                   <Sparkles className="h-8 w-8 text-[#DD3300]" />
                 </div>
                 <h2 className="mb-2 text-2xl font-serif text-[#1F1D1A]">
-                  Start with one legal issue
+                  {copy.startTitle}
                 </h2>
                 <p className="mx-auto mb-8 max-w-xl text-sm leading-7 text-[#63534B]">
-                  Clarvo retrieves sources per legal issue. Focus the prompt
-                  so the answer can attach the right citations.
+                  {copy.startDescription}
                 </p>
 
                 <div className="grid w-full max-w-4xl gap-4 text-left md:grid-cols-3">
@@ -1218,14 +1229,14 @@ export function AssistantStreamingPage({
                           <item.icon className="h-4 w-4 text-[#BDA989] transition-colors group-hover:text-[#DD3300]" />
                         </span>
                         <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7C746B]">
-                          {getDomainLabel(item.domain)}
+                          {getDomainLabel(item.domain, resolvedLocale)}
                         </span>
                       </div>
                       <p className="text-sm font-medium leading-6 text-[#1F1D1A]">
                         {item.prompt}
                       </p>
                       <p className="mt-3 text-xs leading-5 text-[#7C746B]">
-                        {item.description}
+                        {getSuggestedPromptDescription(item.domain, copy)}
                       </p>
                     </Link>
                   ))}
@@ -1338,7 +1349,7 @@ export function AssistantStreamingPage({
                       className="hidden h-9 rounded-lg border border-[#D8D2C8] bg-[#F5F5F4] px-3 text-xs text-[#1F1D1A] transition-colors focus:border-[#DD3300]/50 focus:outline-none sm:block"
                     >
                       <option value="">{copy.allDomains}</option>
-                      {DOMAIN_OPTIONS.map((option) => (
+                      {localizedDomainOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
@@ -1452,7 +1463,9 @@ export function AssistantStreamingPage({
                       }
                     >
                       <span className="mr-2 font-semibold text-[#1F1D1A]">
-                        {shortcut.label}
+                        {shortcut.domain
+                          ? getDomainLabel(shortcut.domain, resolvedLocale)
+                          : shortcut.label}
                       </span>
                       {shortcut.prompt}
                     </button>
@@ -1574,7 +1587,7 @@ function CitationSidebar({
                         variant="outline"
                         className="border-[#D8D2C8] bg-[#EEEDE4] text-[#63534B]"
                       >
-                        {getDomainLabel(citation.domain)}
+                        {getDomainLabel(citation.domain, locale)}
                       </Badge>
                     </div>
                     <p className="text-sm font-medium leading-5 text-[#1F1D1A]">
@@ -1688,7 +1701,7 @@ function ConversationTurnView({
   locale: DashboardLocale;
 }) {
   const copy = dashboardCopy[locale].assistant;
-  const refusalDisplay = getRefusalDisplay(turn.query);
+  const refusalDisplay = getRefusalDisplay(turn.query, copy);
   const domainsFound = getTurnDomains(turn);
   const sourceCount = turn.sourceIds.length || turn.citations.length;
 
@@ -1712,7 +1725,9 @@ function ConversationTurnView({
               variant="outline"
               className="border-[#D8D2C8] bg-[#F8F6F1] text-[#63534B]"
             >
-              {turn.domain ? getDomainLabel(turn.domain) : copy.allDomains}
+              {turn.domain
+                ? getDomainLabel(turn.domain, locale)
+                : copy.allDomains}
             </Badge>
           </div>
           <p className="whitespace-pre-wrap text-base leading-7 text-[#1F1D1A]">
@@ -1781,7 +1796,7 @@ function ConversationTurnView({
                     href={buildAssistantHref(turn.query)}
                     className="inline-flex items-center rounded-full border border-[#DD3300]/20 bg-[#FFF8F5] px-4 py-2 text-sm font-medium text-[#DD3300] transition-colors hover:border-[#DD3300]/40"
                   >
-                    Search all domains
+                    {copy.searchAllDomains}
                   </Link>
                 ) : null}
                 {refusalDisplay.suggestions.map((prompt) => (
@@ -1823,7 +1838,7 @@ function ConversationTurnView({
                     {copy.domainsSurfaced}:{" "}
                     {domainsFound.length > 0
                       ? domainsFound
-                          .map((item) => getDomainLabel(item))
+                          .map((item) => getDomainLabel(item, locale))
                           .join(", ")
                       : copy.noDomains}
                   </p>

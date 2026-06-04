@@ -32,7 +32,7 @@ export class ApiError extends Error {
 
 async function parseJsonResponse(response: Response) {
   const rawBody = await response.text();
-  const body = rawBody ? safeJsonParse(rawBody) : {};
+  const body = rawBody ? safeJsonParse(rawBody, response) : {};
 
   if (!response.ok) {
     const errorMessage =
@@ -49,10 +49,16 @@ async function parseJsonResponse(response: Response) {
   return body;
 }
 
-function safeJsonParse(value: string) {
+function safeJsonParse(value: string, response: Response) {
   try {
     return JSON.parse(value);
   } catch {
+    if (!response.ok) {
+      throw new ApiError(
+        response.statusText || `Backend request failed with ${response.status}.`,
+        response.status,
+      );
+    }
     throw new ApiError("Backend returned invalid JSON.", 502);
   }
 }

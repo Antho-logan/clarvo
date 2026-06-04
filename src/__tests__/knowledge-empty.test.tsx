@@ -28,7 +28,7 @@ describe("knowledge empty state", () => {
     );
 
     expect(
-      screen.getByText('No matches for "zzzzgeenmatch" in Tenancy Law'),
+      screen.getByText('No matches for "zzzzgeenmatch" in Tenancy law'),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Try broader domain" }),

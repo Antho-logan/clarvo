@@ -11,11 +11,17 @@ import { SettingsProfileForm } from "@/app/dashboard/settings/SettingsProfileFor
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ApiError, getSettings } from "@/lib/api/client";
-import { DOMAIN_OPTIONS } from "@/lib/types";
+import {
+  dashboardCopy,
+  normalizeDashboardLocale,
+} from "@/lib/dashboard-i18n";
+import { getLocalizedDomainOptions } from "@/lib/legal-display";
 
-const PRIMARY_DOMAIN_OPTIONS = DOMAIN_OPTIONS.filter((option) =>
-  ["employment_law", "tenancy_law", "administrative_law"].includes(option.value),
-);
+const PRIMARY_DOMAIN_VALUES = [
+  "employment_law",
+  "tenancy_law",
+  "administrative_law",
+] as const;
 
 function modelStatus() {
   return {
@@ -45,6 +51,13 @@ export default async function SettingsPage({
         : "Settings could not be loaded.",
   }));
   const settings = "settings" in settingsResult ? settingsResult.settings : null;
+  const locale = normalizeDashboardLocale(settings?.language_preference);
+  const copy = dashboardCopy[locale].settings;
+  const primaryDomainOptions = getLocalizedDomainOptions(locale).filter((option) =>
+    PRIMARY_DOMAIN_VALUES.includes(
+      option.value as (typeof PRIMARY_DOMAIN_VALUES)[number],
+    ),
+  );
   const models = modelStatus();
 
   return (
@@ -52,21 +65,20 @@ export default async function SettingsPage({
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#BDA989]">
-            Private beta settings
+            {copy.kicker}
           </p>
           <h1 className="mb-2 font-serif text-3xl tracking-tight text-[#1F1D1A]">
-            Settings
+            {copy.title}
           </h1>
           <p className="max-w-3xl text-sm leading-6 text-[#63534B]">
-            Profile preferences and read-only system status for this local beta
-            workspace. Secrets and corpus operations stay outside the browser.
+            {copy.description}
           </p>
         </div>
         <Badge
           variant="outline"
           className="w-fit border-[#D8D2C8] bg-white px-3 py-1.5 text-[#63534B]"
         >
-          Private beta
+          {copy.betaBadge}
         </Badge>
       </div>
 
@@ -82,7 +94,8 @@ export default async function SettingsPage({
         <div className="space-y-8">
           <SettingsProfileForm
             initialSettings={settings}
-            primaryDomainOptions={PRIMARY_DOMAIN_OPTIONS}
+            primaryDomainOptions={primaryDomainOptions}
+            locale={locale}
             showSavedMessage={showSavedMessage}
           />
 
@@ -91,12 +104,10 @@ export default async function SettingsPage({
               <ShieldAlert className="mt-1 h-5 w-5 shrink-0 text-[#DD3300]" />
               <div>
                 <h2 className="font-serif text-xl text-[#1F1D1A]">
-                  Legal disclaimer
+                  {copy.legalDisclaimerTitle}
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-[#63534B]">
-                  Clarvo supports Dutch legal research. It does not provide
-                  legal advice, does not replace a lawyer, and outputs should be
-                  reviewed by a qualified professional before use.
+                  {copy.legalDisclaimer}
                 </p>
               </div>
             </CardContent>
@@ -106,36 +117,35 @@ export default async function SettingsPage({
         <aside className="space-y-6">
           <StatusCard
             icon={BadgeCheck}
-            title="Beta status"
+            title={copy.betaStatus}
             rows={[
-              ["Access", "Private beta"],
-              ["Primary workflow", "Assistant + saved matter research"],
-              ["Automation", "Workflow runner not generally available"],
+              [copy.access, copy.privateBeta],
+              [copy.primaryWorkflow, copy.workflowValue],
+              [copy.automation, copy.automationValue],
             ]}
           />
           <StatusCard
             icon={Database}
-            title="Corpus status"
+            title={copy.corpusStatus}
             rows={[
-              ["Documents", "14,346 indexed"],
-              ["Embeddings", "Complete"],
-              ["Coverage", "BWB legislation and Rechtspraak rows"],
+              [copy.documents, copy.documentsValue],
+              [copy.embeddings, copy.embeddingsValue],
+              [copy.coverage, copy.coverageValue],
             ]}
           />
           <StatusCard
             icon={Scale}
-            title="Model status"
+            title={copy.modelStatus}
             rows={[
-              ["Chat model", models.chatModel],
-              ["Embedding model", models.embeddingModel],
-              ["Secrets", "Configured outside the browser"],
+              [copy.chatModel, models.chatModel],
+              [copy.embeddingModel, models.embeddingModel],
+              [copy.secrets, copy.secretsValue],
             ]}
           />
           <Card className="border-[#D8D2C8] bg-white shadow-sm">
             <CardContent className="flex gap-3 p-5 text-sm leading-6 text-[#63534B]">
               <Info className="mt-1 h-4 w-4 shrink-0 text-[#BDA989]" />
-              API keys and corpus ingestion are operator-managed for this beta.
-              This page does not expose or accept secrets.
+              {copy.operatorManaged}
             </CardContent>
           </Card>
         </aside>
