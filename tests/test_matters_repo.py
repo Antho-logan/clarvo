@@ -302,6 +302,7 @@ def test_update_settings_respects_whitelist(ensure_user) -> None:
             "language_preference": "en",
             "bwb_enabled": False,
             "openai_key_configured": True,
+            "cohere_key_configured": True,
             "primary_domain": "employment_law",
             "onboarding_completed": True,
             "bogus": "should-be-ignored",
@@ -312,7 +313,8 @@ def test_update_settings_respects_whitelist(ensure_user) -> None:
     assert updated.theme_preference == "dark"
     assert updated.language_preference == "en"
     assert updated.bwb_enabled is False
-    assert updated.openai_key_configured is True
+    assert updated.openai_key_configured is False
+    assert updated.cohere_key_configured is False
     assert updated.primary_domain == "employment_law"
     assert updated.onboarding_completed is True
     assert not hasattr(updated, "bogus")

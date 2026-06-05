@@ -74,3 +74,19 @@ def test_protected_endpoint_accepts_valid_bearer_token(monkeypatch: pytest.Monke
 
     assert response.status_code == 200
     assert response.json()["count"] >= 2
+
+
+def test_operator_endpoint_rejects_non_owner(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AUTH_SECRET", AUTH_SECRET)
+    monkeypatch.setenv("CLARVO_OWNER_EMAILS", "owner@example.com")
+
+    import api.main
+
+    api_main = importlib.reload(api.main)
+    response = TestClient(api_main.app).post(
+        "/ingest/curated-law",
+        json={"domain": "tenancy_law", "limit": 1},
+        headers=_auth_headers(),
+    )
+
+    assert response.status_code == 403

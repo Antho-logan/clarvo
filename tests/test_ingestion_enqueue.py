@@ -66,6 +66,7 @@ def test_curated_law_endpoint_enqueues_job(monkeypatch: pytest.MonkeyPatch) -> N
     database_url = _test_database_url()
     monkeypatch.setenv("DATABASE_URL", database_url)
     monkeypatch.setenv("AUTH_SECRET", AUTH_SECRET)
+    monkeypatch.setenv("CLARVO_OWNER_EMAILS", "test@example.com")
     _reset_and_migrate(database_url)
 
     import api.main
@@ -90,6 +91,7 @@ def test_legacy_law_trigger_now_enqueues_job(monkeypatch: pytest.MonkeyPatch) ->
     database_url = _test_database_url()
     monkeypatch.setenv("DATABASE_URL", database_url)
     monkeypatch.setenv("AUTH_SECRET", AUTH_SECRET)
+    monkeypatch.setenv("CLARVO_OWNER_EMAILS", "test@example.com")
     _reset_and_migrate(database_url)
 
     import api.main
@@ -111,6 +113,7 @@ def test_enqueue_failure_marks_job_failed(monkeypatch: pytest.MonkeyPatch) -> No
     database_url = _test_database_url()
     monkeypatch.setenv("DATABASE_URL", database_url)
     monkeypatch.setenv("AUTH_SECRET", AUTH_SECRET)
+    monkeypatch.setenv("CLARVO_OWNER_EMAILS", "test@example.com")
     _reset_and_migrate(database_url)
 
     import api.main
@@ -137,6 +140,7 @@ def test_embedding_backfill_endpoint_enqueues_job(monkeypatch: pytest.MonkeyPatc
     database_url = _test_database_url()
     monkeypatch.setenv("DATABASE_URL", database_url)
     monkeypatch.setenv("AUTH_SECRET", AUTH_SECRET)
+    monkeypatch.setenv("CLARVO_OWNER_EMAILS", "test@example.com")
     _reset_and_migrate(database_url)
 
     import api.main

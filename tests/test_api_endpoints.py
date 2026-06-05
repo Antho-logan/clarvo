@@ -572,8 +572,11 @@ def test_ingestion_jobs_list_and_detail(
 
 
 def test_embedding_coverage_endpoint(
-    api_client: TestClient, auth_headers: dict[str, str]
+    api_client: TestClient,
+    auth_headers: dict[str, str],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setenv("CLARVO_OWNER_EMAILS", "test@example.com")
     response = api_client.get("/embeddings/coverage", headers=auth_headers)
 
     assert response.status_code == 200

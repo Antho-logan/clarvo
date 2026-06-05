@@ -12,12 +12,12 @@ import time
 
 from celery.exceptions import CeleryError
 from fastapi import Depends, FastAPI, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import text
 from starlette.responses import StreamingResponse
 
 from agentic_orchestrator import chat
-from api.auth import AuthenticatedUser, get_current_user
+from api.auth import AuthenticatedUser, get_current_user, require_operator_user
 from backend_common import get_logger, get_session_factory
 from ingestion.tasks import (
     curated_judgment_task,
@@ -69,6 +69,8 @@ app = FastAPI(title="Clarvo Legal Backend", version="milestone2")
 class IngestRequest(BaseModel):
     """Shared ingest request model for curated law and judgment endpoints."""
 
+    model_config = ConfigDict(extra="forbid")
+
     domain: Optional[str] = None
     limit: Optional[int] = None
     dry_run: bool = False
@@ -77,6 +79,8 @@ class IngestRequest(BaseModel):
 
 class EmbeddingJobRequest(BaseModel):
     """Request body for embedding lifecycle jobs."""
+
+    model_config = ConfigDict(extra="forbid")
 
     mode: str = "all"
     limit: Optional[int] = None
@@ -103,6 +107,8 @@ class WorkflowRunRequest(BaseModel):
 class AgentConversationMessage(BaseModel):
     """Prior chat message supplied by the client for ephemeral chat context."""
 
+    model_config = ConfigDict(extra="forbid")
+
     role: str
     content: str
 
@@ -110,12 +116,16 @@ class AgentConversationMessage(BaseModel):
 class AgentClientDocument(BaseModel):
     """Client-provided document text supplied only for the current chat."""
 
+    model_config = ConfigDict(extra="forbid")
+
     name: str
     text: str
 
 
 class AgentDocumentExtractionRequest(BaseModel):
     """Base64-encoded document upload for ephemeral assistant context."""
+
+    model_config = ConfigDict(extra="forbid")
 
     filename: str
     content_type: Optional[str] = None
@@ -133,6 +143,8 @@ class AgentDocumentExtractionResponse(BaseModel):
 class AgentStreamRequest(BaseModel):
     """Request body for source-backed agent streaming."""
 
+    model_config = ConfigDict(extra="forbid")
+
     question: str
     max_iterations: int = 4
     domain: Optional[str] = None
@@ -143,6 +155,8 @@ class AgentStreamRequest(BaseModel):
 
 class MatterRequest(BaseModel):
     """Matter create/update payload."""
+
+    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = None
     client: Optional[str] = None
@@ -157,11 +171,15 @@ class MatterRequest(BaseModel):
 class MatterLinkDocumentRequest(BaseModel):
     """Request body for linking a document to a matter."""
 
+    model_config = ConfigDict(extra="forbid")
+
     document_id: str
 
 
 class MatterLinkRunRequest(BaseModel):
     """Request body for linking an agent or workflow run to a matter."""
+
+    model_config = ConfigDict(extra="forbid")
 
     run_id: str
     run_type: Optional[str] = None
@@ -169,6 +187,8 @@ class MatterLinkRunRequest(BaseModel):
 
 class MatterResearchNoteRequest(BaseModel):
     """Request body for saving a grounded assistant answer to a matter."""
+
+    model_config = ConfigDict(extra="forbid")
 
     matter_id: Optional[str] = None
     question: str
@@ -182,6 +202,8 @@ class MatterResearchNoteRequest(BaseModel):
 class MatterResearchMemoRequest(BaseModel):
     """Request body for drafting a memo from a saved research note."""
 
+    model_config = ConfigDict(extra="forbid")
+
     matter_id: str
     source_note_id: str
 
@@ -189,14 +211,14 @@ class MatterResearchMemoRequest(BaseModel):
 class SettingsRequest(BaseModel):
     """Persisted user settings payload."""
 
+    model_config = ConfigDict(extra="forbid")
+
     display_name: Optional[str] = None
     firm_name: Optional[str] = None
     theme_preference: Optional[str] = None
     language_preference: Optional[str] = None
     bwb_enabled: Optional[bool] = None
     rechtspraak_enabled: Optional[bool] = None
-    openai_key_configured: Optional[bool] = None
-    cohere_key_configured: Optional[bool] = None
     primary_domain: Optional[str] = None
     onboarding_completed: Optional[bool] = None
 
@@ -609,7 +631,7 @@ def patch_settings(
     "/ingest/laws", response_model=EnqueueResponse, status_code=status.HTTP_202_ACCEPTED
 )
 def ingest_laws(
-    request: IngestRequest, _user: AuthenticatedUser = Depends(get_current_user)
+    request: IngestRequest, _user: AuthenticatedUser = Depends(require_operator_user)
 ) -> EnqueueResponse:
     """Queue curated legislation ingestion and return immediately."""
     return _enqueue_ingestion(
@@ -626,7 +648,7 @@ def ingest_laws(
     status_code=status.HTTP_202_ACCEPTED,
 )
 def ingest_judgments(
-    request: IngestRequest, _user: AuthenticatedUser = Depends(get_current_user)
+    request: IngestRequest, _user: AuthenticatedUser = Depends(require_operator_user)
 ) -> EnqueueResponse:
     """Queue curated case-law ingestion and return immediately."""
     return _enqueue_ingestion(
@@ -644,7 +666,7 @@ def ingest_judgments(
 )
 def enqueue_curated_law(
     request: IngestRequest,
-    _user: AuthenticatedUser = Depends(get_current_user),
+    _user: AuthenticatedUser = Depends(require_operator_user),
 ) -> EnqueueResponse:
     """Queue curated legislation ingestion and return immediately."""
     return _enqueue_ingestion(
@@ -662,7 +684,7 @@ def enqueue_curated_law(
 )
 def enqueue_curated_judgment(
     request: IngestRequest,
-    _user: AuthenticatedUser = Depends(get_current_user),
+    _user: AuthenticatedUser = Depends(require_operator_user),
 ) -> EnqueueResponse:
     """Queue curated judgment ingestion and return immediately."""
     return _enqueue_ingestion(
@@ -675,7 +697,7 @@ def enqueue_curated_judgment(
 
 @app.get("/embeddings/coverage")
 def get_embeddings_coverage(
-    _user: AuthenticatedUser = Depends(get_current_user),
+    _user: AuthenticatedUser = Depends(require_operator_user),
     refresh: bool = Query(default=False),
     refresh_limit: Optional[int] = Query(default=None, ge=1),
 ) -> dict:
@@ -698,7 +720,7 @@ def get_embeddings_coverage(
 )
 def enqueue_embedding_backfill(
     request: EmbeddingJobRequest,
-    _user: AuthenticatedUser = Depends(get_current_user),
+    _user: AuthenticatedUser = Depends(require_operator_user),
 ) -> EnqueueResponse:
     """Queue a lifecycle-aware embedding backfill job."""
     return _enqueue_embedding_job(request)
@@ -711,7 +733,7 @@ def enqueue_embedding_backfill(
 )
 def enqueue_embedding_reembed_stale(
     request: EmbeddingJobRequest,
-    _user: AuthenticatedUser = Depends(get_current_user),
+    _user: AuthenticatedUser = Depends(require_operator_user),
 ) -> EnqueueResponse:
     """Queue a stale embedding refresh job."""
     request.mode = "stale"

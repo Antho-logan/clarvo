@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from typing import Optional
 
 import jwt
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
+
+
+DEFAULT_OWNER_EMAIL = "anthonylogan1995@gmail.com"
 
 
 @dataclass(frozen=True)
@@ -69,3 +72,25 @@ def get_current_user(
         email=email if isinstance(email, str) else None,
         name=name if isinstance(name, str) else None,
     )
+
+
+def _configured_owner_emails() -> set[str]:
+    raw = os.getenv("CLARVO_OWNER_EMAILS") or os.getenv("OWNER_EMAILS") or DEFAULT_OWNER_EMAIL
+    return {
+        item.strip().lower()
+        for item in raw.split(",")
+        if item.strip()
+    }
+
+
+def require_operator_user(
+    user: AuthenticatedUser = Depends(get_current_user),
+) -> AuthenticatedUser:
+    """Restrict operator endpoints to configured owner accounts."""
+    email = (user.email or "").strip().lower()
+    if not email or email not in _configured_owner_emails():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Owner access is required for this operation.",
+        )
+    return user

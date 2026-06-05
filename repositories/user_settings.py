@@ -48,8 +48,6 @@ def update_settings(user_id: str, values: dict[str, Any]) -> UserSettings:
         "language_preference",
         "bwb_enabled",
         "rechtspraak_enabled",
-        "openai_key_configured",
-        "cohere_key_configured",
         "primary_domain",
         "onboarding_completed",
     }
