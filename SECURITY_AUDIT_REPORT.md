@@ -61,7 +61,7 @@ Read-only Security Advisor check found:
 - `ERROR`: RLS disabled on `public.users`, `public.accounts`, `public.sessions`, `public.verification_token`, and `public.alembic_version`.
 - `ERROR`: sensitive columns exposed on `public.accounts` and `public.verification_token` because RLS is disabled.
 - `INFO`: several RLS-enabled tables have no policies. For shared/operator-only tables, no policy is intentional deny-by-default direct Supabase API access.
-- `WARN`: `vector` extension is installed in the `public` schema. Moving extensions is a separate migration with higher operational risk and was not changed in this minimal pass.
+- `WARN`: `vector` extension was installed in the `public` schema. Follow-up migration `202606050002_move_vector_extension_schema.py` moves it to the `extensions` schema and updates vector search SQL to use the schema-qualified operator/type.
 
 ## RLS Migration Added
 
@@ -130,7 +130,7 @@ If Supabase Storage is added later, add private buckets and owner-scoped storage
 
 - Apply the new RLS migration and rerun Supabase Security Advisor. The advisor errors remain live until migration is applied.
 - Review the live-only `research_notes` and `research_memos` tables. Add modeled migrations/policies or remove them if they are obsolete.
-- `vector` extension in `public` remains an advisor warning; moving it should be planned separately because it can affect indexes and search.
+- SQLAlchemy reflection may report `extensions.vector` as an unknown type during tests; direct Postgres `format_type` checks verify the column remains `extensions.vector(1536)`.
 - Server DB credentials bypass non-forced RLS. Keep all DB URLs server-only.
 - If a future browser Supabase client is added, design policies against the actual Supabase Auth identity model before exposing any table.
 

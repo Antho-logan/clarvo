@@ -21,7 +21,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    op.execute("CREATE SCHEMA IF NOT EXISTS extensions")
     op.execute("CREATE EXTENSION IF NOT EXISTS vector")
+    op.execute("SET LOCAL search_path TO public, extensions")
     op.alter_column("documents", "embedding", new_column_name="embedding_legacy")
     op.add_column("documents", sa.Column("embedding", Vector(1536), nullable=True))
     op.execute(

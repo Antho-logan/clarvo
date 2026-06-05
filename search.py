@@ -239,10 +239,10 @@ def vector_search(
                 embedding_model,
                 embedding_version,
                 embedding_dimensions,
-                embedding <=> CAST(:query_vector AS vector) AS distance
+                embedding OPERATOR(extensions.<=>) CAST(:query_vector AS extensions.vector) AS distance
             FROM documents
             WHERE embedding IS NOT NULL
-            ORDER BY embedding <=> CAST(:query_vector AS vector)
+            ORDER BY embedding OPERATOR(extensions.<=>) CAST(:query_vector AS extensions.vector)
             LIMIT :candidate_limit
         )
         SELECT

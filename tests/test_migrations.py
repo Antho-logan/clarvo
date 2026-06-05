@@ -48,7 +48,21 @@ def test_alembic_upgrade_head_and_downgrade_one_revision(monkeypatch: pytest.Mon
     inspector = inspect(engine)
     assert "users" in inspector.get_table_names()
     columns = {column["name"]: column for column in inspector.get_columns("documents")}
-    assert columns["embedding"]["type"].__class__.__name__.upper() == "VECTOR"
+    with engine.begin() as connection:
+        embedding_type = connection.execute(
+            text(
+                """
+                SELECT format_type(attribute.atttypid, attribute.atttypmod)
+                FROM pg_attribute AS attribute
+                JOIN pg_class AS class ON class.oid = attribute.attrelid
+                JOIN pg_namespace AS namespace ON namespace.oid = class.relnamespace
+                WHERE namespace.nspname = 'public'
+                  AND class.relname = 'documents'
+                  AND attribute.attname = 'embedding'
+                """
+            )
+        ).scalar_one()
+    assert embedding_type == "extensions.vector(1536)"
     assert "embedding_legacy" not in columns
     assert columns["embedding_status"]["nullable"] is False
     assert columns["embedding_attempts"]["nullable"] is False

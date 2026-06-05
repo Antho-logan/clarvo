@@ -83,7 +83,7 @@ def _insert_document(
                     VALUES (
                         :id, :document_type, :source_type, 'system', :source_id,
                         :domain, :source_id, :effective_from, :effective_to, :text,
-                        CAST(:embedding AS vector), 'completed', 'text-embedding-3-small',
+                        CAST(:embedding AS extensions.vector), 'completed', 'text-embedding-3-small',
                         'v1', 1536, :now,
                         :now, :now
                     )

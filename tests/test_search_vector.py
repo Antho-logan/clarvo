@@ -105,7 +105,7 @@ def _insert_document(
                 :effective_from,
                 :effective_to,
                 :text,
-                CAST(:embedding AS vector),
+                CAST(:embedding AS extensions.vector),
                 :embedding_status,
                 'text-embedding-3-small',
                 'v1',
