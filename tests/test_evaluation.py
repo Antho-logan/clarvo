@@ -1,5 +1,8 @@
 from evaluation import compute_ranking_metrics, summarize_cases
+from evals.check_eval_regression import _metric
 from evals.run_eval import DEFAULT_QA_PATH, _article_matches, _load_entries
+from evals.run_milestone2_eval import DEFAULT_TESTS_PATH, run_eval
+from evals.seed_milestone2_eval import seed_eval_database
 
 
 def test_compute_ranking_metrics() -> None:
@@ -57,3 +60,22 @@ def test_article_matching_accepts_book_prefix_or_plain_article() -> None:
     assert _article_matches("271", {"7:271"})
     assert _article_matches("7:271", {"7:271"})
     assert not _article_matches("7:272", {"7:271"})
+
+
+def test_eval_regression_metric_reads_baseline_and_generated_reports() -> None:
+    assert _metric({"metrics": {"ndcg@10": 0.95}}, "ndcg@10") == 0.95
+    assert _metric({"summary": {"overall": {"ndcg_at_k": 1.0}}}, "ndcg@10") == 1.0
+
+
+def test_seeded_milestone2_eval_passes(db_engine, tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    inserted = seed_eval_database()
+    exit_code = run_eval(
+        tests_path=DEFAULT_TESTS_PATH,
+        limit=10,
+        reports_dir=tmp_path,
+    )
+
+    assert inserted == 8
+    assert exit_code == 0

@@ -6,6 +6,14 @@ import argparse
 import json
 from pathlib import Path
 
+METRIC_ALIASES = {
+    "precision@10": "precision_at_k",
+    "recall@10": "recall_at_k",
+    "f1@10": "f1_at_k",
+    "ndcg@10": "ndcg_at_k",
+    "mrr": "mrr",
+}
+
 
 def _load_latest_report(reports_dir: Path) -> dict:
     reports = sorted(reports_dir.glob("*.json"))
@@ -17,6 +25,9 @@ def _load_latest_report(reports_dir: Path) -> dict:
 def _metric(report: dict, metric: str) -> float:
     metrics = report.get("metrics", {})
     value = metrics.get(metric)
+    if not isinstance(value, (int, float)):
+        overall = report.get("summary", {}).get("overall", {})
+        value = overall.get(METRIC_ALIASES.get(metric, metric))
     if not isinstance(value, (int, float)):
         raise KeyError(f"Metric {metric!r} was not found in report metrics.")
     return float(value)

@@ -40,6 +40,9 @@ jobs:
       - name: Migrate database
         run: python -m alembic upgrade head
 
+      - name: Seed eval fixtures
+        run: python evals/seed_milestone2_eval.py
+
       - name: Run retrieval eval
         run: python evals/run_milestone2_eval.py --limit 10 --reports-dir evals/reports/ci
 
