@@ -66,6 +66,7 @@ type AssistantStreamingPageProps = {
 const SOFT_REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
 const STREAM_DISPLAY_TICK_MS = 32;
 const STREAM_DISPLAY_CHARS_PER_TICK = 7;
+const ASSISTANT_STREAM_IDLE_TIMEOUT_MS = 90_000;
 
 type StreamState = "streaming" | "grounded" | "insufficient_sources" | "error";
 
@@ -650,6 +651,23 @@ export function AssistantStreamingPage({
       const stageTimers: Array<ReturnType<typeof setTimeout>> = [];
       let stagesCompleted = false;
       let stopDisplayTicker = () => {};
+      let streamTimedOut = false;
+      let streamTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
+
+      const clearStreamTimeout = () => {
+        if (streamTimeoutTimer) {
+          clearTimeout(streamTimeoutTimer);
+          streamTimeoutTimer = null;
+        }
+      };
+
+      const refreshStreamTimeout = () => {
+        clearStreamTimeout();
+        streamTimeoutTimer = setTimeout(() => {
+          streamTimedOut = true;
+          abortController.abort();
+        }, ASSISTANT_STREAM_IDLE_TIMEOUT_MS);
+      };
 
       setTurns((current) => [
         ...current,
@@ -696,6 +714,7 @@ export function AssistantStreamingPage({
           );
         });
 
+        refreshStreamTimeout();
         const response = await fetch("/api/agent/stream", {
           method: "POST",
           headers: {
@@ -721,6 +740,7 @@ export function AssistantStreamingPage({
         if (!response.body) {
           throw new Error("Assistant stream returned an empty body.");
         }
+        refreshStreamTimeout();
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -803,6 +823,7 @@ export function AssistantStreamingPage({
           if (done) {
             break;
           }
+          refreshStreamTimeout();
           buffer += decoder.decode(value, { stream: true });
           const parsed = readSseEvents(buffer);
           buffer = parsed.remainder;
@@ -916,7 +937,7 @@ export function AssistantStreamingPage({
           }
         }
       } catch (error) {
-        if (!abortController.signal.aborted) {
+        if (!abortController.signal.aborted || streamTimedOut) {
           stopDisplayTicker();
           stagesCompleted = true;
           for (const timer of stageTimers) {
@@ -925,7 +946,9 @@ export function AssistantStreamingPage({
           updateTurn(turnId, (turn) => ({
             ...turn,
             error:
-              error instanceof Error
+              streamTimedOut
+                ? copy.streamTimedOut
+                : error instanceof Error
                 ? error.message
                 : "The assistant could not retrieve grounded results.",
             state: "error",
@@ -937,10 +960,18 @@ export function AssistantStreamingPage({
         for (const timer of stageTimers) {
           clearTimeout(timer);
         }
+        clearStreamTimeout();
         abortControllersRef.current.delete(abortController);
       }
     },
-    [copy.streamFailed, resolvedLocale, updateTurn],
+    [copy.streamFailed, copy.streamTimedOut, resolvedLocale, updateTurn],
+  );
+
+  const retryTurn = useCallback(
+    (turn: ConversationTurn) => {
+      void startResearch(turn.query, turn.domain);
+    },
+    [startResearch],
   );
 
   const saveTurnToMatter = useCallback(
@@ -1274,6 +1305,7 @@ export function AssistantStreamingPage({
                     key={turn.id}
                     turn={turn}
                     onSave={saveTurnToMatter}
+                    onRetry={retryTurn}
                     locale={resolvedLocale}
                   />
                 ))}
@@ -1719,10 +1751,12 @@ function CitationSidebar({
 function ConversationTurnView({
   turn,
   onSave,
+  onRetry,
   locale,
 }: {
   turn: ConversationTurn;
   onSave: (turn: ConversationTurn) => void;
+  onRetry: (turn: ConversationTurn) => void;
   locale: DashboardLocale;
 }) {
   const copy = dashboardCopy[locale].assistant;
@@ -1772,6 +1806,14 @@ function ConversationTurnView({
                 {copy.retrievalUnavailable}
               </p>
               <p className="text-sm leading-6 text-[#63534B]">{turn.error}</p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 border-[#D8D2C8] bg-white text-[#1F1D1A] hover:border-[#DD3300]/30 hover:bg-[#FFF8F5]"
+                onClick={() => onRetry(turn)}
+              >
+                {copy.retry}
+              </Button>
             </div>
           ) : null}
 

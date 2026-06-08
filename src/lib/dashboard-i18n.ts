@@ -100,6 +100,9 @@ export const dashboardCopy = {
       sidePanel: "in het zijpaneel",
       retrievalUnavailable: "Ophalen niet beschikbaar",
       streamFailed: "De assistentstream is mislukt.",
+      streamTimedOut:
+        "Het antwoord duurde te lang. Probeer opnieuw met dezelfde vraag of maak de vraag iets gerichter.",
+      retry: "Opnieuw proberen",
       connecting: "Verbinden...",
       thinking: "Denkt na",
       thinkingStages: [
@@ -265,6 +268,9 @@ export const dashboardCopy = {
       sidePanel: "in the side panel",
       retrievalUnavailable: "Retrieval unavailable",
       streamFailed: "Assistant stream failed.",
+      streamTimedOut:
+        "The answer took too long. Try again with the same question or make the question a little more specific.",
+      retry: "Try again",
       connecting: "Connecting...",
       thinking: "Thinking",
       thinkingStages: [

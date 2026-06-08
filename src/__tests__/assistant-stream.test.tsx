@@ -6,6 +6,7 @@ import { AssistantStreamingPage } from "@/components/dashboard/assistant-streami
 describe("assistant streaming page", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
     delete (
       window as Window &
         typeof globalThis & {
@@ -467,6 +468,50 @@ describe("assistant streaming page", () => {
 
     expect(screen.getByText("Leest uw vraag")).toBeInTheDocument();
     expect(screen.queryByText("Reading your question")).not.toBeInTheDocument();
+  });
+
+  it("times out stalled assistant streams and lets the user retry", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      let streamController: ReadableStreamDefaultController<Uint8Array> | null =
+        null;
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          streamController = controller;
+        },
+      });
+      init?.signal?.addEventListener("abort", () => {
+        streamController?.error(new DOMException("Aborted", "AbortError"));
+      });
+      return new Response(stream, { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <AssistantStreamingPage
+        query="Wat geldt bij opzegging van huur van woonruimte?"
+        domain="tenancy_law"
+        locale="nl"
+      />,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(90_000);
+    });
+
+    expect(
+      screen.getByText(
+        "Het antwoord duurde te lang. Probeer opnieuw met dezelfde vraag of maak de vraag iets gerichter.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Opnieuw proberen" }));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("keeps previous answers visible when a new question starts", async () => {
