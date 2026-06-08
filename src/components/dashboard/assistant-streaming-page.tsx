@@ -272,6 +272,7 @@ const OUT_OF_SCOPE_PATTERNS = [
 ] as const;
 
 const MAX_ATTACHED_DOCUMENTS = 3;
+const MAX_ASSISTANT_DOCUMENT_CHARS = 30_000;
 const MAX_HISTORY_TURNS = 4;
 const SUPPORTED_ATTACHMENT_PATTERN = /\.(pdf|docx|txt|md|markdown|csv)$/i;
 const SUPPORTED_ATTACHMENT_TYPES = new Set([
@@ -446,6 +447,10 @@ function previewDocumentText(text: string) {
   return `${cleaned.slice(0, 177)}...`;
 }
 
+function assistantDocumentText(text: string) {
+  return text.slice(0, MAX_ASSISTANT_DOCUMENT_CHARS);
+}
+
 function getDocumentParagraphs(text: string) {
   const paragraphs = text
     .split(/\n+/)
@@ -611,6 +616,7 @@ export function AssistantStreamingPage({
   const [speechMessage, setSpeechMessage] = useState<string | null>(null);
   const [clientDocuments, setClientDocuments] = useState<ClientDocument[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [isExtractingDocuments, setIsExtractingDocuments] = useState(false);
   const startedUrlQueryRef = useRef("");
   const turnsRef = useRef<ConversationTurn[]>([]);
   const clientDocumentsRef = useRef<ClientDocument[]>([]);
@@ -728,7 +734,7 @@ export function AssistantStreamingPage({
             conversation_history: buildConversationHistory(turnsRef.current),
             client_documents: clientDocumentsRef.current.map((document) => ({
               name: document.name,
-              text: document.text,
+              text: assistantDocumentText(document.text),
             })),
           }),
           signal: abortController.signal,
@@ -1176,6 +1182,7 @@ export function AssistantStreamingPage({
     }
 
     try {
+      setIsExtractingDocuments(true);
       const documents = await Promise.all(
         readableFiles.map((file) => extractClientDocument(file)),
       );
@@ -1191,6 +1198,8 @@ export function AssistantStreamingPage({
           ? error.message
           : "This document could not be converted into readable text.",
       );
+    } finally {
+      setIsExtractingDocuments(false);
     }
   }
 
@@ -1316,7 +1325,7 @@ export function AssistantStreamingPage({
 
           <div className="shrink-0 border-t border-[#D8D2C8] bg-white p-4">
             <div className="mx-auto max-w-4xl">
-              {clientDocuments.length > 0 || attachmentError ? (
+              {clientDocuments.length > 0 || attachmentError || isExtractingDocuments ? (
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   {clientDocuments.map((document) => {
                     const paragraphCount = getDocumentParagraphs(
@@ -1353,6 +1362,13 @@ export function AssistantStreamingPage({
                   {attachmentError ? (
                     <span className="text-xs text-[#8A2408]">
                       {attachmentError}
+                    </span>
+                  ) : null}
+                  {isExtractingDocuments ? (
+                    <span className="text-xs text-[#7C746B]">
+                      {resolvedLocale === "nl"
+                        ? "Document wordt gelezen..."
+                        : "Reading document..."}
                     </span>
                   ) : null}
                 </div>

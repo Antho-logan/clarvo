@@ -321,6 +321,84 @@ describe("assistant streaming page", () => {
     ]);
   });
 
+  it("keeps attached documents available for follow-up questions", async () => {
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        void init;
+        if (String(input) === "/api/agent/extract-document") {
+          return new Response(
+            JSON.stringify({
+              name: "algemene-bepalingen.pdf",
+              text: "Huurder betaalt onderhoud, gebreken, schade, slijtage en waarborgsom.",
+              truncated: false,
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        return new Response(
+          createAssistantStream([
+            { type: "token", content: "Antwoord." },
+            {
+              type: "done",
+              status: "grounded",
+              source_ids: [],
+              tool_trace: [],
+            },
+          ]),
+          { status: 200 },
+        );
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AssistantStreamingPage query="" domain="tenancy_law" />);
+
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(["%PDF fake"], "algemene-bepalingen.pdf", {
+      type: "application/pdf",
+    });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    await screen.findAllByText("algemene-bepalingen.pdf");
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Controleer deze algemene bepalingen." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send question" }));
+    expect(await screen.findByText("Antwoord.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Controleer vooral onderhoud en waarborgsom." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send question" }));
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.filter(
+          ([input]) => String(input) === "/api/agent/stream",
+        ),
+      ).toHaveLength(2);
+    });
+    const assistantRequests = fetchMock.mock.calls.filter(
+      ([input]) => String(input) === "/api/agent/stream",
+    );
+    for (const [, requestInit] of assistantRequests) {
+      const payload = JSON.parse(String(requestInit?.body));
+      expect(payload.client_documents).toEqual([
+        {
+          name: "algemene-bepalingen.pdf",
+          text: "Huurder betaalt onderhoud, gebreken, schade, slijtage en waarborgsom.",
+        },
+      ]);
+    }
+  });
+
   it("extracts PDF uploads before sending them to the assistant", async () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {

@@ -24,7 +24,7 @@ MAX_CLIENT_DOCUMENTS = 3
 MAX_CLIENT_DOCUMENT_CHARS = 30000
 MAX_CLIENT_DOCUMENT_PARAGRAPHS = 60
 MAX_CLIENT_DOCUMENT_PARAGRAPH_CHARS = 900
-MAX_CONTRACT_REVIEW_QUERIES = 4
+MAX_CONTRACT_REVIEW_QUERIES = 5
 UNSUPPORTED_QUESTION_PATTERNS = (
     "belastingaangifte",
     "deutschen arbeitsrecht",
@@ -311,11 +311,10 @@ def _contract_review_queries(
     queries: list[str] = []
 
     if domain in {None, "", "tenancy_law"}:
+        queries.extend(TENANCY_CONTRACT_DEFAULT_QUERIES)
         for markers, query in TENANCY_CONTRACT_QUERY_RULES:
             if any(marker in combined for marker in markers):
                 queries.append(query)
-        if not queries:
-            queries.extend(TENANCY_CONTRACT_DEFAULT_QUERIES)
 
     deduped: list[str] = []
     for query in queries:
