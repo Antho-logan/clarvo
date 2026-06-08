@@ -443,6 +443,32 @@ describe("assistant streaming page", () => {
     expect(await screen.findByText("BW Boek 7")).toBeInTheDocument();
   });
 
+  it("localizes assistant thinking stages in Dutch", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start() {
+        // Keep the request open so the live thinking trace remains visible.
+      },
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(stream, { status: 200 })),
+    );
+
+    render(
+      <AssistantStreamingPage
+        query="Wat geldt bij opzegging van huur van woonruimte?"
+        domain="tenancy_law"
+        locale="nl"
+      />,
+    );
+
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+
+    expect(screen.getByText("Leest uw vraag")).toBeInTheDocument();
+    expect(screen.queryByText("Reading your question")).not.toBeInTheDocument();
+  });
+
   it("keeps previous answers visible when a new question starts", async () => {
     const fetchMock = vi
       .fn()

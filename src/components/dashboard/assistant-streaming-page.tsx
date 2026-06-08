@@ -63,14 +63,6 @@ type AssistantStreamingPageProps = {
   locale?: DashboardLocale | string | null;
 };
 
-const LIVE_RESEARCH_STAGES: ReadonlyArray<{ id: string; label: string }> = [
-  { id: "reading-question", label: "Reading your question" },
-  { id: "preparing-search", label: "Preparing legal source search" },
-  { id: "searching-sources", label: "Searching stored legal sources" },
-  { id: "checking-passages", label: "Checking relevant passages" },
-  { id: "drafting-answer", label: "Composing a source-backed answer" },
-];
-
 const SOFT_REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
 const STREAM_DISPLAY_TICK_MS = 32;
 const STREAM_DISPLAY_CHARS_PER_TICK = 7;
@@ -83,15 +75,40 @@ type ThinkingStage = {
   done: boolean;
 };
 
-function visibleThinkingStages(activeIndex: number): ThinkingStage[] {
-  return LIVE_RESEARCH_STAGES.slice(0, activeIndex + 1).map((stage, index) => ({
-    ...stage,
-    done: index < activeIndex,
-  }));
+function getLiveResearchStages(locale: DashboardLocale) {
+  return dashboardCopy[locale].assistant.thinkingStages;
 }
 
-function completedThinkingStages(): ThinkingStage[] {
-  return LIVE_RESEARCH_STAGES.map((stage) => ({ ...stage, done: true }));
+function getLiveResearchStageLabel(
+  stageId: string,
+  locale: DashboardLocale,
+  fallback?: string,
+) {
+  return (
+    getLiveResearchStages(locale).find((stage) => stage.id === stageId)
+      ?.label ||
+    fallback ||
+    stageId
+  );
+}
+
+function visibleThinkingStages(
+  activeIndex: number,
+  locale: DashboardLocale,
+): ThinkingStage[] {
+  return getLiveResearchStages(locale)
+    .slice(0, activeIndex + 1)
+    .map((stage, index) => ({
+      ...stage,
+      done: index < activeIndex,
+    }));
+}
+
+function completedThinkingStages(locale: DashboardLocale): ThinkingStage[] {
+  return getLiveResearchStages(locale).map((stage) => ({
+    ...stage,
+    done: true,
+  }));
 }
 
 type ConversationTurn = {
@@ -645,7 +662,7 @@ export function AssistantStreamingPage({
           citations: [],
           sourceIds: [],
           toolTrace: [],
-          stages: visibleThinkingStages(0),
+          stages: visibleThinkingStages(0, resolvedLocale),
         },
       ]);
 
@@ -656,7 +673,7 @@ export function AssistantStreamingPage({
           }
           updateTurn(turnId, (turn) => ({
             ...turn,
-            stages: visibleThinkingStages(stageIndex),
+            stages: visibleThinkingStages(stageIndex, resolvedLocale),
           }));
         };
         const completeThinkingTrace = () => {
@@ -669,11 +686,11 @@ export function AssistantStreamingPage({
           }
           updateTurn(turnId, (turn) => ({
             ...turn,
-            stages: completedThinkingStages(),
+            stages: completedThinkingStages(resolvedLocale),
           }));
         };
 
-        LIVE_RESEARCH_STAGES.slice(1).forEach((_, index) => {
+        getLiveResearchStages(resolvedLocale).slice(1).forEach((_, index) => {
           stageTimers.push(
             setTimeout(() => showThinkingStage(index + 1), 520 * (index + 1)),
           );
@@ -699,7 +716,7 @@ export function AssistantStreamingPage({
         });
 
         if (!response.ok) {
-          throw new Error(response.statusText || "Assistant stream failed.");
+          throw new Error(response.statusText || copy.streamFailed);
         }
         if (!response.body) {
           throw new Error("Assistant stream returned an empty body.");
@@ -797,7 +814,15 @@ export function AssistantStreamingPage({
                 ...turn,
                 stages: [
                   ...turn.stages.map((item) => ({ ...item, done: true })),
-                  { id: event.id, label: event.label, done: false },
+                  {
+                    id: event.id,
+                    label: getLiveResearchStageLabel(
+                      event.id,
+                      resolvedLocale,
+                      event.label,
+                    ),
+                    done: false,
+                  },
                 ],
               }));
             } else if (event.type === "token") {
@@ -915,7 +940,7 @@ export function AssistantStreamingPage({
         abortControllersRef.current.delete(abortController);
       }
     },
-    [resolvedLocale, updateTurn],
+    [copy.streamFailed, resolvedLocale, updateTurn],
   );
 
   const saveTurnToMatter = useCallback(
