@@ -24,6 +24,7 @@ MAX_CLIENT_DOCUMENTS = 3
 MAX_CLIENT_DOCUMENT_CHARS = 30000
 MAX_CLIENT_DOCUMENT_PARAGRAPHS = 60
 MAX_CLIENT_DOCUMENT_PARAGRAPH_CHARS = 900
+MAX_CONTRACT_REVIEW_QUERIES = 4
 UNSUPPORTED_QUESTION_PATTERNS = (
     "belastingaangifte",
     "deutschen arbeitsrecht",
@@ -46,10 +47,70 @@ UNSUPPORTED_QUESTION_PATTERNS = (
     "vervangt mijn advocaat",
     "mijn advocaat vervangen",
 )
+CONTRACT_REVIEW_QUESTION_PATTERNS = (
+    "algemene bepalingen",
+    "contract",
+    "huurovereenkomst",
+    "overeenkomst",
+    "bepaling",
+    "clausule",
+    "pdf",
+    "beoordeel",
+    "controleer",
+    "check",
+    "review",
+    "niet klopt",
+    "niet kloppen",
+    "niet correct",
+    "niet volgens de wet",
+    "following the law",
+    "risico",
+)
+TENANCY_CONTRACT_QUERY_RULES = (
+    (
+        (
+            "onderhoud",
+            "herstel",
+            "hersteld",
+            "gebrek",
+            "gebreken",
+            "schade",
+            "slijtage",
+        ),
+        "huur gebreken onderhoud kleine herstellingen normale slijtage",
+    ),
+    (
+        ("opzeg", "opzegging", "opzegtermijn", "beëindiging", "beeindiging"),
+        "huur woonruimte opzegging wettelijke eisen opzegtermijn",
+    ),
+    (
+        ("borg", "waarborgsom", "deposit"),
+        "huur waarborgsom terugbetaling schadevergoeding",
+    ),
+    (
+        ("boete", "boetebeding", "contractuele boete"),
+        "huur boetebeding contractuele boete redelijkheid",
+    ),
+    (
+        ("oplever", "eindinspectie", "inspectie"),
+        "oplevering huurwoning schade normale slijtage",
+    ),
+    (
+        ("huurbescherming", "bescherming", "ontruiming"),
+        "huur woonruimte huurbescherming ontruiming wettelijke regels",
+    ),
+)
+TENANCY_CONTRACT_DEFAULT_QUERIES = (
+    "huur gebreken onderhoud kleine herstellingen normale slijtage",
+    "huur woonruimte opzegging wettelijke eisen opzegtermijn",
+    "huur waarborgsom terugbetaling schadevergoeding",
+)
 
 
 def _source_label(hit: dict) -> str:
-    return str(hit.get("source_id") or hit.get("ecli") or hit.get("bwbr_id") or hit.get("id"))
+    return str(
+        hit.get("source_id") or hit.get("ecli") or hit.get("bwbr_id") or hit.get("id")
+    )
 
 
 def _citation(hit: dict) -> dict:
@@ -141,7 +202,9 @@ def _format_conversation_history(conversation_history: list[dict] | None) -> str
         role = str(message.get("role") or "").strip().lower()
         if role not in {"user", "assistant"}:
             continue
-        content = compact_text(message.get("content") or "")[:MAX_HISTORY_CHARS_PER_MESSAGE]
+        content = compact_text(message.get("content") or "")[
+            :MAX_HISTORY_CHARS_PER_MESSAGE
+        ]
         if not content:
             continue
         lines.append(f"- {role.title()}: {content}")
@@ -203,7 +266,10 @@ def _split_long_contract_line(text: str) -> list[str]:
         if not sentence:
             continue
         sentence = sentence if sentence.endswith(".") else f"{sentence}."
-        if current and len(f"{current} {sentence}") > MAX_CLIENT_DOCUMENT_PARAGRAPH_CHARS:
+        if (
+            current
+            and len(f"{current} {sentence}") > MAX_CLIENT_DOCUMENT_PARAGRAPH_CHARS
+        ):
             paragraphs.append(current)
             current = sentence
         else:
@@ -211,6 +277,51 @@ def _split_long_contract_line(text: str) -> list[str]:
     if current:
         paragraphs.append(current)
     return paragraphs or [text[:MAX_CLIENT_DOCUMENT_PARAGRAPH_CHARS]]
+
+
+def _client_document_search_text(client_documents: list[dict] | None) -> str:
+    if not client_documents:
+        return ""
+
+    parts: list[str] = []
+    for document in client_documents[:MAX_CLIENT_DOCUMENTS]:
+        parts.append(str(document.get("name") or ""))
+        parts.append(str(document.get("text") or "")[:MAX_CLIENT_DOCUMENT_CHARS])
+    return compact_text(" ".join(parts)).lower()
+
+
+def _looks_like_contract_review(
+    question: str, client_documents: list[dict] | None
+) -> bool:
+    if not client_documents:
+        return False
+    combined = f"{compact_text(question).lower()} {_client_document_search_text(client_documents)}"
+    return any(pattern in combined for pattern in CONTRACT_REVIEW_QUESTION_PATTERNS)
+
+
+def _contract_review_queries(
+    question: str,
+    client_documents: list[dict] | None,
+    domain: str | None = None,
+) -> list[str]:
+    if not _looks_like_contract_review(question, client_documents):
+        return []
+
+    combined = f"{compact_text(question).lower()} {_client_document_search_text(client_documents)}"
+    queries: list[str] = []
+
+    if domain in {None, "", "tenancy_law"}:
+        for markers, query in TENANCY_CONTRACT_QUERY_RULES:
+            if any(marker in combined for marker in markers):
+                queries.append(query)
+        if not queries:
+            queries.extend(TENANCY_CONTRACT_DEFAULT_QUERIES)
+
+    deduped: list[str] = []
+    for query in queries:
+        if query not in deduped:
+            deduped.append(query)
+    return deduped[:MAX_CONTRACT_REVIEW_QUERIES]
 
 
 def _llm_answer(
@@ -300,7 +411,11 @@ def _llm_answer(
         f"compact headings: {ordinary_headings}. For contract checks, use these exact compact headings: "
         f"{contract_headings}."
     )
-    agent = Agent(name="GroundedLegalAnswerAgent", instructions=instructions, model=DEFAULT_CHAT_MODEL)
+    agent = Agent(
+        name="GroundedLegalAnswerAgent",
+        instructions=instructions,
+        model=DEFAULT_CHAT_MODEL,
+    )
     result = asyncio.run(Runner.run(agent, prompt))
     return str(result.final_output)
 
@@ -332,7 +447,9 @@ def generate_answer(
 
     cited_labels = {_source_label(hit) for hit in hits}
     if not any(f"[{label}]" in answer for label in cited_labels):
-        answer = f"{answer}\n\nBronnen: " + ", ".join(f"[{label}]" for label in sorted(cited_labels)[:4])
+        answer = f"{answer}\n\nBronnen: " + ", ".join(
+            f"[{label}]" for label in sorted(cited_labels)[:4]
+        )
 
     return {
         "status": "grounded",
@@ -356,34 +473,78 @@ def chat(
 
     if _is_unsupported_question(question):
         final = _refusal(question, [], tool_trace)
-        LOGGER.info("assistant status=%s sources=%s", final["status"], len(final.get("citations", [])))
+        LOGGER.info(
+            "assistant status=%s sources=%s",
+            final["status"],
+            len(final.get("citations", [])),
+        )
         return final
 
     exact_identifier = next(
-        (part.strip(".,;:()[]") for part in question.split() if part.startswith(("ECLI:", "BWBR"))),
+        (
+            part.strip(".,;:()[]")
+            for part in question.split()
+            if part.startswith(("ECLI:", "BWBR"))
+        ),
         None,
     )
     if exact_identifier:
         result = CiteLookupTool().run(identifier=exact_identifier, domain=domain)
-        tool_trace.append({"tool": "cite_lookup", "input": {"identifier": exact_identifier, "domain": domain}})
+        tool_trace.append(
+            {
+                "tool": "cite_lookup",
+                "input": {"identifier": exact_identifier, "domain": domain},
+            }
+        )
         hits = result.get("hits", [])
     else:
         limit = max(3, min(8, max_iterations * 4))
-        result = KnowledgeLookupTool().run(query=question, domain=domain, limit=limit)
-        tool_trace.append({"tool": "knowledge_lookup", "input": {"query": question, "domain": domain, "limit": limit}})
+        knowledge_tool = KnowledgeLookupTool()
+        result = knowledge_tool.run(query=question, domain=domain, limit=limit)
+        tool_trace.append(
+            {
+                "tool": "knowledge_lookup",
+                "input": {"query": question, "domain": domain, "limit": limit},
+            }
+        )
         hits = result.get("hits", [])
+        for review_query in _contract_review_queries(
+            question, client_documents, domain=domain
+        ):
+            review_limit = max(2, min(4, limit))
+            review_result = knowledge_tool.run(
+                query=review_query, domain=domain, limit=review_limit
+            )
+            tool_trace.append(
+                {
+                    "tool": "knowledge_lookup",
+                    "input": {
+                        "query": review_query,
+                        "domain": domain,
+                        "limit": review_limit,
+                        "reason": "client_document_contract_review",
+                    },
+                }
+            )
+            hits.extend(review_result.get("hits", []))
 
     final = generate_answer(
         question,
         hits,
         conversation_history=conversation_history,
         client_documents=client_documents,
-        response_language=response_language if response_language in {"nl", "en"} else "nl",
+        response_language=(
+            response_language if response_language in {"nl", "en"} else "nl"
+        ),
     )
     final["tool_trace"] = tool_trace
     if final["status"] == "insufficient_sources":
         final["tool_trace"] = tool_trace
-    LOGGER.info("assistant status=%s sources=%s", final["status"], len(final.get("citations", [])))
+    LOGGER.info(
+        "assistant status=%s sources=%s",
+        final["status"],
+        len(final.get("citations", [])),
+    )
     return final
 
 

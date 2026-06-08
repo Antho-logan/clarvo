@@ -71,7 +71,64 @@ def test_assistant_returns_citations_for_grounded_sources(
     assert "[BWBR-HUUR]" in result["answer"]
 
 
-def test_generated_refusal_is_not_marked_grounded(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_contract_review_uses_uploaded_document_for_targeted_legal_search(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    queries: list[str] = []
+
+    class FakeKnowledgeLookupTool:
+        def run(self, **kwargs):
+            query = str(kwargs["query"])
+            queries.append(query)
+            if "kleine herstellingen" in query:
+                return {
+                    "hits": [
+                        {
+                            "id": "doc-contract-review",
+                            "source_id": "BWBR-HUUR-ONDERHOUD",
+                            "source_type": "legislation",
+                            "domain": "tenancy_law",
+                            "title": "Huurrecht onderhoud",
+                            "article": "7:217",
+                            "text": (
+                                "De huurder verricht kleine herstellingen. "
+                                "Normale slijtage en grotere gebreken komen niet zonder meer voor rekening van de huurder."
+                            ),
+                        }
+                    ]
+                }
+            return {"hits": []}
+
+    monkeypatch.setattr(
+        agentic_orchestrator,
+        "KnowledgeLookupTool",
+        FakeKnowledgeLookupTool,
+    )
+
+    result = chat(
+        "Kun je deze Algemene Bepalingen PDF controleren op bepalingen die niet kloppen met de wet?",
+        domain="tenancy_law",
+        client_documents=[
+            {
+                "name": "Algemene Bepalingen.pdf",
+                "text": (
+                    "Huurder betaalt alle onderhoud, alle gebreken, schade en slijtage, "
+                    "ook wanneer het gehuurde oud is."
+                ),
+            }
+        ],
+    )
+
+    assert result["status"] == "grounded"
+    assert result["citations"][0]["source_id"] == "BWBR-HUUR-ONDERHOUD"
+    assert len(queries) > 1
+    assert any("kleine herstellingen" in query for query in queries)
+
+
+def test_generated_refusal_is_not_marked_grounded(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     monkeypatch.setattr(
         agentic_orchestrator,
@@ -195,7 +252,10 @@ def test_llm_answer_includes_chat_history_and_uploaded_documents(
     assert "Ik heb een contract met een opzegtermijn." in captured["prompt"]
     assert "Client-provided documents:" in captured["prompt"]
     assert "huurcontract.txt" in captured["prompt"]
-    assert "[Contract D1.P1] Contractuele opzegtermijn: twee maanden." in captured["prompt"]
+    assert (
+        "[Contract D1.P1] Contractuele opzegtermijn: twee maanden."
+        in captured["prompt"]
+    )
     assert (
         "[Contract D1.P2] Huurder mag geen beroep doen op wettelijke huurbescherming."
         in captured["prompt"]
